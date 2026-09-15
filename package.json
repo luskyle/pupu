@@ -22,7 +22,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@heroui/react": "2.7.8",
+    "@heroui/react": "2.8.10",
     "@heroui/theme": "2.4.26",
     "@mozilla/readability": "^0.6.0",
     "@plasmohq/storage": "^1.11.0",
