@@ -29,6 +29,7 @@
 | 2026-09-15 | CRX 路线证伪：自签名 CRX 无法安装（`CRX_REQUIRED_PROOF_MISSING`），Release 改为只附 zip，历史 crx 附件已移除（见 P4-1） |
 | 2026-09-15 | 版本号全自动化（关于页/站点/徽章）+ 标签一致性闸门 + 本地落后检查；见「第四批详评」 |
 | 2026-09-15 | **第四批复评**：实测出 3 处 unmet peer（`@types/node` / `esbuild` / `tailwindcss`），确认 React 19 → Tailwind 4 → HeroUI 3 的耦合顺序，并把「上架商店」提为价值最高的下一步 |
+| 2026-09-15 | **功能向复评**：查出 1 个功能性缺陷 —— 「发布完成」是无条件成功的**假成功路径**（见 F0）；实测语言包 **172 / 383（44.9%）** key 零引用；新增「功能向建议（产品视角）」F0–F13 |
 
 ## 结论摘要
 
@@ -44,6 +45,7 @@
 | P1 | 环境不固定（无 `engines` / `packageManager`） | package.json | 补版本声明 | 小 | **部分完成**（`packageManager` + `.nvmrc`；`engines` 因 Parcel 冲突不可用） |
 | P1 | 分支无保护、Dependabot 关闭 | `gh api` 查询结果 | 开启必需检查与依赖告警 | 小 | **部分完成**（Dependabot 已配置；分支保护见下方说明） |
 | P1 | 动态适配器把用户文本未转义拼进 `innerHTML` | `maimai.ts:59`、`weixinchannel.ts:253` | 先转义再拼 `<br>` | 小 | **已修复** |
+| P1 | 「发布完成」是**无条件成功**的（假成功路径） | `PublishConfirm.tsx:74-97`（`onDone(true)` 写在 `finally` 里）+ `sidepanel/index.tsx:154-159` + `background/index.ts:129-135`（失败不回执） | 按回执/超时判定，失败可见 | 小 | 待办（新增，详见 F0） |
 | P2 | 产物 18 MB，重库全静态引入 | options chunk 4.16 MB | 重库改动态 `import()` | 中 | **已修复**（options 首包 4191 → 1845 KB） |
 | P2 | popup 包 369 KB 只为跳转 | `popup/index.tsx` | 去掉无用 shadow CSS | 小 | **已修复**（369 → 139 KB，余量为 React 下限） |
 | P2 | 平台图标 872 KB，单图最大 144 KB | 按 16–24px 显示 | 统一压到 32px | 小 | **PNG 已完成**（872 → 684 KB）；ICO 402 KB 待办 |
@@ -816,6 +818,133 @@ src/components/Sync/DynamicTab.tsx(1072,33): error TS2339: Property 'type' does 
 | ICO 图标压缩（P2-3 剩余） | 402 KB | 需 DIB 解码器或图形工具 + 改 75 处引用 |
 | `video-react` → 原生 `<video>`（P2-5） | ~180 KB + 去掉停更依赖 | UI 行为变更，需实机确认播放/预览 |
 | `strictNullChecks`（P1-3） | 收益在缺陷预防而非体积 | 错误量尚未评估（当前 strict 关闭、typecheck 0 错误） |
+
+---
+
+## 功能向建议（产品视角）
+
+> 复评日期：2026-09-15 ｜ 与前四批的区别：前面是**工程侧**（安全 / 质量 / 体积 / 依赖），本节是**产品侧** —— 只问两件事：「用户能感知到什么」和「内容是否真能可靠发出去」。
+>
+> 结论全部来自静态核查（语言包引用统计、`chrome.storage` 写入点、UI 组件树、全仓关键字搜索），**没有实机操作**。标注「需实机验收」的条目请先在浏览器里跑一遍再动手。
+
+### F0 · 先修一个缺陷：现在的「发布完成」是无条件成功的
+
+这不是功能缺失，是**假成功**。三处代码配合才成立，所以之前几轮审计都没发现：
+
+| # | 位置 | 实测到的行为 |
+| --- | --- | --- |
+| 1 | `src/components/Sidepanel/PublishConfirm.tsx:74-97` | `try { … await sendMessage(…) } finally { setPublishing(false); onDone(true) }` —— `sendMessage` 的**返回值被丢弃**、没有 `catch`，而「成功」写在 `finally` 里，**任何异常都会走到成功分支** |
+| 2 | `src/sidepanel/index.tsx:154-159` | `handlePublishDone(true)` → `suppressAutoCloseRef.current = true` + `setPending(null)`：确认界面直接消失（配合下方的自动关闭逻辑，侧边栏可能整个关掉） |
+| 3 | `src/background/index.ts:129-135` | 失败时刻意**不回执**，只 `logger.error`。注释原文：*“the publish popup's handlePublishComplete treats ANY callback response as ‘publish complete’, so an error payload would be mis-read as success”* |
+
+失败时的实际表现：**界面正常消失、看起来发布完成，但一个平台标签页都没打开**。而第三批把生产日志静默之后，用户连「去控制台看一眼」的退路也没有了 —— 全仓搜索 `chrome.notifications` / `setBadgeText`：**0 处命中**。
+
+> 补一句：注释里提到的 `handlePublishComplete` 现已不在代码中（`grep -rn handlePublishComplete src/` 只命中这条注释本身），那段「不能回错误」的防护逻辑随组件重构一起消失了，注释成了唯一的痕迹。
+
+**改法（很小）**：`onDone(true)` 移出 `finally`，按回执或超时判定；`background` 失败时回一个结构化错误回执；确认界面就地显示结果，而不是直接消失。这一步做完，「发布结果汇总」才有落点（见 F1）。
+
+### 证据基础 · 语言包里 172 个 key 从没被引用过（44.9%）
+
+把 `locales/zh_CN/messages.json` 的 383 个 key 逐个在 `src/` 与 `package.json` 里做字面量搜索：**172 个零命中**。这基本就是「规划过、没落地」的功能清单 —— 实现时连文案都不必再写。
+
+| 分组 | 零引用 | 代表 key（均已逐一验证 0 引用） | 性质 |
+| --- | --- | --- | --- |
+| `options*` | 62 | `optionsRunningLogs`、`optionsFilterLevel`、`optionsDataSync`、`optionsAccountManagement`、`optionsDashboard`、`optionsClearLogs` | 设置页规划区块 |
+| `sidepanel*` | 23 | `sidepanelContentManager`、`contentManagerTitle`，以及收藏夹一整套（`sidepanelCollectionAddNew` / `…NameLabel` / `…Empty` / `…Delete` / `…Default` / `…Work`） | 内容管理 / 收藏夹 |
+| `error*` | 15 | `errorSelectPlatform`、`errorEnterUrl`、`errorProcessingImages`、`errorReloadTab`、`contactUsIfProblem` | **为「用户可见的错误提示」写好了文案，但那个 UI 从未存在** —— 与 F0 互为印证 |
+| `docx*` | 8 | `docxUnsupported`、`docxToImageProgress`… | 已屏蔽的 Word/WPS 导入 |
+| `popup*` | 7 | `popupSettingsTooltip`、`popupSyncPublicTooltip`、`popupBubbleboxTooltip`、`popupGiftTooltip` | 弹窗按钮，已废弃 |
+| `dynamic*` | 7 | `dynamicAddLink`、`dynamicInsertSticker`… | 已屏蔽的动态功能 |
+| `g*` | 6 | `gAbout`（「关于」标题目前是**硬编码**的）、`gDynamic`、`gArticle`、`gTitle`、`gContent`、`gSend` | 通用文案未接管 |
+| 其余零散 | 44 | `settingsTrustedDomainsWarning`、`processingImages`、`aboutGithubRepo`、`webAppModalTitle`、`refreshAccountsNoAccounts`、`publishAutoCloseCountdown`、`extensionName`… | 混合 |
+| **合计** | **172 / 383（44.9%）** | | |
+
+三类，处理方式完全不同：**① 规划未做完**（`options*` / `sidepanel*`）→ 现成的功能待办；**② 主动屏蔽**（`docx*` / `dynamic*`）→ README 已声明「代码与依赖保留」，属恢复项；**③ 已废弃**（`popup*`、`extensionName`）→ 要么补 UI 要么删 key。
+
+### 功能向建议摘要
+
+| # | 建议 | 实测证据 | 价值 | 工作量 | 需实机验收 |
+| --- | --- | --- | --- | --- | --- |
+| F0 | 修掉「发布完成无条件成功」 | `PublishConfirm.tsx:74-97` + `sidepanel/index.tsx:154-159` + `background/index.ts:129-135` | 高（属缺陷） | 小 | 是 |
+| F1 | 发布结果汇总 + 失败可见（badge / 通知）+ 一键重试 | 全仓无 `chrome.notifications` / `setBadgeText`；失败仅 `logger.error`（生产已静默） | 高 | 中 | 是 |
+| F2 | 草稿自动保存与恢复 | 三个发布 Tab 只在点发布时写一次 `pendingPublishData`，编辑过程零落盘 | 高 | 中 | 否 |
+| F3 | 实现「运行日志」页签 | 语言包已备好 12 个 key（`optionsRunningLogs` / `FilterLevel` / `AllLevels` / `Info` / `Warning` / `Error` / `FilterSource` / `AllSources` / `NoLogs` / `ClearLogs`…）全部 0 引用；第三批刚把生产日志静默 | 中高 | 小 | 否 |
+| F4 | 配置导出 / 导入 | 账号缓存、可信域名、收藏全部只在 `chrome.storage.local`，换机即丢 | 中高 | 小 | 否 |
+| F5 | 发布前校验（平台约束） | 仅 `rednote-text.ts` 做了小红书 20 字标题一条软处理，无统一必填/上限校验 | 中高 | 中 | 是 |
+| F6 | 恢复被屏蔽的 4 项功能 | `docx*` + `dynamic*` 共 15 个 key 零引用，README 明确「代码与依赖保留，便于恢复」 | 中 | 中 | 是 |
+| F7 | URL 导入扩展站点 + 自动注明出处 | `src/contents/scraper/` 只有 csdn / jianshu / juejin / wechat / zhihu + default | 中 | 中 | 是 |
+| F8 | 图片自动压缩 / 尺寸统一 / 封面裁切 | 图片按原样 base64 进载荷，直接放大失败率与存储占用 | 中 | 中 | 是 |
+| F9 | 快捷键 / 右键菜单 | `package.json` 无 `commands`，全仓无 `contextMenus` | 中 | 小 | 否 |
+| F10 | 草稿箱 / 模板库 / 收藏夹 | `sidepanelCollection*` 23 个 key 已备好（含增删/默认/工作/空态全套） | 中 | 中 | 否 |
+| F11 | 平台级内容微调 | 所有平台共用一份内容，只有小红书做了话题格式转换 | 中 | 中 | 是 |
+| F12 | 清理 172 个死 key | 见上表 | 低（维护者体验） | 小 | 否 |
+| F13 | 多账号 / 定时发布 / Firefox 版 | 无 `chrome.alarms`；`sidePanel` / `tabGroups` 在 Firefox 不存在 | 低-中 | 大 | 是 |
+
+### F1 · 发布结果汇总（F0 之后紧接着做）
+
+**为什么难在判定而不是 UI**：现在「发布」的真实含义是「打开了平台标签页并把内容填进去」，真正的发布动作发生在各平台的页面上（点它自己的发布按钮）。所以「成功了没」只有三种取法，需要按平台适配器逐个实现：
+
+1. **内容脚本回执**（推荐起点）：填充完成后由内容脚本回一个结构化结果，区分「已填充待确认」「填充失败」「已自动发布」；
+2. **平台成功信号探测**：适配器里识别各平台的发布成功提示 / URL 变化（覆盖「自动发布」开关的场景）；
+3. **超时兜底**：N 秒没回执就标为「待确认」，让用户去看一眼 —— 至少比无声无息强。
+
+**产出**：侧边栏结果列表（成功 / 失败 / 待确认三类）+ 失败项「重试」按钮 + 扩展图标 badge 计数。**新增依赖为零**（`chrome.action.setBadgeText` 是原生 API）。
+
+### F2 · 草稿自动保存与恢复（防丢内容）
+
+- **现状**：`ArticleTab` / `DynamicTab` / `VideoTab` 只在点「发布」的那一刻写一次 `chrome.storage.local.set({ pendingPublishData })`；编辑过程中的任何内容都不落盘 → 关掉侧边栏、切走页面、浏览器重启，**草稿全丢**。
+- **建议**：输入防抖（如 800ms）落盘 + 重开时提示「恢复上次未完成的草稿」。
+- **注意**：图片 / 视频是 base64 或 blob，`chrome.storage.local` 有配额（`unlimitedStorage` 未申请）—— 文本可以进 `storage.local`，二进制建议只存引用或走 IndexedDB，否则 PDF/PPT 转出的一串图片会直接顶爆配额。
+
+### F3 · 实现「运行日志」页签（与第三批直接配套）
+
+- **动机来自我自己第三批的改动**：2311 处日志收敛到分级 `logger` 后，`debug` / `info` 在生产环境不再输出 —— 这是对的（不该往用户控制台刷日志），但代价是**线上问题失去了唯一的现场**。用户反馈只能是「没反应」+ 截图。
+- **语言包早就准备好了**：`optionsRunningLogs`、`optionsFilterLevel`、`optionsAllLevels`、`optionsInfo`、`optionsWarning`、`optionsError`、`optionsFilterSource`、`optionsAllSources`、`optionsNoLogs`、`optionsClearLogs` 全套 0 引用 —— 当初就打算做这个面板。
+- **做法**：`logger` 增加内存环形缓冲（如最近 500 条，`warn` / `error` 可持久化），设置页加筛选 / 复制 / 清空。**新增依赖为零**。
+- **收益**：用户能自助定位（「是没登录还是失败了」），维护者拿到可粘贴的日志；这是 F1 的天然搭档。
+
+### F4 · 配置导出 / 导入（防丢配置）
+
+账号缓存、可信域名（`trustedDomains`）、apiKey、`extensionClientId`、收藏全靠 `chrome.storage.local` 单点存放 —— 重装扩展或换机就得全部重配（包括重新登录各平台、重新抓账号）。建议一键导出 / 导入 JSON（可选是否包含 cookie 相关缓存，导入前二次确认）。**工作量小、回报直接**。
+
+### F5 · 发布前校验（把「静默失败」变成「提前拦住」）
+
+平台的真实限制（标题必填与字数、正文上限、图片数量 / 格式 / 大小、话题格式）现在散落在各适配器里各写各的，唯一显式的是 `rednote-text.ts` 里小红书 20 字标题的软处理。建议：
+
+- 每个平台适配器声明一张约束表（必填 / 上限 / 图片规则）；发布前统一校验 + 高亮问题项；
+- 这一项直接削减 F1 里最难判定的「填充了但没发出去」—— 大部分无声失败其实是「平台不接受这份内容」。
+
+### F6–F13 · 其余项（要点）
+
+- **F6 恢复被屏蔽的功能**：README 说「代码与依赖保留，便于恢复」，`docx*` / `dynamic*` 的 key 也都在。建议顺序 **在线表情包 → Word/WPS 导入 → 动态发视频 → 插入链接**（前两项是「能用但不够好」，后两项是「不稳定」，风险不同）。注意动态 Tab 的 `MAX_VIDEO_COUNT = 1` 要一并放开（`DynamicTab.tsx:27`）。
+- **F7 URL 导入**：现在覆盖 csdn / jianshu / juejin / wechat / zhihu（`src/contents/scraper/`）。扩展站点是一类持续投入；但**建议先把「自动注明原文出处」做掉** —— 转载合规上是刚需，成本很低（导入时在正文尾部附来源链接）。
+- **F8 图片处理**：进载荷前统一压缩 / 限制长边 / 可选封面裁切，能同时改善发布成功率与存储占用（与 F2 的配额问题同源）。
+- **F9 快捷键 / 右键菜单**：`manifest.commands` + `contextMenus`（如选中文字 →「存为 pupu 草稿」）。这是把已有能力接到用户顺手位置的最省事入口，无需新依赖。
+- **F10 草稿箱 / 模板库 / 收藏夹**：`sidepanelCollection*` 那 23 个 key 说明收藏夹当初设计得挺完整（默认夹 / 工作夹 / 增删改 / 空态）。模板库（常用文案、固定话题、尾部签名）与 F2 的草稿持久化共用一套存储。
+- **F11 平台级内容微调**：目前所有平台共用同一份内容，只有小红书做了 `#话题#` 格式转换。可让每个平台单独改标题 / 摘要 / 话题；与 F5 的约束表共用数据结构。
+- **F12 死 key 清理**：172 个零引用 key 建议**一边实现（F3 / F10）一边清**，不急单独做；最省事的起点是删掉 `popup*` 那 7 个（弹窗按钮早已不在）—— 但注意 `gAbout` 若要保留，就把「关于」标题改成读语言包（现在硬编码在 `src/options/index.tsx`）。
+- **F13 大工作量项**：多账号（依赖 cookie / 会话隔离方式）、定时发布（需 `chrome.alarms`，且**扩展与平台登录状态必须都在**，可靠性天生受限）、Firefox 版（`sidePanel` / `tabGroups` 在 Firefox 不存在，需换 `sidebar_action` 等，属新目标平台而非小改）。建议都排在 F0–F5 之后。
+
+### 已有能力，不要重复造
+
+核查中确认**已经实现**、无需再做的：
+
+- **平台组合记忆**：`PublishConfirm.tsx:77` 写、`:52` 读回 `PLATFORM_STORAGE_KEY[type]`（按发布类型各存一份）—— 已闭环；
+- **话题格式适配与标题截断**：`rednote-text.ts`；
+- **PPT / PDF 逐页转图**：`pptx-preview` + `pdfjs-dist`，含 PDF worker 与 wasm 兜底件；
+- **「关于」页版本号**：构建期 manifest，已自动化（见第四批）。
+
+### 本节建议顺序
+
+**第一步（缺陷 + 与第三批配套，都是小改动）**：F0 → F3 →（F2 的文本部分）。理由：F0 是假成功，必须修；F3 补上被我第三批静默掉的现场；两者都不引入新依赖。
+
+**第二步（可靠性与防丢）**：F1（含各平台回执）→ F5（约束表）→ F4（导出/导入）。F1 是本节的主菜，但要先有 F0 的回执通道才落得下。
+
+**第三步（效率与内容）**：F9 → F10（草稿箱/模板库，与 F2 共用存储）→ F8 → F7（含自动注明出处）→ F11。
+
+**第四步（恢复与扩展）**：F6 → F12 → F13。
+
+**贯穿原则**：F0–F5 全部**零新增依赖**，尽量不引入新的重库（体积来之不易：options 首包已从 4191 KB 压到 1845 KB）；F1 里「怎么判定平台成功」是最需要你实机观察的部分，建议先手动跑一遍各平台发布，把观察到的成功/失败信号记下来再写代码。
 
 ---
 
