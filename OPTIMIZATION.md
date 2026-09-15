@@ -683,11 +683,32 @@ src/components/Sync/DynamicTab.tsx(1072,33): error TS2339: Property 'type' does 
 
 ### P4-1 上架 Chrome Web Store / Edge 加载项商店
 
-现在已有固定签名密钥与 `.crx` 产物，上架条件具备。要点：
+现在已有固定签名密钥，上架条件具备。要点：
 
 - **必须沿用同一把签名密钥**（`keys/pupu.pem`，Secret `CRX_PRIVATE_KEY`），否则扩展 ID 变化，已安装用户收不到更新；
 - 商店提交用 `.zip`；
-- 上架后商店会自动分发更新，用户不再需要「开发者模式」，这解决当前 `.crx` 只能旁加载的体验问题。
+- 上架后商店会自动分发更新，用户不再需要「开发者模式」。
+
+**2026-09-15 实测纠正：自签名 CRX 无法安装（本项目已不再提供 `.crx`）**
+
+早期版本把 `.crx` 当作「可直接安装」的产物附加到 Release，并在文档里写成推荐方式 —— **这是错的**。用户在 Edge 里
+拖入时得到：
+
+```
+包无效："CRX_REQUIRED_PROOF_MISSING"。
+```
+
+原因（依据 Chromium `components/crx_file/crx_verifier.cc`，Plasmo 有专文分析）：`VerifyCrx3` 在
+`require_publisher_key` 为真时（off-store 下载按 `CRX3_WITH_PUBLISHER_PROOF` 校验）会要求 proof 的 key hash 命中写死的
+**Chrome 应用商店公钥**；自签名 CRX 永远不可能满足，因此**拖拽 / 双击 / 普通安装流程一律失败**。
+
+- 加 manifest 的 `key` 字段或 `update_url` **都不解决**；
+- 唯一可行路径是机器级**强制**企业策略（`ExtensionInstallAllowlist` + `ExtensionInstallSources`；注意 recommended 会被忽略），这不是普通用户能做的；
+- 因此现在：Release **只附 `.zip`**（`加载已解压` 是唯一可用的本地安装方式，仍受「开发者模式」限制）；
+  `pnpm crx` / `pnpm verify:crx` 与 CI 里的临时密钥冒烟测试**保留**，将来要做企业策略自托管或上架时可随时启用。
+
+教训：CRX 的**签名能被密码学校验通过 ≠ 浏览器会接受它**。我此前只做了前者（并明确标注了需实机验收），
+这类「格式正确但平台拒绝」的问题只有真机安装才能发现。
 
 ### P4-2 `host_permissions` 过宽
 

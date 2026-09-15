@@ -51,14 +51,13 @@
 
           <h2 id="install">安装</h2>
           <p>pupu 提供已经打包好的扩展压缩包，无需自己编译即可安装使用。</p>
-          <h3>方式一：安装 .crx（推荐，无需解压）</h3>
           <ol class="steps">
             <li>
-              <h3>下载 .crx</h3>
+              <h3>下载并解压</h3>
               <p>
                 在
                 <a href="https://github.com/luskyle/pupu/releases/latest" target="_blank" rel="noreferrer">Releases</a>
-                页面下载 <code>pupu-v&lt;version&gt;.crx</code>。
+                页面下载 <code>pupu-v&lt;version&gt;.zip</code>，解压到任意目录。解压后目录中应当直接能看到 <code>manifest.json</code>。
               </p>
             </li>
             <li>
@@ -68,31 +67,21 @@
               </p>
             </li>
             <li>
-              <h3>把 .crx 拖进页面</h3>
-              <p>把 <code>.crx</code> 文件拖入扩展管理页，在弹窗中点「添加扩展程序」即可。</p>
-            </li>
-          </ol>
-
-          <h3>方式二：加载已解压的 .zip</h3>
-          <ol class="steps">
-            <li>
-              <h3>下载并解压</h3>
-              <p>
-                下载 <code>pupu-v&lt;version&gt;.zip</code>，解压到任意目录。解压后目录中应当直接能看到 <code>manifest.json</code>。
-              </p>
-            </li>
-            <li>
-              <h3>打开扩展管理页并开启开发者模式</h3>
-              <p>同上，打开页面右上角的「开发者模式」开关。</p>
-            </li>
-            <li>
               <h3>加载已解压的扩展程序</h3>
               <p>点击左上角「加载已解压的扩展程序」，选中第 1 步解压出的目录。</p>
             </li>
           </ol>
           <div class="note">
+            <strong>为什么不能直接装 <code>.crx</code>？</strong> 自签名 CRX 无法通过拖拽或普通安装流程安装：Chromium 会校验
+            CRX 内的 proof 是否由 Chrome 应用商店的私钥签名，否则报 <code>CRX_REQUIRED_PROOF_MISSING</code>（依据见 Chromium
+            的 <code>crx_verifier.cc</code>：off-store 的 CRX 会按 <code>CRX3_WITH_PUBLISHER_PROOF</code> 校验）。这与怎么打包无关，
+            加 manifest 的 <code>key</code> 字段或 <code>update_url</code> 都不解决；唯一可用的 CRX 路径是机器级<strong>强制</strong>企业策略
+            （<code>ExtensionInstallAllowlist</code> + <code>ExtensionInstallSources</code>，注意必须是 MANDATORY，recommended 会被忽略）。
+            因此本项目不再提供 <code>.crx</code>，想彻底摆脱「开发者模式」，唯一途径是上架应用商店。
+          </div>
+          <div class="note">
             扩展 ID 为 <strong><code>nffpajdealkjpdmjjboneelajanbboig</code></strong
-            >（由签名密钥决定，各版本固定不变）。Edge 与 Chrome 同为 Chromium，共用同一份 <code>.crx</code> / <code>.zip</code>。
+            >（由签名密钥决定，各版本固定不变）。Edge 与 Chrome 同为 Chromium，共用同一份 <code>.zip</code>。
           </div>
           <div class="note">
             安装后点击工具栏的 pupu 图标会自动打开扩展主界面（选项页），侧边栏用于平台选择与账号管理。
@@ -166,13 +155,14 @@
           <pre><code>pnpm install
 pnpm dev        # 启动 Plasmo 开发模式（热更新）</code></pre>
           <p>构建产物的命令：</p>
-          <pre><code>pnpm build      # 版本号 +1 → 构建 → 复制 PDF worker / 平台图标 → 打包 zip + CRX
-pnpm build:ci   # 同上，但不修改版本号（CI 使用）
-pnpm crx        # 只打包 CRX（需要签名密钥）
+          <pre><code>pnpm build      # 本地构建：只产出可「加载已解压」的目录（不出 zip / crx）
+pnpm build:ci   # 构建并打包 zip（CI 使用）
+pnpm package    # 只把已构建的产物打包成 zip
+pnpm crx        # 只打包 CRX（自托管/企业策略场景用，需签名密钥；不能拖拽安装）
 pnpm verify:crx # 校验 CRX3 签名与包内内容</code></pre>
           <p>
-            构建产物位于 <code>build/chrome-mv3-prod/</code>，打包产物为 <code>build/pupu-v&lt;version&gt;.zip</code> 与
-            <code>build/pupu-v&lt;version&gt;.crx</code>。
+            本地构建刻意不产出 zip / crx（那些由 CI 生成并附加到 Release），只输出
+            <code>build/chrome-mv3-prod/</code>，在扩展管理页「加载已解压的扩展程序」中直接导入即可。
           </p>
           <div class="note">
             <strong>注意：</strong>构建后会自动执行 <code>scripts/copy-pdf-worker.mjs</code>，把 PDF worker、PDF 图像解码器
@@ -180,15 +170,17 @@ pnpm verify:crx # 校验 CRX3 签名与包内内容</code></pre>
             转图片与平台图标会缺失。
           </div>
           <div class="note">
-            <strong>签名密钥：</strong>CRX 的扩展 ID 由签名密钥决定，必须长期保持不变。本地密钥放在
-            <code>keys/pupu.pem</code>（已被 <code>.gitignore</code> 忽略），CI 从仓库 Secret
-            <code>CRX_PRIVATE_KEY</code> 读取。没有密钥时 <code>pnpm crx</code> 会跳过而不会自动生成新密钥 —— 新密钥会产生新的
-            扩展 ID，已安装用户将收不到更新。
+            <strong>签名密钥：</strong>扩展 ID 由签名密钥决定，若将来要做企业策略自托管或上架商店，必须沿用同一密钥。
+            本地密钥放在 <code>keys/pupu.pem</code>（已被 <code>.gitignore</code> 忽略），CI 从仓库 Secret
+            <code>CRX_PRIVATE_KEY</code> 读取（Release 已不再需要它）。没有密钥时 <code>pnpm crx</code> 会跳过而不会自动生成新密钥
+            —— 新密钥会产生新的扩展 ID，已安装用户将收不到更新。
           </div>
-          <h3>代码检查</h3>
+          <h3>代码检查与测试</h3>
           <pre><code>pnpm lint       # 代码检查（Biome）
 pnpm lint:fix   # 自动修复
-pnpm format     # 格式化</code></pre>
+pnpm format     # 格式化
+pnpm typecheck  # 类型检查（tsc --noEmit）
+pnpm test       # 单元测试（vitest）</code></pre>
 
           <h2 id="cicd">CI / CD 与发布</h2>
           <p>仓库内置三条 GitHub Actions 工作流：</p>
@@ -205,16 +197,16 @@ pnpm format     # 格式化</code></pre>
                 <th><code>CI</code></th>
                 <td>push 到 main、PR、手动</td>
                 <td>
-                  安装依赖 → <code>pnpm lint</code> → <code>pnpm build:ci</code>，校验产物；再用临时密钥打包 CRX 做冒烟测试，最后上传
-                  zip 与解压目录为构建产物
+                  安装依赖 → <code>pnpm lint</code> → <code>pnpm typecheck</code> → <code>pnpm test</code> →
+                  <code>pnpm build:ci</code>，校验产物；再用临时密钥打包 CRX 做冒烟测试（仅验证打包路径可用），最后上传 zip 与解压目录为构建产物
                 </td>
               </tr>
               <tr>
                 <th><code>Release</code></th>
                 <td>推送 <code>v*</code> 标签、手动</td>
                 <td>
-                  把 package.json 版本号同步为标签版本 → 构建 → 用 <code>CRX_PRIVATE_KEY</code> 签名出 CRX 并校验签名 → 创建
-                  Release，附上 <code>pupu-v&lt;version&gt;.zip</code> 与 <code>pupu-v&lt;version&gt;.crx</code>
+                  校验标签与 <code>package.json</code> 版本一致 → <code>lint</code> + <code>typecheck</code> + <code>test</code>
+                  → 构建 → 创建 Release，附上 <code>pupu-v&lt;version&gt;.zip</code>（不再附 CRX）
                 </td>
               </tr>
               <tr>
@@ -225,24 +217,41 @@ pnpm format     # 格式化</code></pre>
             </tbody>
           </table>
           <h3>发布一个版本</h3>
-          <pre><code>git tag v0.2.5
-git push origin v0.2.5</code></pre>
+          <p>先改版本号并提交，再打标签（顺序不能反，否则发布流程会因一致性校验失败而中止）：</p>
+          <pre><code>pnpm pkg set version=0.2.11
+git commit -am "chore(release): 0.2.11"
+git push origin main
+git tag v0.2.11 &amp;&amp; git push origin v0.2.11</code></pre>
           <p>
-            推送标签后，Release 工作流会自动构建出 <code>pupu-v0.2.5.zip</code> 与 <code>pupu-v0.2.5.crx</code>、校验扩展
-            manifest 中的版本号与标签一致以及 CRX 签名，然后发布到 Releases 页面。也可以在 Actions 页面手动运行
-            <code>Release</code> 工作流并填写版本号，它会自动创建对应标签。
+            推送标签后，Release 工作流会校验标签与 <code>package.json</code> 版本一致、跑完 lint / 类型检查 / 单元测试、
+            构建出 <code>pupu-v&lt;version&gt;.zip</code>（校验 manifest 版本与标签一致），然后发布到 Releases 页面，
+            并触发一次站点重部署以同步站点上的版本号。也可以在 Actions 页面手动运行 <code>Release</code> 工作流并填写版本号，
+            它会自动创建对应标签。
           </p>
           <div class="note">
-            <strong>缺少 Secret 会失败而不是降级：</strong>Release 需要仓库 Secret <code>CRX_PRIVATE_KEY</code>，缺失时工作流直接报错退出，
-            避免用临时密钥签出一个扩展 ID 不同的 CRX 发出去。
+            <strong>为什么必须先改版本号：</strong>扩展内「关于」页显示的是构建时 manifest 的版本，而 manifest 版本来自
+            <code>package.json</code>。标签与 <code>package.json</code> 不一致时发布流程会直接失败并给出修复命令，
+            避免仓库版本与已发布版本悄悄漂移。
+          </div>
+          <div class="note">
+            <strong>站点版本号是自动的：</strong>部署时由 <code>scripts/inject-site-version.mjs</code> 从最新 <code>v*</code>
+            标签注入，页面再用 GitHub API 覆盖为最新 release；发布流程结束时会自动触发一次站点重部署。README 徽章同样由
+            shields 动态读取，都无需手工维护。
           </div>
 
           <h2 id="faq">常见问题</h2>
-          <h3>.crx 拖进浏览器后提示无法安装 / 扩展被停用？</h3>
+          <h3>安装 .crx 时提示「包无效：CRX_REQUIRED_PROOF_MISSING」？</h3>
           <p>
-            这是 Chrome / Edge 对「非应用商店扩展」的限制，不是扩展本身的问题：需要先在扩展管理页打开右上角的「开发者模式」，再把
-            <code>.crx</code> 拖进去；关闭开发者模式后，这类扩展可能被浏览器自动停用。若要保持长期稳定分发，建议上架 Chrome Web
-            Store / Microsoft Edge 加载项商店 —— 上架与后续更新都要沿用同一把签名密钥，以保持扩展 ID 不变。
+            这是 Chromium 对非商店来源 CRX 的限制，<strong>不是打包方式的问题</strong>：它会校验 CRX 内的 proof 是否由 Chrome
+            应用商店的私钥签名，自签名的一律被拒（拖拽、双击都一样），因此本项目已不再提供 <code>.crx</code>。请改用
+            <code>.zip</code> + 「加载已解压的扩展程序」。若确实需要 CRX 部署，只能走机器级<strong>强制</strong>企业策略
+            （<code>ExtensionInstallAllowlist</code> + <code>ExtensionInstallSources</code>）；要彻底摆脱「开发者模式」，唯一途径是上架
+            Chrome Web Store / Edge 加载项商店，且上架与后续更新都要沿用同一把签名密钥以保持扩展 ID 不变。
+          </p>
+          <h3>安装后扩展被浏览器停用 / 提示来自非应用商店？</h3>
+          <p>
+            这是不经过应用商店安装的浏览器限制，与扩展本身无关：需保持扩展管理页右上角的「开发者模式」开启，
+            否则这类扩展可能被浏览器自动停用。
           </p>
           <h3>有 Safari 版本吗？</h3>
           <p>
