@@ -81,20 +81,10 @@ jobs:
       - name: 同步 package.json 版本号
         run: pnpm pkg set version="${{ steps.version.outputs.version }}"
 
-      - name: 写入 CRX 签名密钥
-        env:
-          CRX_PRIVATE_KEY: ${{ secrets.CRX_PRIVATE_KEY }}
-        run: |
-          set -eu
-          if [ -z "$CRX_PRIVATE_KEY" ]; then
-            echo "缺少仓库 Secret CRX_PRIVATE_KEY，无法签名 CRX"
-            echo "在本地生成密钥后执行: gh secret set CRX_PRIVATE_KEY < keys/pupu.pem"
-            exit 1
-          fi
-          mkdir -p keys
-          printf '%s\n' "$CRX_PRIVATE_KEY" > keys/pupu.pem
-          chmod 600 keys/pupu.pem
-
+      # 说明：这里不再生成/附带 CRX。自签名 CRX 无法通过拖拽或普通安装流程安装
+      # （Chromium 要求 proof 由 Chrome 应用商店私钥签名，否则报 CRX_REQUIRED_PROOF_MISSING），
+      # 附带它只会误导用户。CRX 的打包能力仍保留（pnpm crx / pnpm verify:crx），
+      # 并由 CI 用临时密钥做冒烟测试，将来要做企业策略自托管或上架时可随时启用。
       - name: 代码检查
         run: pnpm lint
 
@@ -106,14 +96,6 @@ jobs:
 
       - name: 构建扩展
         run: pnpm build:ci
-
-      - name: 打包 CRX（Chrome / Edge 可直接安装）
-        env:
-          CRX_REQUIRED: "1"
-        run: pnpm crx
-
-      - name: 校验 CRX3 签名与内容
-        run: pnpm verify:crx
 
       - name: 校验产物版本
         env:
@@ -129,7 +111,6 @@ jobs:
             unzip -l "$zip" | grep -q "$f" || { echo "缺少 $f"; exit 1; }
           done
           echo "SHA256(zip): $(sha256sum "$zip" | cut -d' ' -f1)"
-          echo "SHA256(crx): $(sha256sum "build/pupu-v${VERSION}.crx" | cut -d' ' -f1)"
 
       - name: 创建 GitHub Release
         env:
@@ -139,15 +120,13 @@ jobs:
           set -eu
           TAG="v${VERSION}"
           ZIP="build/pupu-v${VERSION}.zip"
-          CRX="build/pupu-v${VERSION}.crx"
           test -f "$ZIP"
-          test -f "$CRX"
           if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-            gh release create "$TAG" "$ZIP" "$CRX" \
+            gh release create "$TAG" "$ZIP" \
               --title "pupu $TAG" \
               --generate-notes
           else
-            gh release create "$TAG" "$ZIP" "$CRX" \
+            gh release create "$TAG" "$ZIP" \
               --title "pupu $TAG" \
               --target "$GITHUB_SHA" \
               --generate-notes
