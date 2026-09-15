@@ -15,12 +15,13 @@ import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Viewer from "react-viewer";
 import { Player } from "video-react";
+import { logger } from "~utils/logger";
 import "video-react/dist/video-react.css";
 import InfoModal from "~components/Sync/Modals/InfoModal";
 import type { FileData, SyncData } from "~sync/common";
 import { escapeHtml } from "~utils/escape-html";
-import { convertPdfToImages } from "~utils/pdf";
-import { convertPptxToImages } from "~utils/pptx";
+// 注意：pdfjs / pptx-preview / 截图库体积很大（合计约 1 MB），只在用户真正导入文件时才需要，
+// 因此这里不静态引入 ~utils/pdf 与 ~utils/pptx，而是在处理函数里动态 import（见下方）。
 
 // Constants
 const MAX_VIDEO_COUNT = 1;
@@ -961,6 +962,7 @@ const DynamicTab: React.FC = () => {
     setProcessProgress(0);
     try {
       const arrayBuffer = await file.arrayBuffer();
+      const { convertPptxToImages } = await import("~utils/pptx");
       const { images, slideCount } = await convertPptxToImages(arrayBuffer, (current, total) => {
         setProcessStatus(
           chrome.i18n.getMessage("pptProgress", [String(current), String(total)]) ||
@@ -982,7 +984,7 @@ const DynamicTab: React.FC = () => {
           `已导入 PPT，共 ${slideCount} 页，已全部转为图片`,
       );
     } catch (error) {
-      console.error("导入 PPT 失败:", error);
+      logger.error("导入 PPT 失败:", error);
       setInfoMsg(chrome.i18n.getMessage("pptImportError") || "导入 PPT 失败，请确认文件为 .pptx 格式");
     } finally {
       setIsProcessing(false);
@@ -1007,6 +1009,7 @@ const DynamicTab: React.FC = () => {
     setProcessProgress(0);
     try {
       const arrayBuffer = await file.arrayBuffer();
+      const { convertPdfToImages } = await import("~utils/pdf");
       const { images, pageCount } = await convertPdfToImages(arrayBuffer, (current, total) => {
         setProcessStatus(
           chrome.i18n.getMessage("pdfProgress", [String(current), String(total)]) ||
@@ -1028,7 +1031,7 @@ const DynamicTab: React.FC = () => {
           `已导入 PDF，共 ${pageCount} 页，已全部转为图片`,
       );
     } catch (error) {
-      console.error("导入 PDF 失败:", error);
+      logger.error("导入 PDF 失败:", error);
       setInfoMsg(chrome.i18n.getMessage("pdfImportError") || "导入 PDF 失败，请确认文件格式正确");
     } finally {
       setIsProcessing(false);
@@ -1059,7 +1062,7 @@ const DynamicTab: React.FC = () => {
       const window = await chrome.windows.getCurrent({ populate: true });
       await chrome.sidePanel.open({ windowId: window.id });
     } catch (error) {
-      console.error("打开侧边栏发布时出错:", error);
+      logger.error("打开侧边栏发布时出错:", error);
     }
   };
 
