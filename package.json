@@ -33,7 +33,7 @@
     "jspdf": "^4.2.1",
     "lucide-react": "^0.447.0",
     "marked": "^18.0.12",
-    "pdfjs-dist": "^6.2.108",
+    "pdfjs-dist": "^6.3.289",
     "plasmo": "0.90.5",
     "pptx-preview": "^1.0.7",
     "react": "18.2.0",
