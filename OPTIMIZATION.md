@@ -21,6 +21,8 @@
 | 2026-09-15 | 首次审计（基线 v0.2.5 / `abff568`） |
 | 2026-09-15 | 完成第一批修复：P0-1、P0-2、P1-2、P2-6；P1-1 部分完成（引入 vitest + jsdom，35 个单测，已接入 CI） |
 | 2026-09-15 | 审计修正：P0-1 实际存在 **2 处**（原文只记了 1 处）；P0-2 中「DynamicTab 同样需处理」为**误报**（该处已做转义）；新增发现 P1-7 |
+| 2026-09-15 | 完成第二批修复：P1-7、P1-4、P1-5（部分）、P1-6（部分）；P1-1 继续补测（共 66 个用例） |
+| 2026-09-15 | 新增发现：`engines` 字段会让 Parcel 构建失败（见 P1-5）；语言包校验自动化后又查出 3 个真实缺陷；`escapeHtml` 放错模块导致分包 +70 KB（见 P2-1） |
 
 ## 结论摘要
 
@@ -29,13 +31,13 @@
 | P0 | 可信域名通配符匹配可被绕过（**2 处**） | `trust-domain.ts:52-54`、`contents/extension.ts:24-26` | 加子域点边界判断 | 小 | **已修复** |
 | P0 | Markdown 预览与发布载荷未消毒 | `ArticleTab.tsx:71,263` | 接入 DOMPurify | 小 | **已修复** |
 | P0 | 生产代码 1153 处 `console.log` | 70 个文件 | 落地分级 logger | 中 | 待办 |
-| P1 | 零测试（183 文件 / 3.8 万行） | 无 test 脚本、0 测试文件 | 引入 vitest，先测纯函数 | 中大 | **部分完成**（35 个单测，已接入 CI） |
+| P1 | 零测试（183 文件 / 3.8 万行） | 无 test 脚本、0 测试文件 | 引入 vitest，先测纯函数 | 中大 | **进行中**（66 个用例，已接入 CI） |
 | P1 | husky 钩子未生效 | `.husky/` 下只有 `_` | 补 `pre-commit` / `commit-msg` | 小 | **已修复** |
 | P1 | TS `strict: false` + 67 处 `any` | plasmo tsconfig.base | 分步开严格模式 | 大 | 待办 |
-| P1 | CI 不做类型检查 | `.github/workflows/ci.yml` | 加 `tsc --noEmit` | 小 | 待办 |
-| P1 | 环境不固定（无 `engines` / `packageManager`） | package.json | 补版本声明 | 小 | 待办 |
-| P1 | 分支无保护、Dependabot 关闭 | `gh api` 查询结果 | 开启必需检查与依赖告警 | 小 | 待办 |
-| P1 | 动态适配器把用户文本未转义拼进 `innerHTML` | `maimai.ts:59`、`weixinchannel.ts:253` | 先转义再拼 `<br>` | 小 | 待办（新增） |
+| P1 | CI 不做类型检查 | `.github/workflows/ci.yml` | 加 `tsc --noEmit` | 小 | **已修复** |
+| P1 | 环境不固定（无 `engines` / `packageManager`） | package.json | 补版本声明 | 小 | **部分完成**（`packageManager` + `.nvmrc`；`engines` 因 Parcel 冲突不可用） |
+| P1 | 分支无保护、Dependabot 关闭 | `gh api` 查询结果 | 开启必需检查与依赖告警 | 小 | **部分完成**（Dependabot 已配置；分支保护见下方说明） |
+| P1 | 动态适配器把用户文本未转义拼进 `innerHTML` | `maimai.ts:59`、`weixinchannel.ts:253` | 先转义再拼 `<br>` | 小 | **已修复** |
 | P2 | 产物 18 MB，重库全静态引入 | options chunk 4.16 MB | 重库改动态 `import()` | 中 | 待办 |
 | P2 | popup 包 369 KB 只为跳转 | `popup/index.tsx` | 去掉无用 shadow CSS | 小 | 待办 |
 | P2 | 平台图标 872 KB，单图最大 144 KB | 按 16–24px 显示 | 统一压到 32px | 小 | 待办 |
@@ -206,17 +208,26 @@ console.log("domainId", domainId);
 **已完成**：
 
 - 引入 `vitest`（+ `jsdom` 供 DOM 相关测试用）+ `vitest.config.mts`（补上 tsconfig 的 `~` → `src` 别名，注意 replacement 需带结尾斜杠）；
-- `pnpm test` / `pnpm test:watch` 脚本，并已接入 CI（在 `pnpm lint` 之后、构建之前执行）；
-- 共 **35 个用例**：`src/utils/domain-match.test.ts`（15）、`src/utils/sanitize.test.ts`（20）；
+- `pnpm test` / `pnpm test:watch` 脚本，并已接入 CI（在 `pnpm typecheck` 之后、构建之前执行）；
+- 共 **66 个用例**，5 个测试文件：
+
+| 测试文件 | 用例数 | 覆盖内容 |
+| --- | --- | --- |
+| `src/utils/domain-match.test.ts` | 15 | 可信域名匹配（P0-1 的修复） |
+| `src/utils/sanitize.test.ts` | 20 | HTML 消毒（P0-2 的修复） |
+| `src/utils/escape-html.test.ts` | 7 | 文本转义 + 模块无依赖守护（P1-7） |
+| `src/utils/rednote-text.test.ts` | 20 | 小红书话题格式与标题长度规则 |
+| `src/locales.test.ts` | 4 | 语言包一致性（P2-6） |
+
 - 已验证测试文件不会被 Plasmo 打进产物（产物中检索不到 test / vitest 字样）。
 
 **后续落地顺序**（从收益/成本比最高的开始）：
 
 1. **纯函数单测**（继续补）：
-   - 话题转换：`#话题#` → 小红书 `#话题[话题]#`；
-   - 标题超长跳过（>20 字）；
-   - HTML ↔ Markdown 往返（`marked` / `turndown`）；
-   - 平台归一化与分组（动态 / 视频 / 文章首选平台）。
+   - ~~话题转换：`#话题#` → 小红书 `#话题[话题]#`~~（已完成，`rednote-text.test.ts`）
+   - ~~标题超长跳过（>20 字）~~（已完成，同上）
+   - HTML ↔ Markdown 往返（`marked` / `turndown`）—— 待做
+   - 平台归一化与分组（动态 / 视频 / 文章首选平台）—— 待做，需先把分组数据从侧边栏组件里抽出来
    - ~~trust-domain 匹配~~（已完成，P0-1）
 2. **平台适配器契约测试**：挑 2–3 个平台，把「输入内容 → 期望填充结果」做成快照测试。
 3. **冒烟检查**：对每个适配器断言「选择器表非空且无重复」（纯静态就能跑，能挡住大量手误）。
@@ -274,20 +285,22 @@ sh .husky/_/pre-commit                   → exit=0（lint-staged 正常执行�
 
 ### P1-4 CI 不做类型检查
 
-**实测**：`.github/workflows/ci.yml` 只有 `pnpm lint`（Biome）+ `pnpm build:ci` + 产物校验 + CRX 冒烟测试，**没有类型检查**。Biome 只做语法/风格/lint，类型错误不会被 CI 拦住。
+**状态：已修复**（2026-09-15）
 
-**修复**：加脚本与步骤
+**实测**（修复前）：`.github/workflows/ci.yml` 只有 `pnpm lint`（Biome）+ `pnpm build:ci` + 产物校验 + CRX 冒烟测试，**没有类型检查**。Biome 只做语法/风格/lint，类型错误不会被 CI 拦住。
 
-```json
-"typecheck": "tsc --noEmit"
+**关键前提（已实测）**：当前配置下 `tsc --noEmit` 是 **0 错误**，且并非空跑 —— 控制了实验验证：
+
+```
+tsc --noEmit --listFiles | grep -c src   → 186（确实在检查 186 个源文件）
+植入一个错误类型赋值 → 立刻报 TS2322，随后已移除探针
 ```
 
-```yaml
-- name: 类型检查
-  run: pnpm typecheck
-```
+也就是说类型检查可以直接设为门禁，不需要先修一堆历史错误。
 
-**注意**：开启后才能看出真实错误量；建议与 P1-3 一起做，先 `strictNullChecks`，再把这个步骤设为必需检查。
+**修复**：新增 `pnpm typecheck`（`tsc --noEmit`），并在 CI 中排在 `lint` 之后、`test` 之前。
+
+**后续**：真正的类型收益来自 P1-3（打开 `strictNullChecks`），那会暴露出大量空值问题；届时再评估错误量、分步推进。
 
 ---
 
@@ -295,18 +308,33 @@ sh .husky/_/pre-commit                   → exit=0（lint-staged 正常执行�
 
 **实测**：无 `.nvmrc` / `.node-version`；`package.json` 无 `engines`、无 `packageManager`。CI 里的 Node 与 pnpm 版本目前是**硬编码在 workflow 里**的（Node 24 / pnpm 11.18.0）—— 本地与 CI 靠人工同步，容易漂移。
 
-**修复**：
+**修复**（已完成部分）：
 
 ```json
-"packageManager": "pnpm@11.18.0",
-"engines": { "node": ">=24", "pnpm": ">=11" }
+"packageManager": "pnpm@11.18.0"
 ```
 
-再补 `.nvmrc`（内容 `24`）。这样 `pnpm/action-setup` 可直接读 `packageManager`，不再需要硬编码版本。
+加 `.nvmrc`（内容 `24`），并把两个 workflow 里硬编码的 `version: 11.18.0` 去掉 —— `pnpm/action-setup` 未指定版本时会读 `packageManager`，这样版本只有一个来源。
+
+**重要发现：`engines` 字段不能用**（原方案里给了它，实测后移除）
+
+加了 `"engines": { "node": ">=24", "pnpm": ">=11" }` 之后，扩展构建**直接失败**：
+
+```
+🔴 ERROR | Failed to resolve '../../src/options/index.tsx' from './.plasmo/static/options.tsx'
+```
+
+原因：**Parcel 会把 `package.json` 的 `engines` 当作构建 targets 读取**（Parcel 支持用 `engines` 声明目标环境）。于是整份扩展产物被按 Node 目标去解析，浏览器入口随之解析失败。
+
+排查过程（可复现）：清空 `.plasmo` 缓存无效 → 用 `git stash -u` 隔离改动后构建**成功** → 仅移除 `engines`（其余改动全部保留）后构建**恢复成功**，因此可确证是 `engines` 导致。
+
+结论：Node 版本要求用 `.nvmrc` 声明，**不要**在 `package.json` 里加 `engines`。README 已加显著提示防止今后误加。
 
 ---
 
 ### P1-6 分支无保护、Dependabot 关闭
+
+**状态：部分完成**（Dependabot 配置与分支保护已完成；Dependabot security alerts 待你在网页开启）
 
 **实测**（`gh api`）：
 
@@ -319,9 +347,26 @@ sh .husky/_/pre-commit                   → exit=0（lint-staged 正常执行�
 - 开启 Dependabot alerts + security updates；
 - 加 `.github/dependabot.yml`（`npm` 生态，每周一次，分组 minor/patch，避免 PR 洪水）。
 
+**实际处理**（2026-09-15）：
+
+- ✅ 新增 `.github/dependabot.yml`：npm 与 github-actions 每周检查；minor/patch 分组开 PR，**大版本一律不自动开**（避免 React 19 / Tailwind 4 之类被自动升级）。
+- ✅ 已通过 API 为 `main` 开启分支保护，必需状态检查为 `代码检查与打包`（配置：`strict: false` 不强制分支最新、`enforce_admins: false`、禁止强制推送与删除）。
+- ⚠️ 仍待你在 GitHub 网页开启 **Dependabot alerts / security updates**（API 侧 `dependabot_security_updates` 需仓库管理员在 Settings 里打开，本次未改动）。
+
+**关于「直接推 main」会怎样（已实测）**：管理员推送仍会成功，但服务端会打印绕过记录 —— 这是有意保留的行为，因为本项目是单人维护、以直接推 main 为主：
+
+```
+remote: Bypassed rule violations for refs/heads/main:
+remote: - Required status check "代码检查与打包" is expected.
+```
+
+也就是说：直接推 main 照常可用（并留下一条可见的绕过提示），而 **PR 合并被真正拦住了** —— Dependabot 开的 PR 必须等 CI 通过才能合并。若今后改为 PR 流程，可把 `enforce_admins` 设为 true。
+
 ---
 
 ### P1-7 动态适配器把用户文本未转义拼进 `innerHTML`（新增）
+
+**状态：已修复**（2026-09-15）
 
 **发现时间**：2026-09-15（修复 P0-2 时排查全仓 `innerHTML` 用法时发现）
 
@@ -353,9 +398,16 @@ const escapeHtml = (text: string) =>
 const htmlContent = `${escapeHtml(content || "").replace(/\n/g, "<br>")}${tagSuffix}`;
 ```
 
-`DynamicTab.tsx` 的 `highlightTopics`（`:828`）已有正确的转义写法，可直接复用同一思路（建议抽成公共工具，两处共用）。
+**实际修复**：
 
-**备注**：`src/sync/dynamic/` 下其余 `innerHTML = ""` 的用法只是清空编辑器，无风险。
+- 新增无依赖模块 `src/utils/escape-html.ts`（7 个用例覆盖，含 `&` 必须先转义、以及「先转义再插 `<br>`」的顺序要求）；
+- `maimai.ts`：转义正文与话题后拼 `<br>`；
+- `weixinchannel.ts`：**拆成两个变量** —— `rawContent`（给剪贴板 `text/plain`，必须保持原文）与 `htmlContent`（给 `innerHTML`，必须转义）。若共用一个变量，剪贴板里会出现 `&lt;` 这种实体；
+- `DynamicTab.tsx` 的 `highlightTopics` 原来自己写了一遍转义，改为复用同一实现，消除重复。
+
+**顺带排除**：`sync/dynamic/` 下其余 `innerHTML = ""` 只是清空编辑器；`weixin.ts` / `webhook.ts` 的 `tip.innerHTML` 模板经核查是**静态文案、无插值**，不存在注入。
+
+**未一并处理（记录在案）**：`weixinchannel.ts` 的正文没有像 `maimai.ts` 那样把 `\n` 转成 `<br>`，因此多行动态在视频号编辑器里可能丢失换行。这属于既有行为、需要实机确认编辑器是否自行处理换行，故未在本次改动中一并调整。
 
 ---
 
@@ -398,6 +450,17 @@ const { convertPdfToImages } = await import("~utils/pdf");
 ```
 
 预期能把 `options` 首屏砍掉可观的一块（pdfjs 主库 + pptx-preview + 两个截图库 + video-react 均在其中）。改完请用「构建产物 chunk 体积对比」验收，别只看总大小。
+
+**本轮已经踩到一次这个坑（实证）**：修 P1-7 时把 `escapeHtml` 放进了 `~utils/sanitize` 并从 `maimai.ts` / `weixinchannel.ts` 导入，结果这两个适配器可达于侧边栏分包，把 **DOMPurify + marked 一起拖了进去**：
+
+```
+sidepanel bundle:  2444 KB  →  2514 KB   （+70 KB）
+zip:               4.29 MB  →  4.36 MB
+```
+
+拆出无依赖的 `src/utils/escape-html.ts` 后回落（2445 KB / 4.29 MB）。教训：**共享工具模块的「依赖重量」决定它能不能被平台适配器引用**，一个四行的转义函数不值得背上两个重库。已在 `escape-html.test.ts` 里加守护用例（禁止该模块引入任何依赖），并在 README 提示。
+
+审核时请一并留意：`~utils/sanitize`（DOMPurify + marked）、`~utils/pdf`（pdfjs）、`~utils/pptx`（pptx-preview + 两个截图库）都属于「重量级」模块，只有真正需要它们的入口才应导入。
 
 ### P2-2 popup 包 369 KB，只为跳转一次
 
@@ -463,7 +526,22 @@ Chrome MV3 环境**一定**有 WebAssembly，因此两个 `*_nowasm_fallback.js`
 
 **修复**：在 `locales/en/messages.json` 中补齐（`Enter Article Digest` / `Cover Image` / `Upload Cover`，风格对齐相邻条目）。修复后复查：`en` 389 键，**缺失 0 项**。
 
-**建议加一道闸门**：这类问题可完全自动化 —— 在 CI 里加一条「各语言包键集合必须覆盖 `zh_CN`」的检查（几行脚本即可），避免今后新增文案时再次漏翻。
+**已加自动化闸门（且立刻又查出 3 个缺陷）**：新增 `src/locales.test.ts`，随 `pnpm test` 在 CI 中执行：
+
+1. 每个语言包必须覆盖 `zh_CN` 的全部 key；
+2. 每个 `message` 必须非空；
+3. `src` 中传给 `getMessage` 的字面量 key 必须真实存在（按括号配平解析实参，因此 `getMessage(isDark ? "A" : "B")` 这类间接写法也覆盖）；
+4. 一条「收集到的 key 数 > 200」的合理性断言，防止扫描逻辑被改坏后静默通过。
+
+启用后立刻查出并修复了 3 个此前无人发现的问题：
+
+| 问题 | 影响 |
+| --- | --- |
+| `refreshAccountsNotLoggedIn` 不存在，且调用处**没有兜底** | 刷新账号取不到信息时，错误提示是**空白** |
+| `devEnvironmentTitle` / `devEnvironmentContent` 不存在 | 开发模式种子文案取不到翻译，只有硬编码中文兜底 |
+| `en` 的 `syncPublicPageTitle` 是**空串** | 英文用户看到中文兜底「发布中心」 |
+
+> 扫描器的两处必要处理也记录在案：需**剥离注释**（有一处 key 只出现在注释掉的 `// alert(getMessage(...))` 里），以及按 lowerCamelCase 形状过滤实参里混入的类型枚举（如 `type === "DYNAMIC"` 中的 `DYNAMIC`）。
 
 ---
 
@@ -540,18 +618,18 @@ Chrome MV3 环境**一定**有 WebAssembly，因此两个 `*_nowasm_fallback.js`
 
 > 本文档现在可以安全提交：P0-1 / P0-2 均已修复。
 
-**第二批（把质量闸门建起来）**
+**第二批（把质量闸门建起来）—— 已完成 2026-09-15（除注明待办外）**
 
-6. P1-7 动态适配器转义修复（小改动，建议紧接着做 —— 已是唯一残留的注入类问题）；
-7. P1-4 CI 加类型检查 + P1-3 分步开启 `strictNullChecks`；
-8. P1-5 `packageManager` / `engines` / `.nvmrc`；
-9. P1-6 分支保护 + Dependabot；
-10. 语言包键覆盖检查接入 CI（见 P2-6 建议）；
-11. P1-1 继续补纯函数单测（话题转换、标题截断、Markdown 往返、平台分组）。
+6. ~~P1-7 动态适配器转义修复~~（已修复，含无依赖模块拆分与守护测试）
+7. P1-4 CI 加类型检查（已修复，实测当前 0 错误可直接门禁）；P1-3 分步开启 `strictNullChecks` —— **待办**（真正的类型收益在这里，需先评估错误量）
+8. ~~P1-5 `packageManager` / `.nvmrc`~~（已完成；`engines` 经实测不可用，原因见该条）
+9. ~~P1-6 分支保护 + Dependabot~~（已完成；Dependabot security alerts 待你在网页开启）
+10. ~~语言包键覆盖检查接入 CI~~（已完成，并借它查出并修复 3 个缺陷）
+11. P1-1 继续补纯函数单测：话题转换与标题截断**已完成**；Markdown 往返、平台分组**待办**
 
 **第三批（体积与可观测性）**
 
-12. P2-1 重库动态导入 → P2-2 popup 瘦身 → P2-3 图标压缩；
+12. P2-1 重库动态导入（注意本批已实证过一次「误引入重库导致分包 +70 KB」，见 P2-1）→ P2-2 popup 瘦身 → P2-3 图标压缩；
 13. P0-3 logger 落地（可与体积优化并行）；
 14. P2-5 依赖清理、P2-4 wasm 可选件（需实机验收）；
 15. P3 中的低风险小升级（`pdfjs-dist` / `marked` / `turndown`）。
