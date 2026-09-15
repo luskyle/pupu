@@ -1,0 +1,49 @@
+# 依赖更新由 Dependabot 自动开 PR。
+#
+# 策略：小版本/补丁自动开 PR（走 CI 校验），大版本一律不开 PR —— 大版本升级需要人工评估
+# 影响面（例如 React 19 / Tailwind 4 / HeroUI 3 / Biome 2），详见 OPTIMIZATION.md 的 P3。
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:20"
+      timezone: Asia/Shanghai
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+    groups:
+      # 开发依赖的 minor/patch 合并成一个 PR，避免 PR 洪水
+      dev-minor-patch:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      # 运行时依赖只自动升 patch：minor 也可能改变打包产物或运行行为
+      prod-patch:
+        dependency-type: production
+        update-types:
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:20"
+      timezone: Asia/Shanghai
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      actions-minor-patch:
+        update-types:
+          - minor
+          - patch

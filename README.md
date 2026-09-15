@@ -97,13 +97,25 @@ pnpm verify:crx # 校验 CRX3 签名与包内内容
 > ⚠️ 构建后会自动执行 `scripts/copy-pdf-worker.mjs`（复制 PDF worker、PDF 图像解码器 WASM 与离线平台图标到产物），
 > 若直接用 `npx plasmo build` 则需手动补跑，否则 PDF 转图片与平台图标会缺失。
 
-### 代码检查
+### 代码检查与测试
 
 ```bash
-pnpm lint       # 代码检查
+pnpm lint       # 代码检查（Biome）
 pnpm lint:fix   # 自动修复
 pnpm format     # 格式化
+pnpm typecheck  # 类型检查（tsc --noEmit）
+pnpm test       # 单元测试（vitest）
+pnpm test:watch # 单元测试（watch 模式）
 ```
+
+> **不要往 `package.json` 里加 `engines` 字段。** Parcel 会把 `engines` 当作构建 targets 读取，
+> 加了之后扩展构建会直接失败（`Failed to resolve '../../src/options/index.tsx'`），
+> 因为整份产物会按 Node 目标去解析。Node 版本请用 `.nvmrc` 声明（当前为 24）。
+>
+> ⚠️ 需要浏览器专有的工具模块（带 `chrome.*`、依赖 DOM 的）保持**按需引入**：
+> 平台适配器只做「文本 + 自建标签」拼接时，请从 `~utils/escape-html` 这类无依赖模块导入，
+> 不要从 `~utils/sanitize`（它会带上 DOMPurify 与 marked，约 70 KB）导入。
+> 详见 `OPTIMIZATION.md` 的 P2-1。
 
 ## 🔁 CI / CD
 
@@ -111,7 +123,7 @@ pnpm format     # 格式化
 
 | 工作流 | 触发条件 | 作用 |
 | --- | --- | --- |
-| [`CI`](.github/workflows/ci.yml) | push 到 `main`、PR、手动 | `pnpm install` → `pnpm lint` → `pnpm build:ci`，校验产物（manifest 版本、PDF worker、WASM、平台图标），并用临时密钥打包 CRX 做冒烟测试，最后上传 zip 与解压目录为构建产物 |
+| [`CI`](.github/workflows/ci.yml) | push 到 `main`、PR、手动 | `pnpm install` → `pnpm lint` → `pnpm typecheck` → `pnpm test` → `pnpm build:ci`，校验产物（manifest 版本、PDF worker、WASM、平台图标），并用临时密钥打包 CRX 做冒烟测试，最后上传 zip 与解压目录为构建产物 |
 | [`Release`](.github/workflows/release.yml) | 推送 `v*` 标签、手动 | 将 `package.json` 版本号同步为标签版本 → 构建 → 用 `CRX_PRIVATE_KEY` 签名出 CRX 并校验签名 → 创建 GitHub Release，附上 `pupu-v<version>.zip` 与 `pupu-v<version>.crx` |
 | [`Deploy Pages`](.github/workflows/pages.yml) | push 到 `main` 且改动 `docs/**`、手动 | 将 `docs/` 部署到 GitHub Pages（官网与文档站） |
 
