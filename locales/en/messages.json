@@ -686,9 +686,21 @@
     "message": "Enter Article Content",
     "description": "Article content input placeholder"
   },
+  "optionsEnterArticleDigest": {
+    "message": "Enter Article Digest",
+    "description": "Article digest input placeholder"
+  },
   "optionsSyncArticle": {
     "message": "Sync Article",
     "description": "Sync article button text"
+  },
+  "optionsCoverImage": {
+    "message": "Cover Image",
+    "description": "Cover image label"
+  },
+  "optionsUploadCover": {
+    "message": "Upload Cover",
+    "description": "Upload cover button text"
   },
   "errorProcessingImages": {
     "message": "Error processing images",
