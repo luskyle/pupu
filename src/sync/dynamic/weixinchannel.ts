@@ -5,6 +5,7 @@
  * @date 2024-01-01
  */
 
+import { escapeHtml } from "~utils/escape-html";
 import type { DynamicData, FileData, SyncData } from "../common";
 
 /**
@@ -249,8 +250,11 @@ export async function DynamicWeiXinChannel(data: SyncData) {
 
   try {
     const { content, images, videos, title, tags } = data.data as DynamicData;
-    const tagSuffix = tags?.length ? ` ${tags.map((t) => `#${t}`).join(" ")}` : "";
-    const finalContent = `${content || ""}${tagSuffix}`;
+    // 正文与话题都是用户输入。编辑器走 innerHTML 需要转义，剪贴板走 text/plain 必须保持原文，
+    // 因此这里分成两份，不能共用同一个变量。
+    const tagSuffix = tags?.length ? ` ${tags.map((t) => `#${escapeHtml(t)}`).join(" ")}` : "";
+    const rawContent = `${content || ""}${tagSuffix}`;
+    const htmlContent = escapeHtml(rawContent);
     const requestedMediaCount = (images?.length ?? 0) + (videos?.length ?? 0);
     let attachedMediaCount = 0;
 
@@ -271,7 +275,7 @@ export async function DynamicWeiXinChannel(data: SyncData) {
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       // Set innerHTML directly.
-      editorElement.innerHTML = finalContent;
+      editorElement.innerHTML = htmlContent;
 
       // Dispatch the full event sequence.
       const events = [
@@ -288,7 +292,7 @@ export async function DynamicWeiXinChannel(data: SyncData) {
       ];
 
       // Set paste data.
-      (events[1] as ClipboardEvent).clipboardData?.setData("text/plain", finalContent);
+      (events[1] as ClipboardEvent).clipboardData?.setData("text/plain", rawContent);
 
       for (const event of events) {
         editorElement.dispatchEvent(event);

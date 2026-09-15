@@ -1,3 +1,4 @@
+import { escapeHtml } from "~utils/escape-html";
 import type { DynamicData, SyncData } from "../common";
 
 export async function DynamicMaimai(data: SyncData) {
@@ -55,8 +56,9 @@ export async function DynamicMaimai(data: SyncData) {
       return;
     }
 
-    const tagSuffix = tags?.length ? ` ${tags.map((t) => `#${t}`).join(" ")}` : "";
-    const htmlContent = `${(content || "").replace(/\n/g, "<br>")}${tagSuffix}`;
+    // 正文与话题都是用户输入：先转义再拼自建的 <br>，否则含 < > 的文本会被编辑器当成标签吞掉
+    const tagSuffix = tags?.length ? ` ${tags.map((t) => `#${escapeHtml(t)}`).join(" ")}` : "";
+    const htmlContent = `${escapeHtml(content || "").replace(/\n/g, "<br>")}${tagSuffix}`;
     editor.innerHTML = htmlContent;
     editor.dispatchEvent(new Event("input", { bubbles: true }));
     editor.dispatchEvent(new Event("change", { bubbles: true }));

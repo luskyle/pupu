@@ -18,6 +18,7 @@ import { Player } from "video-react";
 import "video-react/dist/video-react.css";
 import InfoModal from "~components/Sync/Modals/InfoModal";
 import type { FileData, SyncData } from "~sync/common";
+import { escapeHtml } from "~utils/escape-html";
 import { convertPdfToImages } from "~utils/pdf";
 import { convertPptxToImages } from "~utils/pptx";
 
@@ -825,8 +826,8 @@ const DynamicTab: React.FC = () => {
 
   // 预览高亮：把 #话题# 渲染为蓝色（在输入框内直接显示编辑效果）
   const highlightTopics = useCallback((text: string) => {
-    const escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    return escaped.replace(/#([^#\n]+)#/g, '<span class="text-sky-500 font-medium">#$1#</span>');
+    // 必须先转义用户文本，再拼接自建的 <span>（统一使用 sanitize 里的实现，避免各处重复）
+    return escapeHtml(text).replace(/#([^#\n]+)#/g, '<span class="text-sky-500 font-medium">#$1#</span>');
   }, []);
 
   // 输入框滚动时同步高亮层
