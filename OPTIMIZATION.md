@@ -25,6 +25,10 @@
 | 2026-09-15 | 新增发现：`engines` 字段会让 Parcel 构建失败（见 P1-5）；语言包校验自动化后又查出 3 个真实缺陷；`escapeHtml` 放错模块导致分包 +70 KB（见 P2-1） |
 | 2026-09-15 | 完成第三批：P0-3（日志全量收敛）、P2-1、P2-2、P2-3（PNG 部分）、P2-5（部分）；P2-4 经查证后**主动推迟**（理由见该条） |
 | 2026-09-15 | 第三批实测：`options` 首包 4191 → 1845 KB、`popup` 369 → 139 KB、平台图标 872 → 684 KB、zip 4.29 → 4.14 MB |
+| 2026-09-15 | 合并 4 个 Dependabot PR（HeroUI 2.8.10 / Tailwind 3.4.19 / pdfjs 6.3.289 / prod-patch）；实测 HeroUI 2.8 使首屏 +144 KB、zip +130 KB（对照实验确认） |
+| 2026-09-15 | CRX 路线证伪：自签名 CRX 无法安装（`CRX_REQUIRED_PROOF_MISSING`），Release 改为只附 zip，历史 crx 附件已移除（见 P4-1） |
+| 2026-09-15 | 版本号全自动化（关于页/站点/徽章）+ 标签一致性闸门 + 本地落后检查；见「第四批详评」 |
+| 2026-09-15 | **第四批复评**：实测出 3 处 unmet peer（`@types/node` / `esbuild` / `tailwindcss`），确认 React 19 → Tailwind 4 → HeroUI 3 的耦合顺序，并把「上架商店」提为价值最高的下一步 |
 
 ## 结论摘要
 
@@ -46,8 +50,10 @@
 | P2 | `wasm/` 约 1 MB 为可选兜底件 | pdfjs fallback 与 quickjs | 评估剔除 | 小 | **已查证，主动推迟**（见该条） |
 | P2 | 死代码 / 死依赖 | `utils/docx.ts` 0 引用等 | 清理依赖声明 | 小 | **部分完成**（移除 `uuid`、`@iconify/react`；docx 依赖按项目意图保留） |
 | P2 | 英文语言包缺 3 个 key | en 缺 `optionsCoverImage` 等 | 补齐 | 小 | **已修复** |
-| P3 | 一批大版本升级积压 | React 18 / HeroUI 2 / Tailwind 3 | 一次一个 PR | 大 | 待办 |
-| P4 | 未上架商店、隐私说明缺失、权限过宽 | `host_permissions: https://*/*` | 上架 + 补文档 + 收窄权限 | 中 | 待办 |
+| P3 | 一批大版本升级积压 | React 18 / HeroUI 2 / Tailwind 3 | 一次一个 PR；顺序已被实测约束为 **React 19 → Tailwind 4 → HeroUI 3**（见「第四批详评」） | 大 | 待办 |
+| P3 | 依赖树已有 3 处 unmet peer | `pnpm peers check` | 先补 `@types/node`；`esbuild` 结构性冲突需留意；`tailwindcss >=4` 由 theme 2.4.26 带来 → Tailwind 4 应提上日程 | 小 | 待办（新增） |
+| P3 | `@types/chrome` 升级被类型门禁拦下 | CI 4 个错误，已定位到行与改法 | 改 1 处类型名（`OnUpdatedInfo`）+ 2 处 `storage.get` 泛型，即可解锁 dev 依赖组 PR | 小 | 待办（新增） |
+| P4 | 未上架商店、隐私说明缺失、权限过宽 | `host_permissions: https://*/*` | 上架 + 补文档 + 收窄权限 | 中 | 待办（**当前价值最高**：crx 路线证伪后，这是摆脱「开发者模式」的唯一途径） |
 
 ---
 
@@ -735,6 +741,84 @@ src/components/Sync/DynamicTab.tsx(1072,33): error TS2339: Property 'type' does 
 
 ---
 
+## 第四批详评：升级与生态（2026-09-15 复评）
+
+> 本节是对 P3 / P4 的重新评估：前三批改造完成后依赖树与工具链都变了，这里按**实测**重新排了优先级，
+> 并把每条升级的阻塞点、迁移面与验收方式写清楚。所有数字都是本轮实跑所得（`npm view` / `pnpm peers check` / 本地 grep）。
+
+### 新发现：当前依赖树已有 3 处 unmet peer（这是"下一步该动哪"的强信号）
+
+`pnpm peers check` 实测：
+
+```
+✕ unmet peer @types/node     installed 20.9.0    wanted ^22.0.0 || >=24.0.0 (vitest@5) / ^20.19.0 || >=22.12.0 (vite@8.3.0)
+✕ unmet peer esbuild         installed 0.18.2    wanted ^0.27.0 || ^0.28.0 (vite@8.3.0)
+✕ unmet peer tailwindcss     installed 3.4.19    wanted >=4.0.0（来自 @heroui/theme@2.4.26）
+```
+
+- **`@types/node` 落后**是我们引入 vitest 时欠下的：它要求 `>=20.19` 或 `>=22/24`，我们停在 20.9.0。属低风险可修。
+- **`esbuild` 落后**是打包工具链的结构性冲突：plasmo 的 parcel 栈固定 0.18.2，而 vite 8 要 0.27/0.28。目前 vitest 跑得正常，但这是**埋着的坑** —— 需要关注，别贸然动（动 esbuild 等于动打包产物）。
+- **`tailwindcss` peer 变为 `>=4.0.0`** 是上一次合并 `@heroui/theme` 2.4.6 → 2.4.26 带来的（实测：2.4.6 与 2.4.15 都是 `>=3.4.0`，只有 2.4.26 起要求 `>=4.0.0`）。也就是说**当前 Tailwind 3.4.19 + theme 2.4.26 是官方声明的越界组合**，虽然构建与运行暂时正常。→ 这直接把「Tailwind 4」从"以后再说"提到了**下一个该做的大版本**。
+
+### 大版本升级：三者是耦合的，必须按序
+
+实测 peer 关系（关键结论）：
+
+| 组合 | 要求 |
+| --- | --- |
+| `@heroui/react@2.8.10`（当前） | `react >=18 \|\| >=19.0.0-rc.0`、`react-dom` 同、`framer-motion >=11.5.6 \|\| >=12` |
+| `@heroui/react@3.x` | **`react >=19`、`react-dom >=19`、`tailwindcss >=4`** —— 三者同时满足才能用 |
+| `@heroui/theme@2.4.26`（当前） | `tailwindcss >=4.0.0` |
+
+**所以顺序只能是：React 19 → Tailwind 4 → HeroUI 3**（前两步可以各自独立做，因为 HeroUI 2.8 两个都允许；第三步必须等前两步都完成）。
+
+实测迁移面（本地 grep）：
+
+| 升级 | 迁移面 | 风险点 | 验收方式 |
+| --- | --- | --- | --- |
+| **React 19** | `forwardRef` **0 处**、`React.FC` 5 处、`useFormState/useActionState` 0 处 → 面很小 | HeroUI 2.8 内部依赖 React 行为，属最大不确定项 | `typecheck` + 构建 + **逐页实机点一遍** |
+| **Tailwind 4** | ① `postcss.config.js` 需换成 `@tailwindcss/postcss`；② `src/style.css` 的 `@tailwind base/components/utilities` 改为 `@import "tailwindcss"`；③ `tailwind.config.js`（`heroui()` 插件来自 `@heroui/react`，且 `content` 里显式扫 `node_modules/@heroui/theme/dist`）需用 `@config` 保留或改写成 CSS-first | 工具类在 v4 有**重命名/删除**，会静默改变样式 → 只能靠肉眼看 | 构建产物体积 + **逐页实机对照截图** |
+| **HeroUI 3** | 内部改为 `@heroui/styles` + `@radix-ui/*`（实测其依赖含 `@heroui/styles@3.2.5`、`tailwind-merge@3.4.0`、`tailwind-variants@3.3.1`、`@radix-ui/react-avatar`），组件 API 与样式接入方式都变 | 🔴 **最高**：涉及全部界面 | 需要一份「页面清单」逐个验收（主界面 / 侧边栏 / 三个发布 Tab / popup / 三个 tabs 页） |
+| **Biome 2**（1.9.4 → 2.5.13） | `biome.json` schema 迁移（`organizeImports` 等规则位置变化） | 低（纯工具） | `pnpm lint` + 确认 CI 仍绿 |
+| **TypeScript 7**（5.2.2 → 7.0.2） | 原生版编译器，跳跃很大 | 中（插件/工具链兼容未知） | 建议**先到 5.9.x**，跑通 typecheck / lint / 构建，再评估 7 |
+
+> 建议做法：React 19 与 Tailwind 4 各自单独一个 PR（都要实机验收），HeroUI 3 最后单独做。
+
+### 可立刻做的小项（低风险，其中一个还能解锁被拦的 Dependabot PR）
+
+**① 修 4 处类型用法，解锁「开发依赖组」PR**（`@types/chrome` 0.0.251 → 0.2.9 + `typescript` → 5.9.3）
+
+已把 4 个错误逐个定位到根因与改法（对照 0.2.9 的实际 `.d.ts` 核实）：
+
+| 位置 | 报错 | 根因 | 改法 |
+| --- | --- | --- | --- |
+| `src/background/services/tabs.ts:14` | `TS2694: Namespace 'chrome.tabs' has no exported member 'TabChangeInfo'` | 新版把该接口**改名为 `OnUpdatedInfo`**（`.d.ts` 中 `interface OnUpdatedInfo` + `onUpdated` 监听签名 `(tabId, changeInfo: OnUpdatedInfo, tab) => void`） | 类型名 `chrome.tabs.TabChangeInfo` → `chrome.tabs.OnUpdatedInfo`（一处改名） |
+| `src/components/Sidepanel/PublishConfirm.tsx:88` | `TS2339: Property 'type' does not exist on type 'unknown'` | 新版 `StorageArea.get<T = { [key: string]: unknown }>` 的默认泛型从 `any` 值改成了 `unknown` 值，取出的对象属性成了 `unknown` | 显式给泛型：`chrome.storage.local.get<{ pendingPublishData?: PendingPublish }>("pendingPublishData")` |
+| `src/components/Sync/DynamicTab.tsx:1072` | 同上 | 同上 | 同上 |
+
+影响面很小：`chrome.storage.local.get` 全仓仅 **6 处调用（4 个文件）**，其中目前只有 2 处报错。
+
+**② 补齐 `@types/node`**（20.9.0 → 22 或 24）：修掉上面那条 unmet peer，vitest/vite 都不再抱怨。顺带把 `lint-staged`（15 → 17）、`husky`（9.1.6 → 9.1.7）、`postcss`（8.4.31 → 8.5.28）、`marked`（18.0.12 → 18.0.13）一起升 —— 都是 dev/补丁级，风险低。
+
+### 非升级类，但价值更高的一项：上架商店
+
+`.crx` 路线被证伪后（见 P4-1：自签名 CRX 无法安装），**「加载已解压 + 开发者模式」是目前唯一的安装方式**。要摆脱它，唯一途径是上架 Chrome Web Store / Edge 加载项商店 —— 这件事现在的价值已经超过任何一个依赖升级。需要配套：
+
+- 商店提交用现有 `.zip`（已就绪）；沿用同一签名密钥保持扩展 ID；
+- `PRIVACY.md`（扩展读 cookies / 浏览数据，商店必填）+ `SECURITY.md`（漏洞上报渠道）；
+- **权限收窄**（P4-2）：`host_permissions: https://*/*` 会拉长审核并降低用户信任 —— 但需实机验证主要平台的注入时机，属「需实机验收」项。
+
+### 体积方面还剩什么（前三批之后）
+
+| 项 | 收益 | 阻塞 |
+| --- | --- | --- |
+| 剔除 pdfjs 无 WASM 兜底件（P2-4） | 583 KB（zip 约 13%） | 需先实机验证扫描版 PDF |
+| ICO 图标压缩（P2-3 剩余） | 402 KB | 需 DIB 解码器或图形工具 + 改 75 处引用 |
+| `video-react` → 原生 `<video>`（P2-5） | ~180 KB + 去掉停更依赖 | UI 行为变更，需实机确认播放/预览 |
+| `strictNullChecks`（P1-3） | 收益在缺陷预防而非体积 | 错误量尚未评估（当前 strict 关闭、typecheck 0 错误） |
+
+---
+
 ## 建议执行顺序
 
 **第一批（低风险、消真实缺陷）—— 已完成 2026-09-15**
@@ -763,10 +847,16 @@ src/components/Sync/DynamicTab.tsx(1072,33): error TS2339: Property 'type' does 
 14. P2-5 依赖清理（已移除 `uuid` / `@iconify/react`）；P2-4 wasm 可选件 —— **待办**（已查证失败模式，需实机验证扫描版 PDF 后再启用，见该条）
 15. P3 中的低风险小升级：`pdfjs-dist` / `marked` / `turndown` —— 已有 Dependabot 自动开 PR（`pdfjs-dist` 6.3.289、`tailwindcss` 3.4.19、prod-patch 组均已过 CI）
 
-**第四批（大版本与生态）**
+**第四批（升级与生态）—— 顺序由实测约束，详见上方「第四批详评」**
 
-16. P3 大版本升级（React 19 / HeroUI 3 / Tailwind 4 / TS / Biome），一次一个；
-17. P4 商店上架 + `PRIVACY.md` / `SECURITY.md` + 权限收窄（需实机验收）。
+16. **立刻可做的小项**（低风险）：修 4 处类型用法（`chrome.tabs.TabChangeInfo` → `OnUpdatedInfo`、2 处 `chrome.storage.local.get` 补泛型）→ 解锁被拦的 dev 依赖组 PR；补 `@types/node`（修 unmet peer），顺带 `lint-staged` / `husky` / `postcss` / `marked`；
+17. **上架商店 + `PRIVACY.md` / `SECURITY.md`** —— crx 路线证伪后这是价值最高的一项（唯一能摆脱「开发者模式」的途径）；权限收窄（P4-2）需实机验收；
+18. **React 19**（可独立做，迁移面实测很小：`forwardRef` 0 处 / `React.FC` 5 处）—— 需逐页实机验收；
+19. **Tailwind 4**（`@heroui/theme@2.4.26` 已要求 `>=4`，当前属越界组合）—— 改 postcss 插件与 `@tailwind` 指令，样式需逐页对照；
+20. **HeroUI 3**（必须等 18、19 完成）—— 内部改为 `@heroui/styles` + Radix，风险最高；
+21. **Biome 2**（纯工具，低风险，可随时插队）；TypeScript 先到 5.9.x 并跑通全链路，再评估 7；
+22. 体积剩余项：wasm 无 WASM 兜底件 583 KB / ICO 402 KB / `video-react` → 原生 `<video>` 180 KB —— **都需实机验收后**再合入；
+23. `strictNullChecks`（P1-3）：建议先单独跑一遍统计错误量，再决定分步方案。
 
 ---
 
@@ -853,4 +943,36 @@ grep -q PDFDocumentLoadingTask "$O" && echo "pdfjs 仍在首包" || echo "pdfjs 
 # 体积
 find build/chrome-mv3-prod -maxdepth 1 -name '*.js' -printf '%s\t%f\n' | sort -rn | head -5
 du -sk assets/platforms
+```
+
+---
+
+## 附录 C · 第四批评估的复现命令
+
+```bash
+# 依赖树里现存的 peer 违规（本轮最重要的发现来源）
+pnpm peers check
+
+# 版本对照
+for p in react @heroui/react @heroui/theme tailwindcss typescript @biomejs/biome \
+         @types/chrome @types/node lint-staged husky postcss marked; do
+  echo "$p: $(npm view $p version)"
+done
+
+# 升级的耦合关系（决定顺序的关键）
+npm view @heroui/react@3.2.5 peerDependencies           # react >=19 + tailwindcss >=4
+npm view @heroui/react@2.8.10 peerDependencies          # react >=18 || >=19（所以 React 19 可先单独升）
+npm view @heroui/theme@2.4.6  peerDependencies.tailwindcss   # >=3.4.0
+npm view @heroui/theme@2.4.26 peerDependencies.tailwindcss   # >=4.0.0  ← 越界的来源
+
+# 迁移面
+grep -rc 'forwardRef' src/ | awk -F: '{s+=$2} END {print "forwardRef:", s+0}'
+grep -rc 'React.FC'   src/ | awk -F: '{s+=$2} END {print "React.FC:", s+0}'
+grep -rn 'chrome\.storage\.local\.get' src/ | wc -l      # 6 处（4 个文件）
+cat postcss.config.js; head -6 src/style.css; grep -nE 'content|plugins' tailwind.config.js
+
+# 被 @types/chrome 拦下的 4 个错误对应的类型定义
+curl -sL https://unpkg.com/@types/chrome@0.2.9/index.d.ts -o /tmp/c.d.ts
+grep -nE 'interface OnUpdatedInfo|const onUpdated' /tmp/c.d.ts      # changeInfo 的新名字
+grep -nE 'get<T = \{ \[key: string\]: unknown \}>' /tmp/c.d.ts      # storage.get 默认泛型变化
 ```
