@@ -39,6 +39,9 @@ jobs:
       - name: 代码检查
         run: pnpm lint
 
+      - name: 单元测试
+        run: pnpm test
+
       - name: 读取版本号
         id: version
         run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"

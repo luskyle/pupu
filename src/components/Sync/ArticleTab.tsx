@@ -1,11 +1,11 @@
 import { Button, Card, CardBody, CardHeader, Image, Input, Switch, Textarea } from "@heroui/react";
 import { BotIcon, Code2, Eye, FileUp, HandIcon, ImagePlusIcon, TrashIcon, XIcon } from "lucide-react";
-import { marked } from "marked";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import TurndownService from "turndown";
 import InfoModal from "~components/Sync/Modals/InfoModal";
 import type { FileData, SyncData } from "~sync/common";
+import { renderMarkdownSafely, sanitizeHtml } from "~utils/sanitize";
 
 const ArticleTab: React.FC = () => {
   const [title, setTitle] = useState<string>("");
@@ -66,9 +66,9 @@ const ArticleTab: React.FC = () => {
       return;
     }
 
-    // 内容：md 模式下使用 markdown 源码，HTML 由 marked 渲染；
-    // 否则使用导入内容的 HTML，并转换为 Markdown。
-    const htmlContent = mdMode ? (marked.parse(mdSource) as string) : digest || "";
+    // 内容：md 模式下使用 markdown 源码，HTML 由 marked 渲染后再消毒；
+    // 否则使用导入内容的 HTML，同样需要消毒（导入来源是任意站点，且该 HTML 会被注入平台编辑器页面）。
+    const htmlContent = mdMode ? renderMarkdownSafely(mdSource) : sanitizeHtml(digest || "");
     const markdownContent = mdMode ? mdSource : turndownService.turndown(htmlContent);
 
     const data: SyncData = {
@@ -260,7 +260,7 @@ const ArticleTab: React.FC = () => {
                 ) : (
                   <div
                     className="md-preview max-h-[420px] overflow-y-auto rounded-xl bg-default-50 p-4"
-                    dangerouslySetInnerHTML={{ __html: marked.parse(mdSource || "") as string }}
+                    dangerouslySetInnerHTML={{ __html: renderMarkdownSafely(mdSource || "") }}
                   />
                 )
               ) : (
