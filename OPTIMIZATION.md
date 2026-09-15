@@ -567,6 +567,22 @@ Chrome MV3 环境**一定**有 WebAssembly，因此两个 `*_nowasm_fallback.js`
 
 **做法**：大版本**一个 PR 一个依赖**，每个都跑 `pnpm lint` + `pnpm typecheck` + `pnpm build:ci` 并实机验收相关功能，不要合并成一个巨型升级。
 
+**新门禁立刻见效的一次实证（2026-09-15）**：Dependabot 上线几分钟后就开了 3 个 PR，其中「开发依赖 minor/patch 组」（9 个包）被 CI **拦下** —— 类型检查报 4 个错：
+
+```
+src/background/services/tabs.ts(14,67): error TS2694: Namespace 'chrome.tabs' has no exported member 'TabChangeInfo'.
+src/components/Sidepanel/PublishConfirm.tsx(88,50): error TS2339: Property 'type' does not exist on type 'unknown'.
+src/components/Sidepanel/PublishConfirm.tsx(88,86): error TS2339: Property 'data' does not exist on type 'unknown'.
+src/components/Sync/DynamicTab.tsx(1072,33): error TS2339: Property 'type' does not exist on type 'unknown'.
+```
+
+原因是该 PR 顺带把 `@types/chrome` 0.0.251 → **0.2.9**、`typescript` 5.2.2 → **5.9.3**。这些是**纯类型层面**的破坏（运行时不受影响，Parcel 会剥离类型），但需要先改代码才能合：
+
+- `chrome.tabs.TabChangeInfo` 在新版类型里已不存在，需改用现有类型（或用 `Parameters<...>` 推导）；
+- 消息回调的参数在新版被推断为 `unknown`，需要在回调内收窄或用现有的 `ExtensionExternalRequest` 等类型标注。
+
+**结论**：`@types/chrome` 与 `typescript` 的升级应作为独立任务处理（先修这 4 处），不建议混在分组 PR 里一起合。这也是「类型检查门禁」的价值所在 —— 没有它，这 9 个包会静默合入。
+
 另：`package.json` 的 `pnpm.overrides`（21 条安全版本固定）**已被 pnpm 11 忽略**，需迁移到 `pnpm-workspace.yaml` 的 `overrides:`。实测该迁移会带动 `esbuild` 0.18.2 → 0.28.2（打包工具链跨大版本）与 `react-viewer` 3.2.2 → 3.2.5，lockfile 变动约 968 行，属「需实机验收」项，建议随一个独立版本发布。
 
 ---
