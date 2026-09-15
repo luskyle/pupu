@@ -7,8 +7,9 @@
   "packageManager": "pnpm@11.18.0",
   "scripts": {
     "dev": "plasmo dev && node scripts/copy-pdf-worker.mjs",
-    "build": "plasmo build && node scripts/copy-pdf-worker.mjs",
+    "build": "plasmo build && node scripts/copy-pdf-worker.mjs && node scripts/check-local-version.mjs",
     "build:ci": "plasmo build && node scripts/copy-pdf-worker.mjs && plasmo package && node scripts/rename-package.mjs",
+    "check:version": "node scripts/check-local-version.mjs",
     "package": "plasmo package && node scripts/rename-package.mjs",
     "crx": "node scripts/pack-crx.mjs",
     "verify:crx": "node scripts/verify-crx.mjs",

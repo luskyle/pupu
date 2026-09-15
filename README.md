@@ -75,15 +75,21 @@ pnpm dev        # 启动 Plasmo 开发模式（热更新）
 ### 构建
 
 ```bash
-pnpm build      # 本地构建：只产出可「加载已解压」的目录（不出 zip / crx）
-pnpm build:ci   # 构建并打包 zip（CI 使用）
-pnpm package    # 只把已构建的产物打包成 zip
-pnpm crx        # 只打包 CRX（自托管/企业策略场景用，需签名密钥；不能拖拽安装）
-pnpm verify:crx # 校验 CRX3 签名与包内内容
+pnpm build         # 本地构建：只产出可「加载已解压」的目录（不出 zip / crx）
+pnpm check:version # 检查本地产物/源码是否落后于最新发布（build 结束时也会自动跑）
+pnpm build:ci      # 构建并打包 zip（CI 使用）
+pnpm package       # 只把已构建的产物打包成 zip
+pnpm crx           # 只打包 CRX（自托管/企业策略场景用，需签名密钥；不能拖拽安装）
+pnpm verify:crx    # 校验 CRX3 签名与包内内容
 ```
 
 **本地构建刻意不产出 zip / crx**（那些由 CI 生成并附加到 Release），只输出 `build/chrome-mv3-prod/`，
 在扩展管理页「加载已解压的扩展程序」中直接导入即可；需要本地打包时用 `pnpm build:ci`。
+
+> ⚠️ **本地产物不会自动跟随新发布**：`pnpm build` 用的是 `package.json` 的版本号，所以本地产物会停在
+> 「上次构建时」的版本 —— 如果之后又发了新版本（或你在旧 commit 上构建），浏览器里加载它时「关于」页会
+> 显示旧版本号。`pnpm build` 结束时会自动做一次检查，落后就会醒目提示；也可随时手动执行
+> `pnpm check:version`。重新构建一次即可对齐。
 
 > 🔑 CRX 签名密钥决定扩展 ID，若将来要做企业策略自托管或上架商店，必须沿用同一密钥：本地放
 > `keys/pupu.pem`（已被 `.gitignore` 忽略），CI 从仓库 Secret `CRX_PRIVATE_KEY` 读取。
