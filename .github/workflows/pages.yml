@@ -5,7 +5,10 @@ on:
     branches: [main]
     paths:
       - "docs/**"
+      - "scripts/inject-site-version.mjs"
       - ".github/workflows/pages.yml"
+  # 发布流程在创建 Release 后会触发本工作流（GITHUB_TOKEN 可以触发 workflow_dispatch），
+  # 这样每发一个版本，站点上的版本号也会同步刷新
   workflow_dispatch:
 
 concurrency:
@@ -27,6 +30,13 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v7
+        with:
+          # 需要读取标签来取「最新已发布版本」，浅克隆拿不到标签
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: 注入站点版本号
+        run: node scripts/inject-site-version.mjs docs dist-pages
 
       - name: 配置 Pages
         uses: actions/configure-pages@v6
@@ -34,7 +44,7 @@ jobs:
       - name: 上传站点产物
         uses: actions/upload-pages-artifact@v5
         with:
-          path: docs
+          path: dist-pages
 
       - name: 部署到 GitHub Pages
         id: deployment

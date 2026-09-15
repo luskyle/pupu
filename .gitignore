@@ -12,6 +12,9 @@
 # production
 /build
 
+# 站点部署产物（scripts/inject-site-version.mjs 生成，版本号已注入）
+/dist-pages
+
 # pdf.js worker（由 scripts/copy-pdf-worker.mjs 复制到产物）
 /build/**/pdf.worker.min.mjs
 /.plasmo/**/pdf.worker.min.mjs
