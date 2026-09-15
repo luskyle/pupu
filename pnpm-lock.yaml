@@ -65,9 +65,6 @@ importers:
       turndown:
         specifier: ^7.2.0
         version: 7.2.4
-      uuid:
-        specifier: ^10.0.0
-        version: 10.0.0
       video-react:
         specifier: ^0.16.0
         version: 0.16.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -81,9 +78,6 @@ importers:
       '@commitlint/config-conventional':
         specifier: ^19.5.0
         version: 19.5.0
-      '@iconify/react':
-        specifier: ^5.2.0
-        version: 5.2.0(react@18.2.0)
       '@types/chrome':
         specifier: 0.0.251
         version: 0.0.251
@@ -1115,14 +1109,6 @@ packages:
       '@heroui/theme': '>=2.4.6'
       react: '>=18 || >=19.0.0-rc.0'
       react-dom: '>=18 || >=19.0.0-rc.0'
-
-  '@iconify/react@5.2.0':
-    resolution: {integrity: sha512-7Sdjrqq3fkkQNks9SY3adGC37NQTHsBJL2PRKlQd455PoDi9s+Es9AUTY+vGLFOYs5yO9w9yCE42pmxCwG26WA==}
-    peerDependencies:
-      react: '>=16'
-
-  '@iconify/types@2.0.0':
-    resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
 
   '@img/sharp-darwin-arm64@0.33.5':
     resolution: {integrity: sha512-UT4p+iz/2H4twwAoLCqfA9UH5pI6DggwKEGuaPy7nCVQ8ZsiY5PIcrRvD1DzuY3qYL07NtIQcWnBSY/heikIFQ==}
@@ -7440,13 +7426,6 @@ snapshots:
       '@react-aria/utils': 3.28.2(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
-
-  '@iconify/react@5.2.0(react@18.2.0)':
-    dependencies:
-      '@iconify/types': 2.0.0
-      react: 18.2.0
-
-  '@iconify/types@2.0.0': {}
 
   '@img/sharp-darwin-arm64@0.33.5':
     optionalDependencies:
