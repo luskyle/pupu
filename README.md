@@ -124,17 +124,29 @@ pnpm test:watch # 单元测试（watch 模式）
 | 工作流 | 触发条件 | 作用 |
 | --- | --- | --- |
 | [`CI`](.github/workflows/ci.yml) | push 到 `main`、PR、手动 | `pnpm install` → `pnpm lint` → `pnpm typecheck` → `pnpm test` → `pnpm build:ci`，校验产物（manifest 版本、PDF worker、WASM、平台图标），并用临时密钥打包 CRX 做冒烟测试，最后上传 zip 与解压目录为构建产物 |
-| [`Release`](.github/workflows/release.yml) | 推送 `v*` 标签、手动 | 将 `package.json` 版本号同步为标签版本 → `lint` + `typecheck` + `test`（发布前自证）→ 构建 → 用 `CRX_PRIVATE_KEY` 签名出 CRX 并校验签名 → 创建 GitHub Release，附上 `pupu-v<version>.zip` 与 `pupu-v<version>.crx` |
-| [`Deploy Pages`](.github/workflows/pages.yml) | push 到 `main` 且改动 `docs/**`、手动 | 将 `docs/` 部署到 GitHub Pages（官网与文档站） |
+| [`Release`](.github/workflows/release.yml) | 推送 `v*` 标签、手动 | 校验标签与 `package.json` 版本一致 → `lint` + `typecheck` + `test`（发布前自证）→ 构建 → 用 `CRX_PRIVATE_KEY` 签名出 CRX 并校验签名 → 创建 GitHub Release（附 zip 与 crx）→ 触发站点重部署以同步站点版本号 |
+| [`Deploy Pages`](.github/workflows/pages.yml) | push 到 `main` 且改动 `docs/**`、发布后自动触发、手动 | 注入最新版本号到 `docs/` 并部署到 GitHub Pages（官网与文档站） |
 
 ### 发布一个新版本
 
+**先改版本号并提交，再打标签**（顺序不能反 —— 扩展内「关于」页显示的版本取自构建时的 manifest，而 manifest 版本来自 `package.json`；标签与 `package.json` 不一致时发布流程会直接失败）：
+
 ```bash
-git tag v0.2.5
-git push origin v0.2.5
+pnpm pkg set version=0.2.10        # 改成要发布的版本
+git commit -am "chore(release): 0.2.10"
+git push origin main
+git tag v0.2.10 && git push origin v0.2.10
 ```
 
-推送标签后会自动构建并发布 Release（zip + crx）；也可以在 Actions 页面手动运行 `Release` 工作流并填写版本号（留空则使用 `package.json` 中的版本号），工作流会自动创建对应标签。
+推送标签后会自动构建并发布 Release（zip + crx）；也可以在 Actions 页面手动运行 `Release` 工作流并填写版本号（留空则使用 `package.json` 中的版本号），工作流会自动创建对应标签（手动触发时不做一致性校验，会按填写值同步）。
+
+**版本号会显示在这几处，均已自动化，无需手工同步**：
+
+| 位置 | 来源 |
+| --- | --- |
+| 扩展内「关于」页 | 构建时 manifest（即 `package.json`） |
+| 官网 / 文档站 | 部署时由 `scripts/inject-site-version.mjs` 从**最新 `v*` 标签**注入静态兜底值，页面再用 GitHub API 覆盖为最新 release |
+| README 徽章 | shields 动态读取最新 release |
 
 > 🔐 Release 需要仓库 Secret `CRX_PRIVATE_KEY`（CRX 签名密钥）。缺失时工作流会直接失败并给出提示，
 > 不会用临时密钥签出一个扩展 ID 不同的产物。

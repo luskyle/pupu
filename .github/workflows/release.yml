@@ -17,6 +17,8 @@ concurrency:
 
 permissions:
   contents: write
+  # 发布完成后需要触发 Deploy Pages（workflow_dispatch 要求 actions: write）
+  actions: write
 
 jobs:
   release:
@@ -57,6 +59,24 @@ jobs:
           fi
           echo "版本号: $VERSION"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      # 扩展内「关于」页显示的是构建时 manifest 里的版本，而 manifest 版本来自 package.json。
+      # 因此标签必须与 package.json 一致，否则本地/CI 构建出来的「关于」页会显示错的版本。
+      # 这里刻意「校验并报错」而不是静默改版本号，避免仓库版本与已发布版本悄悄漂移。
+      - name: 校验标签与 package.json 版本一致
+        if: github.ref_type == 'tag'
+        env:
+          TAG_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -eu
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "❌ 标签 v${TAG_VERSION} 与 package.json 的版本 ${PKG_VERSION} 不一致"
+            echo "   请先把 package.json 的版本改为 ${TAG_VERSION} 并提交到 main，再打标签："
+            echo "     pnpm pkg set version=${TAG_VERSION} && git commit -am \"chore(release): ${TAG_VERSION}\""
+            exit 1
+          fi
+          echo "✅ 标签与 package.json 版本一致：${PKG_VERSION}"
 
       - name: 同步 package.json 版本号
         run: pnpm pkg set version="${{ steps.version.outputs.version }}"
@@ -131,4 +151,17 @@ jobs:
               --title "pupu $TAG" \
               --target "$GITHUB_SHA" \
               --generate-notes
+          fi
+
+      # 站点上的版本号取自「最新 v* 标签」，因此发版后需要重新部署一次站点才能刷新
+      # （Deploy Pages 只监听 docs/** 的推送，不会因打标签而自动触发）。
+      # 这一步失败不影响已完成的发布，只是站点静态版本号会滞后到下次部署。
+      - name: 触发站点重新部署（同步站点版本号）
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh workflow run pages.yml --ref main; then
+            echo "✅ 已触发 Deploy Pages，站点版本号将与本次发布同步"
+          else
+            echo "⚠️ 触发 Deploy Pages 失败（不影响本次发布）；可在 Actions 页面手动运行 Deploy Pages"
           fi
