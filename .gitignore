@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# CRX 签名密钥（决定扩展 ID，绝不入库）
+/keys/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

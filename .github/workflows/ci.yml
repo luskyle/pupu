@@ -61,6 +61,14 @@ jobs:
           done
           echo "SHA256: $(sha256sum "$zip" | cut -d' ' -f1)"
 
+      - name: 打包并校验 CRX（用临时密钥冒烟测试）
+        run: |
+          set -eu
+          mkdir -p keys
+          openssl genrsa -out keys/pupu.pem 2048 2>/dev/null
+          pnpm crx
+          pnpm verify:crx
+
       - name: 上传构建产物
         uses: actions/upload-artifact@v7
         with:
