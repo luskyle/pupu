@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { SyncData, VideoData } from "../common";
 
 export async function VideoTiktok(data: SyncData) {
@@ -32,7 +33,7 @@ export async function VideoTiktok(data: SyncData) {
   async function uploadVideo(file: File): Promise<void> {
     const fileInput = (await waitForElement('input[type="file"][accept="video/*"]')) as HTMLInputElement;
     if (!fileInput) {
-      console.error("Video file input not found");
+      logger.error("Video file input not found");
       throw new Error("Video file input not found");
     }
     await new Promise((resolve) => setTimeout(resolve, 1000)); // 等待1秒确保元素完全加载
@@ -47,15 +48,15 @@ export async function VideoTiktok(data: SyncData) {
     const inputEvent = new Event("input", { bubbles: true });
     fileInput.dispatchEvent(inputEvent);
 
-    console.log("视频上传事件已触发");
+    logger.debug("视频上传事件已触发");
   }
 
   async function uploadCover(cover: { url: string; name: string; type: string }) {
-    console.log("准备上传封面:", cover);
+    logger.debug("准备上传封面:", cover);
 
     const editContainer = (await waitForElement("div.edit-container")) as HTMLElement;
     if (!editContainer) {
-      console.log("未找到封面编辑容器");
+      logger.debug("未找到封面编辑容器");
       return;
     }
     editContainer.click();
@@ -63,7 +64,7 @@ export async function VideoTiktok(data: SyncData) {
 
     const tabs = document.querySelectorAll("div.cover-edit-header div.cover-edit-tab");
     if (tabs.length < 2) {
-      console.log("未找到封面上传标签页");
+      logger.debug("未找到封面上传标签页");
       return;
     }
     (tabs[1] as HTMLElement).click();
@@ -73,7 +74,7 @@ export async function VideoTiktok(data: SyncData) {
       'input[type="file"][accept="image/png, image/jpeg, image/jpg"]',
     )) as HTMLInputElement;
     if (!fileInput) {
-      console.log("未找到封面图片文件输入框");
+      logger.debug("未找到封面图片文件输入框");
       return;
     }
 
@@ -88,15 +89,15 @@ export async function VideoTiktok(data: SyncData) {
     fileInput.dispatchEvent(new Event("change", { bubbles: true }));
     fileInput.dispatchEvent(new Event("input", { bubbles: true }));
 
-    console.log("封面图片上传事件已触发");
+    logger.debug("封面图片上传事件已触发");
     await new Promise((r) => setTimeout(r, 3000));
 
     const doneButtons = document.querySelectorAll("div.cover-edit-footer button");
-    console.log("完成按钮:", doneButtons);
+    logger.debug("完成按钮:", doneButtons);
     const doneButton = doneButtons[doneButtons.length - 1] as HTMLElement;
     if (doneButton) {
       doneButton.click();
-      console.log("已点击完成按钮");
+      logger.debug("已点击完成按钮");
     }
   }
 
@@ -117,10 +118,10 @@ export async function VideoTiktok(data: SyncData) {
       const extension = video.name.split(".").pop();
       const fileName = `${title || "video"}.${extension}`;
       const videoFile = new File([arrayBuffer], fileName, { type: video.type });
-      console.log(`视频文件: ${videoFile.name} ${videoFile.type} ${videoFile.size}`);
+      logger.debug(`视频文件: ${videoFile.name} ${videoFile.type} ${videoFile.size}`);
 
       await uploadVideo(videoFile);
-      console.log("视频上传已初始化");
+      logger.debug("视频上传已初始化");
     }
 
     await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -157,14 +158,14 @@ ${tags.map((tag) => `#${tag}`).join(" ")}`;
     for (const button of Array.from(buttons)) {
       if (["發佈", "发布", "Post"].includes(button.textContent?.trim() || "")) {
         if (data.isAutoPublish) {
-          console.log("点击发布按钮");
+          logger.debug("点击发布按钮");
           button.click();
         }
         break;
       }
     }
   } catch (error) {
-    console.error("TiktokVideo 发布过程中出错:", error);
+    logger.error("TiktokVideo 发布过程中出错:", error);
     throw error; // 向上传递错误
   }
 }

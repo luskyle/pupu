@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { ArticleData, FileData, SyncData } from "../common";
 
 export async function ArticleInfoQ(data: SyncData) {
@@ -43,7 +44,7 @@ export async function ArticleInfoQ(data: SyncData) {
       const blob = await response.blob();
       return new File([blob], fileData.name, { type: fileData.type || blob.type || "application/octet-stream" });
     } catch (error) {
-      console.warn("InfoQ cover file fetch failed:", error);
+      logger.warn("InfoQ cover file fetch failed:", error);
       return null;
     }
   }
@@ -76,7 +77,7 @@ export async function ArticleInfoQ(data: SyncData) {
   async function uploadCover(cover?: FileData): Promise<boolean> {
     if (!cover) return true;
     if (!cover.url) {
-      console.debug("InfoQ cover data has no URL");
+      logger.debug("InfoQ cover data has no URL");
       return false;
     }
 
@@ -84,7 +85,7 @@ export async function ArticleInfoQ(data: SyncData) {
     const fileInput = (document.querySelector(selector) ||
       (await waitForElementOptional(selector, 3000))) as HTMLInputElement | null;
     if (!fileInput) {
-      console.debug("InfoQ cover upload input not found");
+      logger.debug("InfoQ cover upload input not found");
       return false;
     }
 
@@ -104,7 +105,7 @@ export async function ArticleInfoQ(data: SyncData) {
     ].filter(([, filled]) => !filled);
 
     for (const [field] of missing) {
-      console.error(`InfoQ required field ${field} not filled; skipping auto-publish to avoid an incomplete article`);
+      logger.error(`InfoQ required field ${field} not filled; skipping auto-publish to avoid an incomplete article`);
     }
 
     return missing.length === 0;
@@ -121,7 +122,7 @@ export async function ArticleInfoQ(data: SyncData) {
     });
 
     if (!publishButton) {
-      console.debug("InfoQ publish button not found");
+      logger.debug("InfoQ publish button not found");
       return;
     }
 
@@ -145,7 +146,7 @@ export async function ArticleInfoQ(data: SyncData) {
       writeBtn.click();
       await sleep(1200);
     } else {
-      console.debug("InfoQ write button not found");
+      logger.debug("InfoQ write button not found");
     }
 
     await waitForElementOptional('input[placeholder*="标题"]');
@@ -157,10 +158,10 @@ export async function ArticleInfoQ(data: SyncData) {
         dispatchInputEvents(titleEl);
         required.title = true;
       } catch (error) {
-        console.error("InfoQ title write failed:", error);
+        logger.error("InfoQ title write failed:", error);
       }
     } else {
-      console.debug("InfoQ title input not found");
+      logger.debug("InfoQ title input not found");
     }
 
     const editor = document.querySelector('div.ProseMirror[contenteditable="true"]') as HTMLDivElement | null;
@@ -170,20 +171,20 @@ export async function ArticleInfoQ(data: SyncData) {
         pasteHtml(editor, htmlContent || "");
         required.body = true;
       } catch (error) {
-        console.error("InfoQ body write failed:", error);
+        logger.error("InfoQ body write failed:", error);
       }
     } else {
-      console.debug("InfoQ ProseMirror editor not found");
+      logger.debug("InfoQ ProseMirror editor not found");
     }
 
     try {
       required.cover = await uploadCover(cover);
     } catch (error) {
-      console.error("InfoQ cover upload failed:", error);
+      logger.error("InfoQ cover upload failed:", error);
       required.cover = false;
     }
     clickPublishIfRequested(required);
   } catch (error) {
-    console.error("InfoQ 文章发布失败:", error);
+    logger.error("InfoQ 文章发布失败:", error);
   }
 }

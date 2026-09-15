@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { ArticleData, DynamicData, FileData, PodcastData, SyncData, VideoData } from "./common";
 
 /**
@@ -16,7 +17,7 @@ async function processFile(file: FileData): Promise<FileData> {
       url: blobUrl,
     };
   } catch (error) {
-    console.error("处理文件时出错:", error, file.name);
+    logger.error("处理文件时出错:", error, file.name);
     return file;
   }
 }
@@ -66,7 +67,7 @@ export async function processArticle(data: SyncData): Promise<SyncData> {
           return match.replace(originalUrl, blobUrl);
         });
       } catch (error) {
-        console.error("处理图片时出错:", error, img.src);
+        logger.error("处理图片时出错:", error, img.src);
       }
     }
   }
@@ -100,7 +101,7 @@ export async function processDynamic(data: SyncData): Promise<SyncData> {
       processedImages.push(await processFile(image));
     }
   } else {
-    console.warn("images 不是一个数组或可迭代对象", images);
+    logger.warn("images 不是一个数组或可迭代对象", images);
   }
 
   if (Array.isArray(videos) && videos.length > 0) {
@@ -108,7 +109,7 @@ export async function processDynamic(data: SyncData): Promise<SyncData> {
       processedVideos.push(await processFile(video));
     }
   } else {
-    console.warn("videos 不是一个数组或可迭代对象", videos);
+    logger.warn("videos 不是一个数组或可迭代对象", videos);
   }
 
   return {
@@ -125,7 +126,7 @@ export async function processPodcast(data: SyncData): Promise<SyncData> {
   const { audio } = data.data as PodcastData;
 
   if (!audio) {
-    console.warn("音频数据不存在");
+    logger.warn("音频数据不存在");
     return data;
   }
 
@@ -143,7 +144,7 @@ export async function processVideo(data: SyncData): Promise<SyncData> {
   const { video, cover, verticalCover, horizontalCover, scheduledPublishTime } = data.data as VideoData;
 
   if (!video) {
-    console.warn("视频数据不存在");
+    logger.warn("视频数据不存在");
     return data;
   }
 

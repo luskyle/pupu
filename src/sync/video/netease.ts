@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { SyncData, VideoData } from "../common";
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -7,24 +8,24 @@ import type { SyncData, VideoData } from "../common";
  * 网易号视频发布器
  */
 export async function VideoNetease(data: SyncData): Promise<void> {
-  console.log("🚀 开始网易号视频发布流程...");
-  console.log("🔍 当前页面:", window.location.href);
+  logger.debug("🚀 开始网易号视频发布流程...");
+  logger.debug("🔍 当前页面:", window.location.href);
 
   try {
     // 检查是否在网易号页面
     if (!window.location.href.includes("dy.163.com")) {
-      console.error("❌ 不在网易号页面，当前页面:", window.location.href);
+      logger.error("❌ 不在网易号页面，当前页面:", window.location.href);
       return;
     }
 
     // 解析视频数据
     if (!data || !data.data) {
-      console.error("❌ 缺少视频数据");
+      logger.error("❌ 缺少视频数据");
       return;
     }
 
     const { content, video, title, description } = data.data as VideoData;
-    console.log("📝 视频数据:", {
+    logger.debug("📝 视频数据:", {
       title: title?.substring(0, 50),
       contentLength: content?.length,
       hasVideo: !!video,
@@ -75,7 +76,7 @@ export async function VideoNetease(data: SyncData): Promise<void> {
        */
       public async fillTitle(title: string): Promise<void> {
         try {
-          console.log("📝 填写标题:", title);
+          logger.debug("📝 填写标题:", title);
 
           // 等待页面加载
           await this.sleep(3000);
@@ -99,7 +100,7 @@ export async function VideoNetease(data: SyncData): Promise<void> {
           for (const selector of titleSelectors) {
             const titleElement = document.querySelector(selector) as HTMLInputElement | HTMLTextAreaElement;
             if (titleElement && titleElement.offsetParent !== null) {
-              console.log("✅ 找到标题输入框:", selector);
+              logger.debug("✅ 找到标题输入框:", selector);
 
               try {
                 // 清空原有内容
@@ -123,21 +124,21 @@ export async function VideoNetease(data: SyncData): Promise<void> {
                 titleElement.dispatchEvent(new Event("blur", { bubbles: true }));
 
                 // 验证设置是否成功
-                console.log(`✅ 标题设置后验证: value="${titleElement.value}"`);
+                logger.debug(`✅ 标题设置后验证: value="${titleElement.value}"`);
                 if (titleElement.value === title) {
-                  console.log("✅ 标题填写成功");
+                  logger.debug("✅ 标题填写成功");
                   return;
                 }
               } catch (e) {
-                console.error("设置标题值时出错:", e);
+                logger.error("设置标题值时出错:", e);
               }
             }
           }
 
-          console.log("❌ 未找到可用的标题输入框");
+          logger.debug("❌ 未找到可用的标题输入框");
           return;
         } catch (error) {
-          console.error("填写标题失败:", error);
+          logger.error("填写标题失败:", error);
           return;
         }
       }
@@ -147,7 +148,7 @@ export async function VideoNetease(data: SyncData): Promise<void> {
        */
       public async fillDescription(description: string): Promise<void> {
         try {
-          console.log("📝 填写描述:", `${description.substring(0, 100)}...`);
+          logger.debug("📝 填写描述:", `${description.substring(0, 100)}...`);
 
           // 网易号描述输入框选择器
           const descSelectors = [
@@ -168,7 +169,7 @@ export async function VideoNetease(data: SyncData): Promise<void> {
           for (const selector of descSelectors) {
             const descElement = document.querySelector(selector) as HTMLTextAreaElement;
             if (descElement && descElement.offsetParent !== null) {
-              console.log("✅ 找到描述输入框:", selector);
+              logger.debug("✅ 找到描述输入框:", selector);
 
               try {
                 descElement.focus();
@@ -178,18 +179,18 @@ export async function VideoNetease(data: SyncData): Promise<void> {
                 descElement.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
                 descElement.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
 
-                console.log("✅ 描述填写成功");
+                logger.debug("✅ 描述填写成功");
                 return;
               } catch (e) {
-                console.error("设置描述值时出错:", e);
+                logger.error("设置描述值时出错:", e);
               }
             }
           }
 
-          console.log("❌ 未找到可用的描述输入框");
+          logger.debug("❌ 未找到可用的描述输入框");
           return;
         } catch (error) {
-          console.error("填写描述失败:", error);
+          logger.error("填写描述失败:", error);
           return;
         }
       }
@@ -199,7 +200,7 @@ export async function VideoNetease(data: SyncData): Promise<void> {
        */
       public async uploadVideo(videoData: any): Promise<void> {
         try {
-          console.log("📹 开始上传视频...");
+          logger.debug("📹 开始上传视频...");
 
           // 获取视频文件
           let file: File;
@@ -212,18 +213,18 @@ export async function VideoNetease(data: SyncData): Promise<void> {
             const fileName = `${videoData.name.replace(/\.[^/.]+$/, "")}.${extension}`;
             file = new File([arrayBuffer], fileName, { type: "video/mp4" });
           } else {
-            console.error("❌ 无效的视频数据");
+            logger.error("❌ 无效的视频数据");
             return;
           }
 
-          console.log("📁 视频文件:", file.name, file.size, file.type);
+          logger.debug("📁 视频文件:", file.name, file.size, file.type);
 
           // 等待页面完全加载
-          console.log("⏳ 等待页面加载完成...");
+          logger.debug("⏳ 等待页面加载完成...");
           await this.sleep(5000);
 
           // 查找上传区域
-          console.log("🔍 查找网易号上传区域...");
+          logger.debug("🔍 查找网易号上传区域...");
           const uploadSelectors = [
             ".upload-area",
             ".video-upload",
@@ -244,28 +245,28 @@ export async function VideoNetease(data: SyncData): Promise<void> {
           for (const selector of uploadSelectors) {
             const element = document.querySelector(selector) as HTMLElement | null;
             if (element && element.offsetParent !== null) {
-              console.log(`✅ 找到上传区域: ${selector}`);
+              logger.debug(`✅ 找到上传区域: ${selector}`);
               uploadArea = element;
               break;
             }
           }
 
           if (!uploadArea) {
-            console.log("❌ 未找到上传区域，尝试查找文件输入框...");
+            logger.debug("❌ 未找到上传区域，尝试查找文件输入框...");
 
             // 直接查找文件输入框
             const fileInputs = document.querySelectorAll('input[type="file"]');
-            console.log(`🔍 找到 ${fileInputs.length} 个文件输入框`);
+            logger.debug(`🔍 找到 ${fileInputs.length} 个文件输入框`);
 
             let targetInput: HTMLInputElement | null = null;
             fileInputs.forEach((input, index) => {
               const accept = input.getAttribute("accept") || "";
-              console.log(`  输入框 ${index + 1}: accept="${accept}"`);
+              logger.debug(`  输入框 ${index + 1}: accept="${accept}"`);
 
               // 优先查找视频文件输入框
               if (accept.includes("video") || accept.includes("*") || accept === "") {
                 targetInput = input as HTMLInputElement;
-                console.log(`✅ 选择输入框 ${index + 1} 作为目标`);
+                logger.debug(`✅ 选择输入框 ${index + 1} 作为目标`);
               }
             });
 
@@ -277,20 +278,20 @@ export async function VideoNetease(data: SyncData): Promise<void> {
 
               // 触发change事件
               targetInput.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
-              console.log("✅ 文件已设置到输入框");
+              logger.debug("✅ 文件已设置到输入框");
               return;
             }
-            console.log("❌ 未找到合适的文件输入框");
+            logger.debug("❌ 未找到合适的文件输入框");
             return;
           }
 
           // 如果找到了上传区域，尝试点击或操作
-          console.log("🔄 尝试操作上传区域...");
+          logger.debug("🔄 尝试操作上传区域...");
 
           // 查找上传区域内的文件输入框
           const uploadInput = uploadArea.querySelector('input[type="file"]') as HTMLInputElement;
           if (uploadInput) {
-            console.log("✅ 在上传区域内找到文件输入框");
+            logger.debug("✅ 在上传区域内找到文件输入框");
 
             // 创建透明的文件输入框覆盖上传区域
             const overlayInput = document.createElement("input");
@@ -319,11 +320,11 @@ export async function VideoNetease(data: SyncData): Promise<void> {
             overlayInput.dispatchEvent(new Event("focus", { bubbles: true }));
             overlayInput.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
 
-            console.log("✅ 文件已设置到覆盖输入框");
+            logger.debug("✅ 文件已设置到覆盖输入框");
 
             // 尝试点击上传区域（如果需要）
             if (uploadArea.tagName === "BUTTON" || uploadArea.closest("button")) {
-              console.log("🖱️ 点击上传按钮...");
+              logger.debug("🖱️ 点击上传按钮...");
               ((uploadArea.closest("button") as HTMLElement) || uploadArea).click();
               await this.sleep(1000);
             }
@@ -333,12 +334,12 @@ export async function VideoNetease(data: SyncData): Promise<void> {
 
             return;
           }
-          console.log("⚠️ 上传区域内未找到文件输入框，尝试点击上传区域...");
+          logger.debug("⚠️ 上传区域内未找到文件输入框，尝试点击上传区域...");
 
           // 点击上传区域触发文件选择
           const clickableElement = uploadArea.closest("button") || uploadArea.querySelector("button") || uploadArea;
           if (clickableElement) {
-            console.log("🖱️ 点击可点击元素...");
+            logger.debug("🖱️ 点击可点击元素...");
             (clickableElement as HTMLElement).click();
             await this.sleep(2000);
 
@@ -349,15 +350,15 @@ export async function VideoNetease(data: SyncData): Promise<void> {
               dataTransfer.items.add(file);
               newFileInput.files = dataTransfer.files;
               newFileInput.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
-              console.log("✅ 文件已设置到新找到的输入框");
+              logger.debug("✅ 文件已设置到新找到的输入框");
               return;
             }
           }
 
-          console.log("⚠️ 无法直接上传文件，但页面可能已经准备好了");
+          logger.debug("⚠️ 无法直接上传文件，但页面可能已经准备好了");
           return;
         } catch (error) {
-          console.error("❌ 视频上传失败:", error);
+          logger.error("❌ 视频上传失败:", error);
           return;
         }
       }
@@ -366,7 +367,7 @@ export async function VideoNetease(data: SyncData): Promise<void> {
        * 等待上传开始
        */
       private async waitForUploadStart(): Promise<void> {
-        console.log("⏳ 等待上传开始...");
+        logger.debug("⏳ 等待上传开始...");
 
         for (let i = 0; i < 30; i++) {
           await this.sleep(1000);
@@ -386,7 +387,7 @@ export async function VideoNetease(data: SyncData): Promise<void> {
           for (const selector of progressSelectors) {
             const elements = document.querySelectorAll(selector);
             if (elements.length > 0) {
-              console.log("✅ 检测到上传进度指示器");
+              logger.debug("✅ 检测到上传进度指示器");
               return;
             }
           }
@@ -397,47 +398,47 @@ export async function VideoNetease(data: SyncData): Promise<void> {
           for (const selector of successSelectors) {
             const elements = document.querySelectorAll(selector);
             if (elements.length > 0) {
-              console.log("✅ 检测到上传成功标志");
+              logger.debug("✅ 检测到上传成功标志");
               return;
             }
           }
         }
 
-        console.log("⚠️ 未检测到明确的上传状态，但可能已开始");
+        logger.debug("⚠️ 未检测到明确的上传状态，但可能已开始");
       }
     };
 
-    console.log("✅ 网易号上传器类定义完成");
+    logger.debug("✅ 网易号上传器类定义完成");
 
     const uploader = new NeteaseVideoUploader();
-    console.log("✅ 网易号上传器实例创建完成");
+    logger.debug("✅ 网易号上传器实例创建完成");
 
     // 步骤1: 填写标题
     if (title) {
-      console.log("📝 填写标题:", title);
+      logger.debug("📝 填写标题:", title);
       await uploader.fillTitle(title);
     }
 
     // 步骤2: 填写描述
     if (content) {
-      console.log("📝 填写描述:", `${content.substring(0, 100)}...`);
+      logger.debug("📝 填写描述:", `${content.substring(0, 100)}...`);
       await uploader.fillDescription(description ?? content);
     }
 
     // 步骤3: 上传视频
     if (video) {
-      console.log("🎥 开始上传视频...");
+      logger.debug("🎥 开始上传视频...");
       await uploader.uploadVideo(video);
     } else {
-      console.error("❌ 缺少视频文件");
+      logger.error("❌ 缺少视频文件");
       return;
     }
 
-    console.log("🎉 网易号视频发布流程完成");
+    logger.debug("🎉 网易号视频发布流程完成");
     return;
   } catch (error) {
-    console.error("💥 网易号视频发布失败:", error);
-    console.error("错误详情:", error.stack);
+    logger.error("💥 网易号视频发布失败:", error);
+    logger.error("错误详情:", error.stack);
     return;
   }
 }

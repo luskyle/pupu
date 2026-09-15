@@ -7,6 +7,7 @@ import {
   createTabsForPlatforms,
   getPlatformInfos,
 } from "~sync/common";
+import { logger } from "~utils/logger";
 import QuantumEntanglementKeepAlive from "../utils/keep-alive";
 import { linkExtensionMessageHandler, starter } from "./services/api";
 import {
@@ -131,7 +132,7 @@ const defaultMessageHandler = (request, _sender, sendResponse) => {
           // Do not sendResponse here: the publish popup's handlePublishComplete treats ANY
           // callback response as "publish complete", so an error payload would be mis-read as success.
           // Preserve original behavior (log only); success path above sends the tabs response.
-          console.error("创建标签页或分组时出错:", error);
+          logger.error("创建标签页或分组时出错:", error);
         }
       })();
     }

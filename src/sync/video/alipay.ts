@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { FileData, SyncData, VideoData } from "../common";
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -7,24 +8,24 @@ import type { FileData, SyncData, VideoData } from "../common";
  * 支付宝视频发布器
  */
 export async function VideoAlipay(data: SyncData): Promise<void> {
-  console.log("🚀 开始支付宝视频发布流程...");
-  console.log("🔍 当前页面:", window.location.href);
+  logger.debug("🚀 开始支付宝视频发布流程...");
+  logger.debug("🔍 当前页面:", window.location.href);
 
   try {
     // 检查是否在支付宝页面
     if (!window.location.href.includes("b.alipay.com")) {
-      console.error("❌ 不在支付宝页面，当前页面:", window.location.href);
+      logger.error("❌ 不在支付宝页面，当前页面:", window.location.href);
       return;
     }
 
     // 解析视频数据
     if (!data || !data.data) {
-      console.error("❌ 缺少视频数据");
+      logger.error("❌ 缺少视频数据");
       return;
     }
 
     const { content, video, videoFile, title, description, tags = [], cover, horizontalCover } = data.data as VideoData;
-    console.log("📝 视频数据:", {
+    logger.debug("📝 视频数据:", {
       title: title?.substring(0, 50),
       contentLength: content?.length,
       hasVideo: !!video,
@@ -85,7 +86,7 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
           const elements = Array.from(document.querySelectorAll<T>(selector));
           const element = elements.find((item) => this.isVisible(item));
           if (element) {
-            console.log("✅ 找到输入框:", selector);
+            logger.debug("✅ 找到输入框:", selector);
             return element;
           }
         }
@@ -152,7 +153,7 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
        */
       public async fillTitle(title: string): Promise<void> {
         try {
-          console.log("📝 填写标题:", title);
+          logger.debug("📝 填写标题:", title);
 
           // 等待页面加载
           await this.sleep(3000);
@@ -176,7 +177,7 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
 
           const titleElement = this.findVisibleInput<HTMLInputElement | HTMLTextAreaElement>(titleSelectors);
           if (!titleElement) {
-            console.log("❌ 未找到可用的标题输入框");
+            logger.debug("❌ 未找到可用的标题输入框");
             return;
           }
 
@@ -201,15 +202,15 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
             titleElement.dispatchEvent(new Event("blur", { bubbles: true }));
 
             // 验证设置是否成功
-            console.log(`✅ 标题设置后验证: value="${titleElement.value}"`);
+            logger.debug(`✅ 标题设置后验证: value="${titleElement.value}"`);
             if (titleElement.value === title) {
-              console.log("✅ 标题填写成功");
+              logger.debug("✅ 标题填写成功");
             }
           } catch (e) {
-            console.error("设置标题值时出错:", e);
+            logger.error("设置标题值时出错:", e);
           }
         } catch (error) {
-          console.error("填写标题失败:", error);
+          logger.error("填写标题失败:", error);
           return;
         }
       }
@@ -219,7 +220,7 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
        */
       public async fillDescriptionAndTags(description: string, tags: string[]): Promise<boolean> {
         try {
-          console.log("📝 填写描述:", `${description.substring(0, 100)}...`);
+          logger.debug("📝 填写描述:", `${description.substring(0, 100)}...`);
 
           // 支付宝描述输入框选择器
           const descSelectors = [
@@ -240,7 +241,7 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
 
           const descElement = this.findVisibleInput<HTMLTextAreaElement>(descSelectors);
           if (!descElement) {
-            console.log("❌ 未找到可用的描述输入框");
+            logger.debug("❌ 未找到可用的描述输入框");
             return false;
           }
 
@@ -248,10 +249,10 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
             descElement.focus();
             descElement.value = "";
             await this.pasteText(descElement, `${description} `);
-            console.log("✅ 描述填写成功");
+            logger.debug("✅ 描述填写成功");
 
             for (const tag of tags.slice(0, 5)) {
-              console.log("🏷️ 添加支付宝话题:", tag);
+              logger.debug("🏷️ 添加支付宝话题:", tag);
               descElement.focus();
               descElement.setSelectionRange(descElement.value.length, descElement.value.length);
               await this.pasteText(descElement, ` #${tag}`);
@@ -264,18 +265,18 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
                 customTopicDiv.click();
                 await this.sleep(1000);
               } else {
-                console.log(`未找到"${tag}"的自定义话题确认项`);
+                logger.debug(`未找到"${tag}"的自定义话题确认项`);
               }
               await this.sleep(1000);
             }
             descElement.blur();
             return true;
           } catch (e) {
-            console.error("设置描述或标签时出错:", e);
+            logger.error("设置描述或标签时出错:", e);
             return false;
           }
         } catch (error) {
-          console.error("填写描述失败:", error);
+          logger.error("填写描述失败:", error);
           return false;
         }
       }
@@ -285,7 +286,7 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
        */
       public async uploadVideo(videoData: VideoData["video"], sourceFile?: File): Promise<boolean> {
         try {
-          console.log("📹 开始上传视频...");
+          logger.debug("📹 开始上传视频...");
 
           // 获取视频文件
           let file: File;
@@ -298,18 +299,18 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
             const fileName = `${videoData.name.replace(/\.[^/.]+$/, "")}.${extension}`;
             file = new File([arrayBuffer], fileName, { type: "video/mp4" });
           } else {
-            console.error("❌ 无效的视频数据");
+            logger.error("❌ 无效的视频数据");
             return false;
           }
 
-          console.log("📁 视频文件:", file.name, file.size, file.type);
+          logger.debug("📁 视频文件:", file.name, file.size, file.type);
 
           // 等待页面完全加载
-          console.log("⏳ 等待页面加载完成...");
+          logger.debug("⏳ 等待页面加载完成...");
           await this.sleep(5000);
 
           // 查找上传区域
-          console.log("🔍 查找支付宝上传区域...");
+          logger.debug("🔍 查找支付宝上传区域...");
 
           const exactFileInput = (await this.waitForElementOptional(
             'input[type="file"]',
@@ -328,7 +329,7 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
             targetInput.files = dataTransfer.files;
             targetInput.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
             targetInput.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
-            console.log("✅ 文件已设置到 input[type=file]");
+            logger.debug("✅ 文件已设置到 input[type=file]");
             return true;
           }
 
@@ -352,28 +353,28 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
           for (const selector of uploadSelectors) {
             const element = document.querySelector(selector) as HTMLElement | null;
             if (element && element.offsetParent !== null) {
-              console.log(`✅ 找到上传区域: ${selector}`);
+              logger.debug(`✅ 找到上传区域: ${selector}`);
               uploadArea = element;
               break;
             }
           }
 
           if (!uploadArea) {
-            console.log("❌ 未找到上传区域，尝试查找文件输入框...");
+            logger.debug("❌ 未找到上传区域，尝试查找文件输入框...");
 
             // 直接查找文件输入框
             const fileInputs = document.querySelectorAll('input[type="file"]');
-            console.log(`🔍 找到 ${fileInputs.length} 个文件输入框`);
+            logger.debug(`🔍 找到 ${fileInputs.length} 个文件输入框`);
 
             let targetInput: HTMLInputElement | null = null;
             fileInputs.forEach((input, index) => {
               const accept = input.getAttribute("accept") || "";
-              console.log(`  输入框 ${index + 1}: accept="${accept}"`);
+              logger.debug(`  输入框 ${index + 1}: accept="${accept}"`);
 
               // 优先查找视频文件输入框
               if (accept.includes("video") || accept.includes("*") || accept === "") {
                 targetInput = input as HTMLInputElement;
-                console.log(`✅ 选择输入框 ${index + 1} 作为目标`);
+                logger.debug(`✅ 选择输入框 ${index + 1} 作为目标`);
               }
             });
 
@@ -385,20 +386,20 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
 
               // 触发change事件
               targetInput.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
-              console.log("✅ 文件已设置到输入框");
+              logger.debug("✅ 文件已设置到输入框");
               return true;
             }
-            console.log("❌ 未找到合适的文件输入框");
+            logger.debug("❌ 未找到合适的文件输入框");
             return false;
           }
 
           // 如果找到了上传区域，尝试点击或操作
-          console.log("🔄 尝试操作上传区域...");
+          logger.debug("🔄 尝试操作上传区域...");
 
           // 查找上传区域内的文件输入框
           const uploadInput = uploadArea.querySelector('input[type="file"]') as HTMLInputElement;
           if (uploadInput) {
-            console.log("✅ 在上传区域内找到文件输入框");
+            logger.debug("✅ 在上传区域内找到文件输入框");
 
             // 创建透明的文件输入框覆盖上传区域
             const overlayInput = document.createElement("input");
@@ -427,11 +428,11 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
             overlayInput.dispatchEvent(new Event("focus", { bubbles: true }));
             overlayInput.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
 
-            console.log("✅ 文件已设置到覆盖输入框");
+            logger.debug("✅ 文件已设置到覆盖输入框");
 
             // 尝试点击上传区域（如果需要）
             if (uploadArea.tagName === "BUTTON" || uploadArea.closest("button")) {
-              console.log("🖱️ 点击上传按钮...");
+              logger.debug("🖱️ 点击上传按钮...");
               ((uploadArea.closest("button") as HTMLElement) || uploadArea).click();
               await this.sleep(1000);
             }
@@ -441,12 +442,12 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
 
             return true;
           }
-          console.log("⚠️ 上传区域内未找到文件输入框，尝试点击上传区域...");
+          logger.debug("⚠️ 上传区域内未找到文件输入框，尝试点击上传区域...");
 
           // 点击上传区域触发文件选择
           const clickableElement = uploadArea.closest("button") || uploadArea.querySelector("button") || uploadArea;
           if (clickableElement) {
-            console.log("🖱️ 点击可点击元素...");
+            logger.debug("🖱️ 点击可点击元素...");
             (clickableElement as HTMLElement).click();
             await this.sleep(2000);
 
@@ -457,33 +458,33 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
               dataTransfer.items.add(file);
               newFileInput.files = dataTransfer.files;
               newFileInput.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
-              console.log("✅ 文件已设置到新找到的输入框");
+              logger.debug("✅ 文件已设置到新找到的输入框");
               return true;
             }
           }
 
-          console.log("⚠️ 无法直接上传文件，但页面可能已经准备好了");
+          logger.debug("⚠️ 无法直接上传文件，但页面可能已经准备好了");
           return false;
         } catch (error) {
-          console.error("❌ 视频上传失败:", error);
+          logger.error("❌ 视频上传失败:", error);
           return false;
         }
       }
 
       public async uploadCover(cover: FileData, label: string): Promise<boolean> {
         try {
-          console.log(`🖼️ 开始上传支付宝${label}:`, cover);
+          logger.debug(`🖼️ 开始上传支付宝${label}:`, cover);
           if (cover.type && !cover.type.includes("image/")) {
-            console.log(`${label}不是图片，跳过上传`);
+            logger.debug(`${label}不是图片，跳过上传`);
             return false;
           }
 
           const coverUpload = document.querySelector(
             "div.antd5-form-item-control-input-content img.absolute",
           ) as HTMLElement | null;
-          console.debug("coverUpload -->", coverUpload);
+          logger.debug("coverUpload -->", coverUpload);
           if (!coverUpload) {
-            console.log(`未找到支付宝${label}封面入口`);
+            logger.debug(`未找到支付宝${label}封面入口`);
             return false;
           }
 
@@ -493,9 +494,9 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
           const uploadCoverTab = Array.from(document.querySelectorAll<HTMLElement>("div[role='tab']")).find(
             (tab) => tab.textContent?.trim() === "上传封面",
           );
-          console.debug("uploadCoverTab -->", uploadCoverTab);
+          logger.debug("uploadCoverTab -->", uploadCoverTab);
           if (!uploadCoverTab) {
-            console.log(`未找到支付宝${label}上传封面 tab`);
+            logger.debug(`未找到支付宝${label}上传封面 tab`);
             return false;
           }
 
@@ -503,9 +504,9 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
           await this.sleep(1000);
 
           const fileInput = document.querySelector('input[accept=".jpg, .jpeg, .png"]') as HTMLInputElement | null;
-          console.debug("fileInput -->", fileInput);
+          logger.debug("fileInput -->", fileInput);
           if (!fileInput) {
-            console.log(`未找到支付宝${label}封面文件输入框`);
+            logger.debug(`未找到支付宝${label}封面文件输入框`);
             return false;
           }
 
@@ -516,16 +517,16 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
           fileInput.files = dataTransfer.files;
           fileInput.dispatchEvent(new Event("change", { bubbles: true }));
           fileInput.dispatchEvent(new Event("input", { bubbles: true }));
-          console.log(`支付宝${label}封面文件上传操作已触发`);
+          logger.debug(`支付宝${label}封面文件上传操作已触发`);
           await this.sleep(3000);
 
           const nextButton = this.findButtonByText("下一步");
-          console.debug("nextButton -->", nextButton);
+          logger.debug("nextButton -->", nextButton);
           nextButton?.click();
 
           for (let i = 0; i < 5; i++) {
             const doneButton = this.findButtonByText("完 成") || this.findButtonByText("完成");
-            console.debug("doneButton -->", doneButton);
+            logger.debug("doneButton -->", doneButton);
             if (doneButton) {
               doneButton.click();
               return true;
@@ -533,10 +534,10 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
             await this.sleep(1000);
           }
 
-          console.log(`支付宝${label}封面未找到完成按钮，视为上传失败`);
+          logger.debug(`支付宝${label}封面未找到完成按钮，视为上传失败`);
           return false;
         } catch (error) {
-          console.warn(`支付宝${label}封面上传失败:`, error);
+          logger.warn(`支付宝${label}封面上传失败:`, error);
           return false;
         }
       }
@@ -545,17 +546,17 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
         if (autoPublish !== true) return;
 
         if (!videoUploaded) {
-          console.warn("支付宝自动发布已跳过：视频未成功触发上传");
+          logger.warn("支付宝自动发布已跳过：视频未成功触发上传");
           return;
         }
 
         await this.sleep(5000);
         const publishButton = this.findButtonByText("确认发布");
         if (publishButton) {
-          console.log("点击支付宝确认发布按钮");
+          logger.debug("点击支付宝确认发布按钮");
           publishButton.click();
         } else {
-          console.log('未找到"确认发布"按钮');
+          logger.debug('未找到"确认发布"按钮');
         }
       }
 
@@ -563,7 +564,7 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
        * 等待上传开始
        */
       private async waitForUploadStart(): Promise<void> {
-        console.log("⏳ 等待上传开始...");
+        logger.debug("⏳ 等待上传开始...");
 
         for (let i = 0; i < 30; i++) {
           await this.sleep(1000);
@@ -583,7 +584,7 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
           for (const selector of progressSelectors) {
             const elements = document.querySelectorAll(selector);
             if (elements.length > 0) {
-              console.log("✅ 检测到上传进度指示器");
+              logger.debug("✅ 检测到上传进度指示器");
               return;
             }
           }
@@ -594,29 +595,29 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
           for (const selector of successSelectors) {
             const elements = document.querySelectorAll(selector);
             if (elements.length > 0) {
-              console.log("✅ 检测到上传成功标志");
+              logger.debug("✅ 检测到上传成功标志");
               return;
             }
           }
         }
 
-        console.log("⚠️ 未检测到明确的上传状态，但可能已开始");
+        logger.debug("⚠️ 未检测到明确的上传状态，但可能已开始");
       }
     };
 
-    console.log("✅ 支付宝上传器类定义完成");
+    logger.debug("✅ 支付宝上传器类定义完成");
 
     const uploader = new AlipayVideoUploader();
-    console.log("✅ 支付宝上传器实例创建完成");
+    logger.debug("✅ 支付宝上传器实例创建完成");
 
     let videoUploaded = false;
 
     // Step 1: upload the required video.
     if (video) {
-      console.log("🎥 开始上传视频...");
+      logger.debug("🎥 开始上传视频...");
       videoUploaded = await uploader.uploadVideo(video, videoFile);
     } else {
-      console.error("❌ 缺少视频文件");
+      logger.error("❌ 缺少视频文件");
       return;
     }
 
@@ -624,14 +625,14 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
 
     // Step 2: fill the title with exact selector first, then legacy fallbacks.
     if (title) {
-      console.log("📝 填写标题:", title);
+      logger.debug("📝 填写标题:", title);
       await uploader.fillTitle(title);
     }
 
     // Step 3: fill description and confirm custom topics from the description box.
     const descriptionText = description ?? content ?? "";
     if (descriptionText || tags.length > 0) {
-      console.log("📝 填写描述:", `${descriptionText.substring(0, 100)}...`);
+      logger.debug("📝 填写描述:", `${descriptionText.substring(0, 100)}...`);
       await uploader.fillDescriptionAndTags(descriptionText, tags);
     }
 
@@ -643,12 +644,12 @@ export async function VideoAlipay(data: SyncData): Promise<void> {
 
     await uploader.publishIfAutoEnabled(data.isAutoPublish, videoUploaded);
 
-    console.log("🎉 支付宝视频发布流程完成");
+    logger.debug("🎉 支付宝视频发布流程完成");
     return;
   } catch (error) {
-    console.error("💥 支付宝视频发布失败:", error);
+    logger.error("💥 支付宝视频发布失败:", error);
     if (error instanceof Error) {
-      console.error("错误详情:", error.stack);
+      logger.error("错误详情:", error.stack);
     }
     return;
   }

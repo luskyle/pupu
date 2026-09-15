@@ -1,8 +1,9 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, SyncData } from "../common";
 
 // 允许发布图文和视频
 export async function DynamicFacebook(data: SyncData) {
-  console.log("Facebook 函数被调用");
+  logger.debug("Facebook 函数被调用");
 
   function waitForElement(selector: string, timeout = 10000): Promise<Element> {
     return new Promise((resolve, reject) => {
@@ -45,15 +46,15 @@ export async function DynamicFacebook(data: SyncData) {
       document.querySelector('div[aria-label="Create a post"]') ||
       document.querySelector('div[aria-label="建立貼文"]');
 
-    console.debug("createPostButton", createPostButton);
+    logger.debug("createPostButton", createPostButton);
     if (!createPostButton) {
-      console.debug("未找到创建帖子按钮");
+      logger.debug("未找到创建帖子按钮");
       return;
     }
 
     // 查找并点击照片/视频或"在想些什么"按钮
     const spans = createPostButton.querySelectorAll("span");
-    console.debug("spans", spans);
+    logger.debug("spans", spans);
     const photoButton = Array.from(spans).find(
       (span) =>
         span.textContent?.includes("照片/视频") ||
@@ -67,7 +68,7 @@ export async function DynamicFacebook(data: SyncData) {
     );
 
     if (!photoButton) {
-      console.error("未找到照片/视频按钮");
+      logger.error("未找到照片/视频按钮");
       return;
     }
     photoButton.click();
@@ -82,11 +83,11 @@ export async function DynamicFacebook(data: SyncData) {
     const editors = document.querySelectorAll(
       'div[contenteditable="true"][role="textbox"][spellcheck="true"][tabindex="0"][data-lexical-editor="true"]',
     );
-    console.debug("qlEditors", editors);
+    logger.debug("qlEditors", editors);
 
     const editor = Array.from(editors).find((el) => {
       const placeholder = el.getAttribute("aria-placeholder");
-      console.debug("ariaPlaceholder", placeholder);
+      logger.debug("ariaPlaceholder", placeholder);
       return (
         placeholder?.includes("在想些什么") ||
         placeholder?.includes("在想些什麼") ||
@@ -96,9 +97,9 @@ export async function DynamicFacebook(data: SyncData) {
       );
     }) as HTMLElement;
 
-    console.debug("qlEditor", editor);
+    logger.debug("qlEditor", editor);
     if (!editor) {
-      console.debug("未找到编辑器元素");
+      logger.debug("未找到编辑器元素");
       return;
     }
 
@@ -120,10 +121,10 @@ export async function DynamicFacebook(data: SyncData) {
       const fileInputs = document.querySelectorAll(
         'input[type="file"][accept^="image/*,image/heif,image/heic,video/*,video/mp4,video/x-m4v,video/x-matroska,.mkv"]',
       );
-      console.debug("fileInputs", fileInputs);
+      logger.debug("fileInputs", fileInputs);
 
       if (!fileInputs || fileInputs.length === 0) {
-        console.debug("未找到文件输入元素");
+        logger.debug("未找到文件输入元素");
         return;
       }
 
@@ -132,14 +133,14 @@ export async function DynamicFacebook(data: SyncData) {
       const dataTransfer = new DataTransfer();
 
       for (const media of mediaFiles) {
-        console.debug("try upload file", media);
+        logger.debug("try upload file", media);
         try {
           const response = await fetch(media.url);
           const arrayBuffer = await response.arrayBuffer();
           const file = new File([arrayBuffer], media.name, { type: media.type });
           dataTransfer.items.add(file);
         } catch (error) {
-          console.error("获取文件失败:", error);
+          logger.error("获取文件失败:", error);
         }
       }
 
@@ -149,7 +150,7 @@ export async function DynamicFacebook(data: SyncData) {
       const inputEvent = new Event("input", { bubbles: true });
       fileInput.dispatchEvent(inputEvent);
 
-      console.debug("文件上传操作完成");
+      logger.debug("文件上传操作完成");
     }
 
     // 等待上传完成
@@ -161,18 +162,18 @@ export async function DynamicFacebook(data: SyncData) {
       document.querySelector('div[aria-label="Post"]') ||
       document.querySelector('div[aria-label="發佈"]');
 
-    console.debug("sendButton", sendButton);
+    logger.debug("sendButton", sendButton);
     if (sendButton) {
       if (data.isAutoPublish) {
-        console.debug("自动发布：点击发布按钮");
+        logger.debug("自动发布：点击发布按钮");
         sendButton.dispatchEvent(new Event("click", { bubbles: true }));
       } else {
-        console.debug("帖子准备就绪，等待手动发布");
+        logger.debug("帖子准备就绪，等待手动发布");
       }
     } else {
-      console.debug("未找到'发送'按钮");
+      logger.debug("未找到'发送'按钮");
     }
   } catch (error) {
-    console.error("FacebookDynamic 发布过程中出错:", error);
+    logger.error("FacebookDynamic 发布过程中出错:", error);
   }
 }

@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, SyncData } from "../common";
 
 // 不支持发布视频
@@ -38,9 +39,9 @@ export async function DynamicToutiaohao(data: SyncData) {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const editor = document.querySelector('div[contenteditable="true"]') as HTMLDivElement;
-    console.debug("qlEditor", editor);
+    logger.debug("qlEditor", editor);
     if (!editor) {
-      console.debug("未找到编辑器元素");
+      logger.debug("未找到编辑器元素");
       return;
     }
 
@@ -55,7 +56,7 @@ export async function DynamicToutiaohao(data: SyncData) {
       for (let i = 0; i < 20; i++) {
         const closeButton = document.querySelector(".image-remove-btn");
         if (!closeButton) break;
-        console.debug("Clicking close button", closeButton);
+        logger.debug("Clicking close button", closeButton);
         (closeButton as HTMLElement).click();
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
@@ -69,65 +70,65 @@ export async function DynamicToutiaohao(data: SyncData) {
       const uploadButton = Array.from(uploadButtons).find((button) => button.textContent?.includes("图片"));
 
       if (uploadButton) {
-        console.debug("Found upload image button", uploadButton);
+        logger.debug("Found upload image button", uploadButton);
         uploadButton.dispatchEvent(new Event("click", { bubbles: true }));
         await new Promise((resolve) => setTimeout(resolve, 3000));
 
         const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-        console.debug("fileInput", fileInput);
+        logger.debug("fileInput", fileInput);
 
         if (!fileInput) {
-          console.debug("未找到文件输入元素");
+          logger.debug("未找到文件输入元素");
           return;
         }
 
         const dataTransfer = new DataTransfer();
         for (const image of images || []) {
           if (!image.type.startsWith("image/")) {
-            console.debug("skip non-image file", image);
+            logger.debug("skip non-image file", image);
             continue;
           }
-          console.debug("try upload file", image);
+          logger.debug("try upload file", image);
           const response = await fetch(image.url);
           const arrayBuffer = await response.arrayBuffer();
           const file = new File([arrayBuffer], image.name, { type: image.type });
           dataTransfer.items.add(file);
-          console.debug("uploaded");
+          logger.debug("uploaded");
         }
 
         if (dataTransfer.files.length > 0) {
           fileInput.files = dataTransfer.files;
           fileInput.dispatchEvent(new Event("change", { bubbles: true }));
           fileInput.dispatchEvent(new Event("input", { bubbles: true }));
-          console.debug("文件上传操作完成");
+          logger.debug("文件上传操作完成");
         }
 
         await new Promise((resolve) => setTimeout(resolve, 5000));
 
         const confirmButton = document.querySelector('button[data-e2e="imageUploadConfirm-btn"]') as HTMLButtonElement;
-        console.debug("confirmButton", confirmButton);
+        logger.debug("confirmButton", confirmButton);
         if (confirmButton) {
-          console.debug("Clicking confirm button for image upload");
+          logger.debug("Clicking confirm button for image upload");
           confirmButton.dispatchEvent(new Event("click", { bubbles: true }));
           await new Promise((resolve) => setTimeout(resolve, 2000));
         } else {
-          console.debug("未找到图片上传确认按钮");
+          logger.debug("未找到图片上传确认按钮");
         }
       }
     }
 
     const publishButton = document.querySelector("button.publish-content") as HTMLButtonElement;
-    console.debug("sendButton", publishButton);
+    logger.debug("sendButton", publishButton);
 
     if (publishButton) {
       if (data.isAutoPublish) {
-        console.debug("sendButton clicked");
+        logger.debug("sendButton clicked");
         publishButton.dispatchEvent(new Event("click", { bubbles: true }));
       }
     } else {
-      console.debug("未找到'发送'按钮");
+      logger.debug("未找到'发送'按钮");
     }
   } catch (error) {
-    console.error("头条号发布过程中出错:", error);
+    logger.error("头条号发布过程中出错:", error);
   }
 }

@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, SyncData } from "../common";
 
 interface WeixinUploadResult {
@@ -40,7 +41,7 @@ export async function DynamicWeixin(data: SyncData) {
     const token = tokenMatch[1];
     const nickname = nicknameMatch ? nicknameMatch[1] : "";
 
-    console.log("提取的数据:", { token, nickname });
+    logger.debug("提取的数据:", { token, nickname });
 
     return { token, nickname };
   }
@@ -316,7 +317,7 @@ export async function DynamicWeixin(data: SyncData) {
     `;
     shadow.appendChild(tip);
 
-    console.log("herf", window.location.href);
+    logger.debug("herf", window.location.href);
 
     // 上传图片
     const uploadedImages: WeixinUploadResult[] = [];
@@ -402,7 +403,7 @@ export async function DynamicWeixin(data: SyncData) {
       }, 3000);
     }
 
-    console.error("发布动态失败:", error);
+    logger.error("发布动态失败:", error);
     throw error;
   }
 }

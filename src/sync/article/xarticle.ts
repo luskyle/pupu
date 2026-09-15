@@ -1,9 +1,10 @@
+import type { ArticleData, SyncData } from "~sync/common";
 /**
  * X 长文发布(experimental,待线上验证)
  *
  * 按策略仅保留 X Articles 页面的 DOM 填充路径,选择器与流程需线上回归验证。
  */
-import type { ArticleData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 export async function ArticleXArticle(data: SyncData) {
   const articleData = data.data as ArticleData;
@@ -125,7 +126,7 @@ export async function ArticleXArticle(data: SyncData) {
       if (!publishButton.disabled) {
         publishButton.dispatchEvent(new Event("click", { bubbles: true }));
       } else {
-        console.debug("X 长文:发布按钮仍不可用");
+        logger.debug("X 长文:发布按钮仍不可用");
       }
       return;
     }
@@ -158,12 +159,12 @@ export async function ArticleXArticle(data: SyncData) {
     } else if (titleElement) {
       fillEditableText(titleElement, articleData.title || "");
     } else {
-      console.debug("X 长文:未找到标题输入框");
+      logger.debug("X 长文:未找到标题输入框");
     }
 
     const bodyElement = findBodyElement(titleElement);
     if (!bodyElement) {
-      console.debug("X 长文:未找到正文编辑器");
+      logger.debug("X 长文:未找到正文编辑器");
       return;
     }
 
@@ -173,6 +174,6 @@ export async function ArticleXArticle(data: SyncData) {
       await clickPublishButton(bodyElement);
     }
   } catch (error) {
-    console.error("X 长文发布出错:", error);
+    logger.error("X 长文发布出错:", error);
   }
 }

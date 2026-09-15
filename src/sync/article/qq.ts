@@ -1,4 +1,5 @@
 import type { ArticleData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 /**
  * 企鹅号文章发布(experimental,待线上验证)
@@ -44,7 +45,7 @@ export async function ArticleQQ(data: SyncData) {
       element.textContent?.includes("单图"),
     ) as HTMLElement | undefined;
     if (!coverRadio) {
-      console.debug("企鹅号:未找到单图封面选项");
+      logger.debug("企鹅号:未找到单图封面选项");
       return;
     }
 
@@ -59,7 +60,7 @@ export async function ArticleQQ(data: SyncData) {
     ) as HTMLElement | null;
     const uploadImageButton = replaceCover || addCover;
     if (!uploadImageButton) {
-      console.debug("企鹅号:未找到封面上传按钮");
+      logger.debug("企鹅号:未找到封面上传按钮");
       return;
     }
 
@@ -70,7 +71,7 @@ export async function ArticleQQ(data: SyncData) {
       element.textContent?.includes("本地上传"),
     ) as HTMLElement | undefined;
     if (!uploadTab) {
-      console.debug("企鹅号:未找到本地上传标签");
+      logger.debug("企鹅号:未找到本地上传标签");
       return;
     }
 
@@ -81,7 +82,7 @@ export async function ArticleQQ(data: SyncData) {
       'input[type="file"][accept="image/png,image/jpg,image/jpeg,image/heic,image/heif"]',
     ) as HTMLInputElement | null;
     if (!fileInput) {
-      console.debug("企鹅号:未找到封面文件输入框");
+      logger.debug("企鹅号:未找到封面文件输入框");
       return;
     }
 
@@ -131,7 +132,7 @@ export async function ArticleQQ(data: SyncData) {
 
     const editor = document.querySelector('div.ProseMirror[contenteditable="true"]') as HTMLElement | null;
     if (!editor) {
-      console.debug("企鹅号:未找到编辑器元素");
+      logger.debug("企鹅号:未找到编辑器元素");
       return;
     }
 
@@ -155,9 +156,9 @@ export async function ArticleQQ(data: SyncData) {
     if (publishButton && data.isAutoPublish === true) {
       publishButton.click();
     } else if (!publishButton) {
-      console.debug("企鹅号:未找到发布按钮");
+      logger.debug("企鹅号:未找到发布按钮");
     }
   } catch (error) {
-    console.error("企鹅号文章发布出错:", error);
+    logger.error("企鹅号文章发布出错:", error);
   }
 }

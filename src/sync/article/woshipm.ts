@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { ArticleData, FileData, SyncData } from "../common";
 
 export async function ArticleWoshipm(data: SyncData) {
@@ -51,7 +52,7 @@ export async function ArticleWoshipm(data: SyncData) {
       const blob = await response.blob();
       return new File([blob], fileData.name, { type: fileData.type || blob.type || "application/octet-stream" });
     } catch (error) {
-      console.warn("Woshipm cover file fetch failed:", error);
+      logger.warn("Woshipm cover file fetch failed:", error);
       return null;
     }
   }
@@ -65,7 +66,7 @@ export async function ArticleWoshipm(data: SyncData) {
   async function uploadInlineImage(fileData: FileData): Promise<string | null> {
     const token = getCookie("__jl");
     if (!token) {
-      console.debug("Woshipm inline image token not found");
+      logger.debug("Woshipm inline image token not found");
       return null;
     }
     const file = await createFile(fileData);
@@ -97,7 +98,7 @@ export async function ArticleWoshipm(data: SyncData) {
         const uploadedUrl = await uploadInlineImage(fileData);
         if (uploadedUrl) image.setAttribute("src", uploadedUrl);
       } catch (error) {
-        console.warn("Woshipm inline image upload failed:", error);
+        logger.warn("Woshipm inline image upload failed:", error);
       }
     }
     return documentFragment.body.innerHTML;
@@ -123,7 +124,7 @@ export async function ArticleWoshipm(data: SyncData) {
     try {
       return iframe.contentDocument?.body || null;
     } catch (error) {
-      console.debug("Woshipm iframe editor is not accessible:", error);
+      logger.debug("Woshipm iframe editor is not accessible:", error);
       return null;
     }
   }
@@ -143,7 +144,7 @@ export async function ArticleWoshipm(data: SyncData) {
   function tickCheckbox(selector: string): void {
     const checkbox = document.querySelector(selector) as HTMLInputElement | null;
     if (!checkbox) {
-      console.debug(`Woshipm checkbox not found: ${selector}`);
+      logger.debug(`Woshipm checkbox not found: ${selector}`);
       return;
     }
 
@@ -155,7 +156,7 @@ export async function ArticleWoshipm(data: SyncData) {
   async function uploadCover(cover?: FileData): Promise<boolean> {
     if (!cover) return true;
     if (!cover.url) {
-      console.debug("Woshipm cover data has no URL");
+      logger.debug("Woshipm cover data has no URL");
       return false;
     }
 
@@ -163,7 +164,7 @@ export async function ArticleWoshipm(data: SyncData) {
     const fileInput = (document.querySelector(selector) ||
       (await waitForElementOptional(selector, 3000))) as HTMLInputElement | null;
     if (!fileInput) {
-      console.debug("Woshipm cover upload input not found");
+      logger.debug("Woshipm cover upload input not found");
       return false;
     }
 
@@ -183,7 +184,7 @@ export async function ArticleWoshipm(data: SyncData) {
     ].filter(([, filled]) => !filled);
 
     for (const [field] of missing) {
-      console.error(`Woshipm required field ${field} not filled; skipping auto-publish to avoid an incomplete article`);
+      logger.error(`Woshipm required field ${field} not filled; skipping auto-publish to avoid an incomplete article`);
     }
 
     return missing.length === 0;
@@ -198,7 +199,7 @@ export async function ArticleWoshipm(data: SyncData) {
       "div.button_publish.item.editor-btn.editor-main-btn",
     ) as HTMLElement | null;
     if (!publishButton) {
-      console.debug("Woshipm publish button not found");
+      logger.debug("Woshipm publish button not found");
       return;
     }
 
@@ -229,10 +230,10 @@ export async function ArticleWoshipm(data: SyncData) {
         dispatchInputEvents(titleEl);
         required.title = true;
       } catch (error) {
-        console.error("Woshipm title write failed:", error);
+        logger.error("Woshipm title write failed:", error);
       }
     } else {
-      console.debug("Woshipm title input not found");
+      logger.debug("Woshipm title input not found");
     }
 
     const editor =
@@ -245,10 +246,10 @@ export async function ArticleWoshipm(data: SyncData) {
         pasteHtml(editor, processedHtml);
         required.body = true;
       } catch (error) {
-        console.error("Woshipm body write failed:", error);
+        logger.error("Woshipm body write failed:", error);
       }
     } else {
-      console.debug("Woshipm body editor not found");
+      logger.debug("Woshipm body editor not found");
     }
 
     tickCheckbox('input[type="checkbox"][name="copyright"]');
@@ -257,11 +258,11 @@ export async function ArticleWoshipm(data: SyncData) {
     try {
       required.cover = await uploadCover(cover);
     } catch (error) {
-      console.error("Woshipm cover upload failed:", error);
+      logger.error("Woshipm cover upload failed:", error);
       required.cover = false;
     }
     clickPublishIfRequested(required);
   } catch (error) {
-    console.error("人人都是产品经理文章发布失败:", error);
+    logger.error("人人都是产品经理文章发布失败:", error);
   }
 }

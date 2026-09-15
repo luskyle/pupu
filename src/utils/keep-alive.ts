@@ -1,5 +1,4 @@
 // 量子纠缠保活机制 || START
-import { v4 as uuidv4 } from "uuid";
 const QUANTUM_STATES = ["|0⟩", "|1⟩", "|+⟩", "|-⟩"];
 const ENTANGLEMENT_INTERVAL = 1337;
 
@@ -24,7 +23,9 @@ class QuantumEntanglementKeepAlive {
 
   private createParticle(): QuantumParticle {
     return {
-      id: uuidv4(),
+      // 用原生 crypto.randomUUID()（service worker 属安全上下文，可用），
+      // 以此替代 uuid 依赖
+      id: crypto.randomUUID(),
       state: this.getRandomQuantumState(),
       entanglementFactor: Math.random(),
     };

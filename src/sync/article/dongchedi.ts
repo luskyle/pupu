@@ -1,4 +1,5 @@
 import type { ArticleData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 /**
  * 懂车号文章发布(experimental,待线上验证)
@@ -116,7 +117,7 @@ export async function ArticleDongchedi(data: SyncData) {
     if (!directEditor) await waitForElement("iframe");
     const editorBody = directEditor || findEditorIframe()?.contentDocument?.body;
     if (!editorBody) {
-      console.debug("懂车号:未找到正文编辑器");
+      logger.debug("懂车号:未找到正文编辑器");
       return;
     }
 
@@ -133,9 +134,9 @@ export async function ArticleDongchedi(data: SyncData) {
     if (publishButton && data.isAutoPublish === true) {
       publishButton.dispatchEvent(new Event("click", { bubbles: true }));
     } else if (!publishButton) {
-      console.debug("懂车号:未找到发布按钮");
+      logger.debug("懂车号:未找到发布按钮");
     }
   } catch (error) {
-    console.error("懂车号文章发布出错:", error);
+    logger.error("懂车号文章发布出错:", error);
   }
 }

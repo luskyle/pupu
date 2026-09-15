@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import TurndownService from "turndown";
 import InfoModal from "~components/Sync/Modals/InfoModal";
 import type { FileData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 import { renderMarkdownSafely, sanitizeHtml } from "~utils/sanitize";
 
 const ArticleTab: React.FC = () => {
@@ -89,7 +90,7 @@ const ArticleTab: React.FC = () => {
       const window = await chrome.windows.getCurrent({ populate: true });
       await chrome.sidePanel.open({ windowId: window.id });
     } catch (error) {
-      console.error("打开侧边栏发布时出错:", error);
+      logger.error("打开侧边栏发布时出错:", error);
     }
   };
 
@@ -126,7 +127,7 @@ const ArticleTab: React.FC = () => {
       setTitle((prev) => prev || mdTitle);
       setDigest((prev) => prev || mdDigest);
     } catch (error) {
-      console.error("导入 Markdown 失败:", error);
+      logger.error("导入 Markdown 失败:", error);
     }
   };
 

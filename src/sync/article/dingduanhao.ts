@@ -1,4 +1,5 @@
 import type { ArticleData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 /**
  * 顶端号文章发布(experimental,待线上验证)
@@ -50,7 +51,7 @@ export async function ArticleDingduanhao(data: SyncData) {
 
     const fileInput = document.querySelector("input#upload") as HTMLInputElement | null;
     if (!fileInput) {
-      console.debug("顶端号:未找到封面上传元素");
+      logger.debug("顶端号:未找到封面上传元素");
       return false;
     }
 
@@ -96,7 +97,7 @@ export async function ArticleDingduanhao(data: SyncData) {
 
     const editor = document.querySelector('div[contenteditable="true"]') as HTMLElement | null;
     if (!editor) {
-      console.debug("顶端号:未找到编辑器元素");
+      logger.debug("顶端号:未找到编辑器元素");
       return;
     }
 
@@ -120,9 +121,9 @@ export async function ArticleDingduanhao(data: SyncData) {
     if (publishButton && data.isAutoPublish === true) {
       publishButton.dispatchEvent(new Event("click", { bubbles: true }));
     } else if (!publishButton) {
-      console.debug("顶端号:未找到发布按钮");
+      logger.debug("顶端号:未找到发布按钮");
     }
   } catch (error) {
-    console.error("顶端号文章发布出错:", error);
+    logger.error("顶端号文章发布出错:", error);
   }
 }

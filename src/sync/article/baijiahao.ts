@@ -1,4 +1,5 @@
 import type { ArticleData, FileData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 interface CoverResult {
   originSrc: string;
@@ -45,7 +46,7 @@ export async function ArticleBaijiahao(data: SyncData) {
       }
       return null;
     } catch (error) {
-      console.error("上传图片失败:", error);
+      logger.error("上传图片失败:", error);
       return null;
     }
   }
@@ -87,7 +88,7 @@ export async function ArticleBaijiahao(data: SyncData) {
       }
       throw new Error(result.errmsg || "裁剪图片失败");
     } catch (error) {
-      console.error("裁剪图片失败:", error);
+      logger.error("裁剪图片失败:", error);
       return null;
     }
   }
@@ -98,7 +99,7 @@ export async function ArticleBaijiahao(data: SyncData) {
     const doc = parser.parseFromString(htmlContent, "text/html");
     const images = Array.from(doc.getElementsByTagName("img"));
 
-    console.log(`处理文章图片，共 ${images.length} 张`);
+    logger.debug(`处理文章图片，共 ${images.length} 张`);
 
     const uploadPromises = images.map(async (img) => {
       const src = img.getAttribute("src");
@@ -111,7 +112,7 @@ export async function ArticleBaijiahao(data: SyncData) {
       if (newUrl) {
         img.setAttribute("src", newUrl);
       } else {
-        console.error(`图片处理失败: ${src}`);
+        logger.error(`图片处理失败: ${src}`);
       }
     });
 
@@ -153,7 +154,7 @@ export async function ArticleBaijiahao(data: SyncData) {
         });
       };
       img.onerror = () => {
-        console.error("获取图片尺寸失败:", url);
+        logger.error("获取图片尺寸失败:", url);
         resolve(null);
       };
       img.src = url;
@@ -162,7 +163,7 @@ export async function ArticleBaijiahao(data: SyncData) {
 
   // 发布文章
   async function publishArticle(articleData: ArticleData): Promise<string | null> {
-    console.log("开始发布文章:", articleData.title);
+    logger.debug("开始发布文章:", articleData.title);
 
     if (articleData.images) {
       articleData.htmlContent = await processContent(articleData.htmlContent, articleData.images);
@@ -172,7 +173,7 @@ export async function ArticleBaijiahao(data: SyncData) {
     if (articleData.cover) {
       coverResults = await processCover(articleData.cover);
       if (!coverResults) {
-        console.error("封面处理失败");
+        logger.error("封面处理失败");
         return null;
       }
     }
@@ -258,13 +259,13 @@ export async function ArticleBaijiahao(data: SyncData) {
 
       const result = await response.json();
       if (result.errno === 0) {
-        console.log("文章发布成功，ID:", result.ret?.id);
+        logger.debug("文章发布成功，ID:", result.ret?.id);
         return result.ret?.id;
       }
-      console.error("发布失败:", result.message);
+      logger.error("发布失败:", result.message);
       return null;
     } catch (error) {
-      console.error("发布过程出错:", error);
+      logger.error("发布过程出错:", error);
       return null;
     }
   }
@@ -355,7 +356,7 @@ export async function ArticleBaijiahao(data: SyncData) {
       }, 3000);
     }
 
-    console.error("发布文章失败:", error);
+    logger.error("发布文章失败:", error);
     throw error;
   }
 }

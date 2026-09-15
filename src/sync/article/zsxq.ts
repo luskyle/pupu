@@ -1,4 +1,5 @@
 import type { ArticleData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 /**
  * 知识星球文章发布(experimental,待线上验证)
@@ -50,7 +51,7 @@ export async function ArticleZsxq(data: SyncData) {
 
     const editor = document.querySelector('div[contenteditable="true"]') as HTMLElement | null;
     if (!editor) {
-      console.debug("知识星球:未找到编辑器元素");
+      logger.debug("知识星球:未找到编辑器元素");
       return;
     }
 
@@ -72,9 +73,9 @@ export async function ArticleZsxq(data: SyncData) {
     if (publishButton && data.isAutoPublish === true) {
       publishButton.dispatchEvent(new Event("click", { bubbles: true }));
     } else if (!publishButton) {
-      console.debug("知识星球:未找到发布按钮");
+      logger.debug("知识星球:未找到发布按钮");
     }
   } catch (error) {
-    console.error("知识星球文章发布出错:", error);
+    logger.error("知识星球文章发布出错:", error);
   }
 }

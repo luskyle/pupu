@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, SyncData } from "../common";
 
 export async function DynamicX(data: SyncData) {
@@ -39,7 +40,7 @@ export async function DynamicX(data: SyncData) {
     // 获取编辑器元素
     const editor = document.querySelector('div[data-contents="true"]');
     if (!editor) {
-      console.debug("未找到编辑器元素");
+      logger.debug("未找到编辑器元素");
       return;
     }
 
@@ -63,7 +64,7 @@ export async function DynamicX(data: SyncData) {
       // 查找文件输入元素
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
       if (!fileInput) {
-        console.debug("未找到文件输入元素");
+        logger.debug("未找到文件输入元素");
         return;
       }
 
@@ -73,18 +74,18 @@ export async function DynamicX(data: SyncData) {
       // 上传文件（最多4个）
       for (let i = 0; i < mediaFiles.length; i++) {
         if (i >= 4) {
-          console.debug("X 最多支持 4 张 ，跳过");
+          logger.debug("X 最多支持 4 张 ，跳过");
           break;
         }
 
         const fileInfo = mediaFiles[i];
-        console.debug("try upload file", fileInfo);
+        logger.debug("try upload file", fileInfo);
 
         // 获取文件内容
         const response = await fetch(fileInfo.url);
         const arrayBuffer = await response.arrayBuffer();
         const file = new File([arrayBuffer], fileInfo.name, { type: fileInfo.type });
-        console.log("file", file);
+        logger.debug("file", file);
         dataTransfer.items.add(file);
       }
 
@@ -99,7 +100,7 @@ export async function DynamicX(data: SyncData) {
       const inputEvent = new Event("input", { bubbles: true });
       fileInput.dispatchEvent(inputEvent);
 
-      console.debug("文件上传操作完成");
+      logger.debug("文件上传操作完成");
     }
 
     // 判断是否自动发布
@@ -117,7 +118,7 @@ export async function DynamicX(data: SyncData) {
         button.textContent?.includes("發佈"),
     );
 
-    console.debug("sendButton", publishButton);
+    logger.debug("sendButton", publishButton);
 
     if (publishButton) {
       // 如果找到发布按钮，检查是否可点击
@@ -125,21 +126,21 @@ export async function DynamicX(data: SyncData) {
       while (publishButton.disabled && attempts < 10) {
         await new Promise((resolve) => setTimeout(resolve, 3000));
         attempts++;
-        console.debug(`Waiting for send button to be enabled. Attempt ${attempts}/10`);
+        logger.debug(`Waiting for send button to be enabled. Attempt ${attempts}/10`);
       }
 
       if (publishButton.disabled) {
-        console.debug("Send button is still disabled after 10 attempts");
+        logger.debug("Send button is still disabled after 10 attempts");
         return;
       }
 
-      console.debug("sendButton clicked");
+      logger.debug("sendButton clicked");
       // 点击发布按钮
       const clickEvent = new Event("click", { bubbles: true });
       publishButton.dispatchEvent(clickEvent);
     } else {
       // 如果没找到发布按钮，尝试使用快捷键发布
-      console.debug("未找到'发送'按钮");
+      logger.debug("未找到'发送'按钮");
       const keyEvent = new KeyboardEvent("keydown", {
         bubbles: true,
         cancelable: true,
@@ -154,9 +155,9 @@ export async function DynamicX(data: SyncData) {
       // 再次聚焦编辑器并发送快捷键
       (editor as HTMLElement).focus();
       editor.dispatchEvent(keyEvent);
-      console.debug("CMD+Enter 事件触发完成");
+      logger.debug("CMD+Enter 事件触发完成");
     }
   } catch (error) {
-    console.error("X 发布过程中出错:", error);
+    logger.error("X 发布过程中出错:", error);
   }
 }

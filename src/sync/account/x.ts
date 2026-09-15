@@ -1,4 +1,5 @@
 import type { AccountInfo } from "~sync/common";
+import { logger } from "~utils/logger";
 
 export async function getXAccountInfo(): Promise<AccountInfo> {
   // 直接使用fetch API获取 X 页面HTML
@@ -31,7 +32,7 @@ export async function getXAccountInfo(): Promise<AccountInfo> {
   try {
     initialState = JSON.parse(jsonStr);
   } catch (parseError) {
-    console.error("解析 X __INITIAL_STATE__ 数据失败:", parseError);
+    logger.error("解析 X __INITIAL_STATE__ 数据失败:", parseError);
     // 清理可能的JSON问题
     const cleanedJsonStr = jsonStr
       .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // 移除控制字符

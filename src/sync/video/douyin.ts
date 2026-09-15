@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { FileData, SyncData, VideoData } from "../common";
 
 export async function VideoDouyin(data: SyncData) {
@@ -59,7 +60,7 @@ export async function VideoDouyin(data: SyncData) {
     const inputEvent = new Event("input", { bubbles: true });
     fileInput.dispatchEvent(inputEvent);
 
-    console.log("视频上传事件已触发");
+    logger.debug("视频上传事件已触发");
   }
 
   // 按视频宽高比挑选封面(注入函数无法 import 共享工具,内联实现):横版优先横封面、竖版优先竖封面,回退 cover
@@ -87,24 +88,24 @@ export async function VideoDouyin(data: SyncData) {
   }
 
   async function uploadCover(cover: FileData): Promise<void> {
-    console.log("尝试上传封面", cover);
+    logger.debug("尝试上传封面", cover);
     const coverUploadContainer = await waitForElement("div.content-upload-new");
-    console.log("封面上传容器", coverUploadContainer);
+    logger.debug("封面上传容器", coverUploadContainer);
     if (!coverUploadContainer) return;
 
     const coverUploadButton = coverUploadContainer.firstChild?.firstChild?.firstChild as HTMLElement;
-    console.log("封面上传按钮", coverUploadButton);
+    logger.debug("封面上传按钮", coverUploadButton);
     if (!coverUploadButton) return;
 
     coverUploadButton.click();
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const fileInput = (await waitForElement('input[type="file"].semi-upload-hidden-input')) as HTMLInputElement;
-    console.log("封面文件输入框", fileInput);
+    logger.debug("封面文件输入框", fileInput);
     if (!fileInput) return;
 
     if (!cover.type?.includes("image/")) {
-      console.log("提供的封面文件不是图片类型", cover);
+      logger.debug("提供的封面文件不是图片类型", cover);
       return;
     }
 
@@ -122,13 +123,13 @@ export async function VideoDouyin(data: SyncData) {
     const inputEvent = new Event("input", { bubbles: true });
     fileInput.dispatchEvent(inputEvent);
 
-    console.log("封面文件上传操作已触发");
+    logger.debug("封面文件上传操作已触发");
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const doneButtons = document.querySelectorAll("button.semi-button.semi-button-primary.semi-button-light");
-    console.log("完成按钮列表", doneButtons);
+    logger.debug("完成按钮列表", doneButtons);
     const doneButton = Array.from(doneButtons).find((button) => button.textContent === "完成");
-    console.log("完成按钮", doneButton);
+    logger.debug("完成按钮", doneButton);
     if (doneButton) {
       (doneButton as HTMLElement).click();
     }
@@ -142,10 +143,10 @@ export async function VideoDouyin(data: SyncData) {
       const response = await fetch(video.url);
       const blob = await response.blob();
       const videoFile = new File([blob], video.name, { type: video.type });
-      console.log(`视频文件: ${videoFile.name} ${videoFile.type} ${videoFile.size}`);
+      logger.debug(`视频文件: ${videoFile.name} ${videoFile.type} ${videoFile.size}`);
 
       await uploadVideo(videoFile);
-      console.log("视频上传已初始化");
+      logger.debug("视频上传已初始化");
     }
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -155,7 +156,7 @@ export async function VideoDouyin(data: SyncData) {
     if (titleInput) {
       titleInput.value = title || content.slice(0, 20);
       titleInput.dispatchEvent(new Event("input", { bubbles: true }));
-      console.log("标题已填写:", titleInput.value);
+      logger.debug("标题已填写:", titleInput.value);
     }
 
     // 填写内容和标签
@@ -178,7 +179,7 @@ export async function VideoDouyin(data: SyncData) {
       if (tags && tags.length > 0) {
         const tagsToSync = tags.slice(0, 5);
         for (const tag of tagsToSync) {
-          console.log("添加标签:", tag);
+          logger.debug("添加标签:", tag);
           contentEditor.focus();
 
           const pasteEvent = new ClipboardEvent("paste", {
@@ -206,20 +207,20 @@ export async function VideoDouyin(data: SyncData) {
     if (scheduledPublishTime) {
       await new Promise((resolve) => setTimeout(resolve, 2000));
       const labels = document.querySelectorAll("label");
-      console.log("labels -->", labels);
+      logger.debug("labels -->", labels);
       const scheduledLabel = Array.from(labels).find((label) => label.textContent?.includes("定时发布"));
-      console.log("scheduledLabel -->", scheduledLabel);
+      logger.debug("scheduledLabel -->", scheduledLabel);
       if (scheduledLabel) {
         (scheduledLabel as HTMLElement).click();
         await new Promise((resolve) => setTimeout(resolve, 500));
 
         const publishTimeInput = document.querySelector('input[format="yyyy-MM-dd HH:mm"]') as HTMLInputElement;
-        console.log("publishTimeInput -->", publishTimeInput);
+        logger.debug("publishTimeInput -->", publishTimeInput);
         if (publishTimeInput) {
           publishTimeInput.value = formatDate(new Date(scheduledPublishTime));
           publishTimeInput.dispatchEvent(new Event("input", { bubbles: true }));
           publishTimeInput.dispatchEvent(new Event("change", { bubbles: true }));
-          console.log("定时发布时间已设置:", publishTimeInput.value);
+          logger.debug("定时发布时间已设置:", publishTimeInput.value);
         }
       }
     }
@@ -230,13 +231,13 @@ export async function VideoDouyin(data: SyncData) {
       const publishButton = Array.from(buttons).find((button) => button.textContent === "发布");
 
       if (publishButton) {
-        console.log("点击发布按钮");
+        logger.debug("点击发布按钮");
         publishButton.click();
       } else {
-        console.log('未找到"发布"按钮');
+        logger.debug('未找到"发布"按钮');
       }
     }
   } catch (error) {
-    console.error("DouyinVideo 发布过程中出错:", error);
+    logger.error("DouyinVideo 发布过程中出错:", error);
   }
 }

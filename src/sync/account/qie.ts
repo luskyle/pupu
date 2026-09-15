@@ -1,4 +1,5 @@
 import type { AccountInfo } from "~sync/common";
+import { logger } from "~utils/logger";
 
 export async function getQiEAccountInfo(): Promise<AccountInfo> {
   try {
@@ -35,7 +36,7 @@ export async function getQiEAccountInfo(): Promise<AccountInfo> {
 
     return result;
   } catch (error) {
-    console.error("获取企鹅号账户信息失败:", error);
+    logger.error("获取企鹅号账户信息失败:", error);
 
     // 如果API调用失败，尝试从页面获取基本信息
     try {
@@ -55,7 +56,7 @@ export async function getQiEAccountInfo(): Promise<AccountInfo> {
         return result;
       }
     } catch (pageError) {
-      console.error("从页面获取企鹅号信息也失败:", pageError);
+      logger.error("从页面获取企鹅号信息也失败:", pageError);
     }
 
     return null;

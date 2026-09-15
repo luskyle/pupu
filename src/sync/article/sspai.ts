@@ -1,7 +1,8 @@
 import type { ArticleData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 export async function ArticleSSPai(data: SyncData) {
-  console.debug("ArticleSSPai", data);
+  logger.debug("ArticleSSPai", data);
 
   function waitForElement(selector: string, timeout = 10000): Promise<Element> {
     return new Promise((resolve, reject) => {
@@ -45,11 +46,11 @@ export async function ArticleSSPai(data: SyncData) {
         return element;
       }
 
-      console.log(`未找到包含文本 "${text}" 的元素，尝试次数：${i + 1}`);
+      logger.debug(`未找到包含文本 "${text}" 的元素，尝试次数：${i + 1}`);
       await new Promise((resolve) => setTimeout(resolve, retryInterval));
     }
 
-    console.error(`在 ${maxRetries} 次尝试后未找到包含文本 "${text}" 的元素`);
+    logger.error(`在 ${maxRetries} 次尝试后未找到包含文本 "${text}" 的元素`);
     return null;
   }
 
@@ -59,21 +60,21 @@ export async function ArticleSSPai(data: SyncData) {
   async function uploadCoverImage() {
     // 检查是否有封面图片
     if (!articleData.cover) {
-      console.debug("没有封面图片需要上传");
+      logger.debug("没有封面图片需要上传");
       return true;
     }
 
     try {
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
       if (!fileInput) {
-        console.debug("未找到文件上传输入框");
+        logger.debug("未找到文件上传输入框");
         return false;
       }
 
       const dataTransfer = new DataTransfer();
       const coverImage = articleData.cover;
 
-      console.debug("开始上传文件", coverImage);
+      logger.debug("开始上传文件", coverImage);
 
       // 从blob URL获取文件内容并创建File对象
       const response = await fetch(coverImage.url);
@@ -82,14 +83,14 @@ export async function ArticleSSPai(data: SyncData) {
 
       // 添加文件到DataTransfer对象
       dataTransfer.items.add(file);
-      console.debug("文件已准备");
+      logger.debug("文件已准备");
 
       if (dataTransfer.files.length > 0) {
         // 设置文件输入框的files属性并触发change事件
         fileInput.files = dataTransfer.files;
         const changeEvent = new Event("change", { bubbles: true });
         fileInput.dispatchEvent(changeEvent);
-        console.debug("文件上传操作完成");
+        logger.debug("文件上传操作完成");
       }
 
       await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -105,7 +106,7 @@ export async function ArticleSSPai(data: SyncData) {
 
       return true;
     } catch (error) {
-      console.error("上传封面图片失败:", error);
+      logger.error("上传封面图片失败:", error);
       return false;
     }
   }
@@ -120,18 +121,18 @@ export async function ArticleSSPai(data: SyncData) {
     titleTextarea.value = articleData.title?.slice(0, 100) || "";
     titleTextarea.dispatchEvent(new Event("input", { bubbles: true }));
     titleTextarea.dispatchEvent(new Event("change", { bubbles: true }));
-    console.debug("titleTextarea", titleTextarea, titleTextarea.value);
+    logger.debug("titleTextarea", titleTextarea, titleTextarea.value);
 
     // 等待编辑器加载
     const editorDiv = (await waitForElement('div[contenteditable="true"]')) as HTMLDivElement;
     if (!editorDiv) {
-      console.debug("未找到编辑器元素");
+      logger.debug("未找到编辑器元素");
       return false;
     }
 
     const editor = editorDiv.querySelector("p") as HTMLParagraphElement;
     if (!editor) {
-      console.debug("未找到编辑器元素");
+      logger.debug("未找到编辑器元素");
       return false;
     }
 
@@ -173,14 +174,14 @@ export async function ArticleSSPai(data: SyncData) {
 
     const previewButton =
       document.querySelector("a.editor-extra-button-preview") || (await findElementByText("button", "预览"));
-    console.debug("previewButton", previewButton);
+    logger.debug("previewButton", previewButton);
 
     if (previewButton) {
-      console.debug("previewButton clicked");
+      logger.debug("previewButton clicked");
       const clickEvent = new Event("click", { bubbles: true });
       previewButton.dispatchEvent(clickEvent);
     } else {
-      console.debug('未找到"预览"按钮');
+      logger.debug('未找到"预览"按钮');
     }
   }
 
@@ -196,6 +197,6 @@ export async function ArticleSSPai(data: SyncData) {
 
     await publishArticle();
   } catch (error) {
-    console.error("发布文章失败:", error);
+    logger.error("发布文章失败:", error);
   }
 }

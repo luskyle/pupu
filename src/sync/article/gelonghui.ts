@@ -1,4 +1,5 @@
 import type { ArticleData, FileData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 /**
  * Gelonghui article publishing (experimental).
@@ -101,7 +102,7 @@ export async function ArticleGeLongHui(data: SyncData) {
       pasteEvent.clipboardData?.setData("text/html", html);
       editor.dispatchEvent(pasteEvent);
     } catch (error) {
-      console.debug("Gelonghui synthetic paste failed; using direct HTML write", error);
+      logger.debug("Gelonghui synthetic paste failed; using direct HTML write", error);
     }
 
     // Some editors ignore synthetic paste events, so write directly and then notify the framework.
@@ -119,7 +120,7 @@ export async function ArticleGeLongHui(data: SyncData) {
       const blob = await response.blob();
       return new File([blob], fileData.name, { type: fileData.type || blob.type || "application/octet-stream" });
     } catch (error) {
-      console.warn(`Gelonghui ${label} file fetch failed:`, error);
+      logger.warn(`Gelonghui ${label} file fetch failed:`, error);
       return null;
     }
   }
@@ -146,7 +147,7 @@ export async function ArticleGeLongHui(data: SyncData) {
       const result = (await response.json()) as ImageUploadResult;
       return result?.result || null;
     } catch (error) {
-      console.warn("Gelonghui inline image upload failed; keeping original inline image URL", error);
+      logger.warn("Gelonghui inline image upload failed; keeping original inline image URL", error);
       return null;
     }
   }
@@ -198,7 +199,7 @@ export async function ArticleGeLongHui(data: SyncData) {
     for (const imageElement of imageElements) {
       const src = imageElement.getAttribute("src")?.trim() || "";
       if (!src) {
-        console.debug("Gelonghui inline image src is empty");
+        logger.debug("Gelonghui inline image src is empty");
         isFullyPrepared = false;
         continue;
       }
@@ -207,7 +208,7 @@ export async function ArticleGeLongHui(data: SyncData) {
 
       const imageData = images.find((image) => image.url === src);
       if (!imageData) {
-        console.debug("Gelonghui inline image data not found; unable to rewrite non-public image URL");
+        logger.debug("Gelonghui inline image data not found; unable to rewrite non-public image URL");
         isFullyPrepared = false;
         continue;
       }
@@ -232,14 +233,14 @@ export async function ArticleGeLongHui(data: SyncData) {
   async function uploadCover(cover?: FileData): Promise<boolean> {
     if (!cover) return true;
     if (!cover.url) {
-      console.debug("Gelonghui cover data has no URL");
+      logger.debug("Gelonghui cover data has no URL");
       return false;
     }
 
     const fileInput = (document.querySelector("input#cover-file") ||
       (await waitForElementOptional("input#cover-file", 3000))) as HTMLInputElement | null;
     if (!fileInput) {
-      console.debug("Gelonghui cover upload input not found");
+      logger.debug("Gelonghui cover upload input not found");
       return false;
     }
 
@@ -259,18 +260,18 @@ export async function ArticleGeLongHui(data: SyncData) {
   function canAutoPublish(required: RequiredFields): boolean {
     let canPublish = true;
     if (!required.title) {
-      console.error("Gelonghui required field title not filled; skipping auto-publish");
+      logger.error("Gelonghui required field title not filled; skipping auto-publish");
       canPublish = false;
     }
     if (!required.body) {
-      console.error("Gelonghui required field body not filled; skipping auto-publish");
+      logger.error("Gelonghui required field body not filled; skipping auto-publish");
       canPublish = false;
     } else if (!required.bodyFullyPrepared) {
-      console.error("Gelonghui inline image upload failed; skipping auto-publish to avoid broken images");
+      logger.error("Gelonghui inline image upload failed; skipping auto-publish to avoid broken images");
       canPublish = false;
     }
     if (!required.cover) {
-      console.error("Gelonghui required field cover not filled; skipping auto-publish");
+      logger.error("Gelonghui required field cover not filled; skipping auto-publish");
       canPublish = false;
     }
     return canPublish;
@@ -284,7 +285,7 @@ export async function ArticleGeLongHui(data: SyncData) {
       "div.button_publish.item.editor-btn.editor-main-btn",
     ) as HTMLElement | null;
     if (!publishButton) {
-      console.debug("Gelonghui publish button not found");
+      logger.debug("Gelonghui publish button not found");
       return;
     }
 
@@ -309,17 +310,17 @@ export async function ArticleGeLongHui(data: SyncData) {
         setControlValue(titleInput, title);
         required.title = true;
       } catch (error) {
-        console.error("Gelonghui title write failed:", error);
+        logger.error("Gelonghui title write failed:", error);
       }
     } else {
-      console.debug("Gelonghui title input not found or title is empty");
+      logger.debug("Gelonghui title input not found or title is empty");
     }
 
     const summaryTextarea = document.querySelector("textarea#doc-summary") as HTMLTextAreaElement | null;
     if (summaryTextarea) {
       setControlValue(summaryTextarea, articleData.digest?.slice(0, 150) || "");
     } else {
-      console.debug("Gelonghui summary textarea not found");
+      logger.debug("Gelonghui summary textarea not found");
     }
 
     const editor = document.querySelector('div.simditor-body[contenteditable="true"]') as HTMLElement | null;
@@ -331,23 +332,23 @@ export async function ArticleGeLongHui(data: SyncData) {
         if (required.body) {
           required.bodyFullyPrepared = rewriteResult.isFullyPrepared;
         } else {
-          console.error("Gelonghui body editor remained empty after write; skipping auto-publish");
+          logger.error("Gelonghui body editor remained empty after write; skipping auto-publish");
         }
       } catch (error) {
-        console.error("Gelonghui body write failed:", error);
+        logger.error("Gelonghui body write failed:", error);
       }
     } else {
-      console.debug("Gelonghui body editor not found or content is empty");
+      logger.debug("Gelonghui body editor not found or content is empty");
     }
 
     try {
       required.cover = await uploadCover(articleData.cover);
     } catch (error) {
-      console.error("Gelonghui cover upload failed:", error);
+      logger.error("Gelonghui cover upload failed:", error);
       required.cover = false;
     }
     clickPublishIfRequested(required);
   } catch (error) {
-    console.error("Gelonghui article publish failed:", error);
+    logger.error("Gelonghui article publish failed:", error);
   }
 }

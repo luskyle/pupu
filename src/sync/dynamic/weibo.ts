@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, SyncData } from "../common";
 
 export async function DynamicWeibo(data: SyncData) {
@@ -88,14 +89,14 @@ export async function DynamicWeibo(data: SyncData) {
         const sendReady = !!sendButton && !sendButton.disabled;
 
         if ((loadingElements.length === 0 && allThumbsLoaded) || sendReady) {
-          console.log("所有图片上传已完成。");
+          logger.debug("所有图片上传已完成。");
           resolve();
           return;
         }
 
         // 检查是否超时（超时后继续尝试发布，不卡死流程）
         if (Date.now() - startTime > timeout) {
-          console.warn(`图片上传在 ${timeout}ms 内未完成，继续尝试发布`);
+          logger.warn(`图片上传在 ${timeout}ms 内未完成，继续尝试发布`);
           resolve();
           return;
         }
@@ -113,7 +114,7 @@ export async function DynamicWeibo(data: SyncData) {
   async function uploadFiles() {
     const fileInput = (await waitForElement('input[type="file"]')) as HTMLInputElement;
     if (!fileInput) {
-      console.error("未找到文件输入元素");
+      logger.error("未找到文件输入元素");
       return;
     }
 
@@ -123,7 +124,7 @@ export async function DynamicWeibo(data: SyncData) {
       const response = await fetch(file.url);
       const blob = await response.blob();
       const imageFile = new File([blob], file.name, { type: file.type });
-      console.log(`文件: ${imageFile.name} ${imageFile.type} ${imageFile.size}`);
+      logger.debug(`文件: ${imageFile.name} ${imageFile.type} ${imageFile.size}`);
       dataTransfer.items.add(imageFile);
     }
 
@@ -131,9 +132,9 @@ export async function DynamicWeibo(data: SyncData) {
       fileInput.files = dataTransfer.files;
       fileInput.dispatchEvent(new Event("change", { bubbles: true }));
       await new Promise((resolve) => setTimeout(resolve, 2000)); // 等待文件处理
-      console.log("文件上传操作完成");
+      logger.debug("文件上传操作完成");
     } else {
-      console.error("没有成功添加任何文件");
+      logger.error("没有成功添加任何文件");
     }
   }
 
@@ -156,7 +157,7 @@ export async function DynamicWeibo(data: SyncData) {
     inputElement.value = fullContent;
     inputElement.dispatchEvent(new Event("input", { bubbles: true }));
 
-    console.log("成功填入微博内容");
+    logger.debug("成功填入微博内容");
 
     // 处理图片上传
     if (images && images.length > 0) {
@@ -165,7 +166,7 @@ export async function DynamicWeibo(data: SyncData) {
       await waitForUploadsToComplete();
     }
 
-    console.log("成功填入微博内容和图片");
+    logger.debug("成功填入微博内容和图片");
 
     // 处理自动发布
     if (data.isAutoPublish) {
@@ -173,16 +174,16 @@ export async function DynamicWeibo(data: SyncData) {
       const sendButton = Array.from(sendButtons).find((button) => button.textContent?.includes("发送"));
 
       if (sendButton) {
-        console.log("点击发送按钮");
+        logger.debug("点击发送按钮");
         await new Promise((resolve) => setTimeout(resolve, 10000));
         (sendButton as HTMLElement).click();
         await new Promise((resolve) => setTimeout(resolve, 3000));
         window.location.reload();
       } else {
-        console.log("未找到'发送'按钮");
+        logger.debug("未找到'发送'按钮");
       }
     }
   } catch (error) {
-    console.error("填入微博内容或上传图片时出错:", error);
+    logger.error("填入微博内容或上传图片时出错:", error);
   }
 }

@@ -1,5 +1,6 @@
 import { Storage } from "@plasmohq/storage";
 import { getPlatformInfos } from "~sync/common";
+import { logger } from "~utils/logger";
 
 const storage = new Storage({ area: "local" });
 
@@ -55,7 +56,7 @@ export const ping = async (withPlatforms = false) => {
 
 export const linkExtensionMessageHandler = (request, _sender, sendResponse) => {
   if (request.action === "PUPU_EXTENSION_LINK_EXTENSION") {
-    console.log("request", request);
+    logger.debug("request", request);
     const params = {
       action: "PUPU_EXTENSION_LINK_EXTENSION",
       apiKey: request.data.apiKey,

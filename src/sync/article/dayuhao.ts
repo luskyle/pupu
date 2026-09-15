@@ -1,4 +1,5 @@
 import type { ArticleData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 /**
  * Dayuhao article publishing (experimental).
@@ -73,7 +74,7 @@ export async function ArticleDaYuHao(data: SyncData) {
     try {
       return iframe.contentDocument?.body || iframe.contentWindow?.document.body || null;
     } catch (error) {
-      console.debug("Dayuhao iframe editor is not accessible:", error);
+      logger.debug("Dayuhao iframe editor is not accessible:", error);
       return null;
     }
   }
@@ -110,11 +111,11 @@ export async function ArticleDaYuHao(data: SyncData) {
   function canAutoPublish(required: RequiredFields): boolean {
     let canPublish = true;
     if (!required.title) {
-      console.error("Dayuhao required field title not filled; skipping auto-publish");
+      logger.error("Dayuhao required field title not filled; skipping auto-publish");
       canPublish = false;
     }
     if (!required.body) {
-      console.error("Dayuhao required field body not filled; skipping auto-publish");
+      logger.error("Dayuhao required field body not filled; skipping auto-publish");
       canPublish = false;
     }
     return canPublish;
@@ -128,7 +129,7 @@ export async function ArticleDaYuHao(data: SyncData) {
       "div.button_publish.item.editor-btn.editor-main-btn",
     ) as HTMLElement | null;
     if (!publishButton) {
-      console.debug("Dayuhao publish button not found");
+      logger.debug("Dayuhao publish button not found");
       return;
     }
 
@@ -151,10 +152,10 @@ export async function ArticleDaYuHao(data: SyncData) {
         setControlValue(titleInput, title);
         required.title = true;
       } catch (error) {
-        console.error("Dayuhao title write failed:", error);
+        logger.error("Dayuhao title write failed:", error);
       }
     } else {
-      console.debug("Dayuhao title input not found or title is empty");
+      logger.debug("Dayuhao title input not found or title is empty");
     }
 
     const editor = await waitForIframeBodyOptional();
@@ -164,14 +165,14 @@ export async function ArticleDaYuHao(data: SyncData) {
         writeHtml(editor, htmlContent);
         required.body = true;
       } catch (error) {
-        console.error("Dayuhao body write failed:", error);
+        logger.error("Dayuhao body write failed:", error);
       }
     } else {
-      console.debug("Dayuhao iframe body editor not found or content is empty");
+      logger.debug("Dayuhao iframe body editor not found or content is empty");
     }
 
     clickPublishIfRequested(required);
   } catch (error) {
-    console.error("Dayuhao article publish failed:", error);
+    logger.error("Dayuhao article publish failed:", error);
   }
 }

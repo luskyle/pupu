@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, SyncData } from "../common";
 
 // 不支持发布视频
@@ -73,7 +74,7 @@ export async function DynamicToutiao(data: SyncData) {
 
           for (const image of images) {
             if (!image.type.startsWith("image/")) {
-              console.log("跳过非图片文件:", image);
+              logger.debug("跳过非图片文件:", image);
               continue;
             }
 
@@ -110,6 +111,6 @@ export async function DynamicToutiao(data: SyncData) {
       }
     }
   } catch (error) {
-    console.error("头条发布过程中出错:", error);
+    logger.error("头条发布过程中出错:", error);
   }
 }

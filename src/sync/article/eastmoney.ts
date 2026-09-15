@@ -1,4 +1,5 @@
 import type { ArticleData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 export async function ArticleEastmoney(data: SyncData) {
   // 处理文章内容中的图片
@@ -59,14 +60,14 @@ export async function ArticleEastmoney(data: SyncData) {
       titleInput.dispatchEvent(new Event("change", { bubbles: true }));
     }
 
-    console.debug("titleTextarea", titleInput, titleInput?.value, articleData.title?.slice(0, 100));
+    logger.debug("titleTextarea", titleInput, titleInput?.value, articleData.title?.slice(0, 100));
 
     // 获取编辑器元素
     const editor = document.querySelector('div.ProseMirror[contenteditable="true"]') as HTMLElement;
-    console.debug("qlEditor", editor);
+    logger.debug("qlEditor", editor);
 
     if (!editor) {
-      console.debug("未找到编辑器元素");
+      logger.debug("未找到编辑器元素");
       return;
     }
 
@@ -88,7 +89,7 @@ export async function ArticleEastmoney(data: SyncData) {
 
     // 处理封面图片上传
     const selectCoverImg = document.querySelector("div.select-cover-img") as HTMLElement;
-    console.debug("selectCoverImg", selectCoverImg);
+    logger.debug("selectCoverImg", selectCoverImg);
 
     if (selectCoverImg) {
       selectCoverImg.click();
@@ -96,7 +97,7 @@ export async function ArticleEastmoney(data: SyncData) {
 
       // 切换到上传标签
       const tabUpload = document.querySelector('div#tab-upload[aria-controls="pane-upload"]') as HTMLElement;
-      console.debug("tabUpload", tabUpload);
+      logger.debug("tabUpload", tabUpload);
 
       if (tabUpload) {
         tabUpload.click();
@@ -104,22 +105,22 @@ export async function ArticleEastmoney(data: SyncData) {
 
         // 获取文件上传输入框
         const fileInputs = document.querySelectorAll("input#upload_input");
-        console.debug("fileInputs", fileInputs);
+        logger.debug("fileInputs", fileInputs);
 
         const fileInput = fileInputs[fileInputs.length - 1] as HTMLInputElement;
-        console.debug("fileInput", fileInput);
+        logger.debug("fileInput", fileInput);
 
         // 上传封面图片
         const dataTransfer = new DataTransfer();
         const coverFile = articleData.cover;
-        console.debug("try upload file", coverFile);
+        logger.debug("try upload file", coverFile);
 
         const response = await fetch(coverFile.url);
         const arrayBuffer = await response.arrayBuffer();
         const file = new File([arrayBuffer], coverFile.name, { type: coverFile.type });
 
         dataTransfer.items.add(file);
-        console.debug("uploaded");
+        logger.debug("uploaded");
 
         if (dataTransfer.files.length > 0) {
           fileInput.files = dataTransfer.files;
@@ -130,7 +131,7 @@ export async function ArticleEastmoney(data: SyncData) {
           const inputEvent = new Event("input", { bubbles: true });
           fileInput.dispatchEvent(inputEvent);
 
-          console.debug("文件上传操作完成");
+          logger.debug("文件上传操作完成");
           await new Promise((resolve) => setTimeout(resolve, 3000));
         }
       }
@@ -138,7 +139,7 @@ export async function ArticleEastmoney(data: SyncData) {
 
     // 勾选阅读协议
     const checkIcon = document.querySelector("footer.read_item > i.check-icon") as HTMLElement;
-    console.debug("checkIcon", checkIcon);
+    logger.debug("checkIcon", checkIcon);
     if (checkIcon) {
       checkIcon.click();
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -146,16 +147,16 @@ export async function ArticleEastmoney(data: SyncData) {
 
     // 发布按钮
     const sendButton = document.querySelector("div.button_publish.item.editor-btn.editor-main-btn") as HTMLElement;
-    console.debug("sendButton", sendButton);
+    logger.debug("sendButton", sendButton);
 
     if (sendButton) {
       if (syncData?.isAutoPublish) {
-        console.debug("sendButton clicked");
+        logger.debug("sendButton clicked");
         const clickEvent = new Event("click", { bubbles: true });
         sendButton.dispatchEvent(clickEvent);
       }
     } else {
-      console.debug("未找到'发送'按钮");
+      logger.debug("未找到'发送'按钮");
     }
   }
 
@@ -229,7 +230,7 @@ export async function ArticleEastmoney(data: SyncData) {
       }, 3000);
     }
 
-    console.error("发布文章失败:", error);
+    logger.error("发布文章失败:", error);
     throw error;
   }
 }

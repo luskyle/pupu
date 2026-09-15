@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { ArticleData, SyncData } from "../common";
 
 export async function ArticleMedium(data: SyncData) {
@@ -72,7 +73,7 @@ export async function ArticleMedium(data: SyncData) {
 
     const editor = document.querySelector('div[contenteditable="true"]') as HTMLDivElement | null;
     if (!editor) {
-      console.error("未找到 Medium 正文编辑器");
+      logger.error("未找到 Medium 正文编辑器");
       return;
     }
     editor.focus();
@@ -93,6 +94,6 @@ export async function ArticleMedium(data: SyncData) {
       publishBtn?.dispatchEvent(new Event("click", { bubbles: true }));
     }
   } catch (error) {
-    console.error("Medium 文章发布失败:", error);
+    logger.error("Medium 文章发布失败:", error);
   }
 }

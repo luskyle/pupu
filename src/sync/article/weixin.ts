@@ -1,4 +1,5 @@
 import type { ArticleData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 interface WeixinUploadResult {
   fileId: number;
@@ -65,7 +66,7 @@ export async function ArticleWeixin(data: SyncData) {
     const ticket = ticketMatch ? ticketMatch[1] : "";
     const userName = userNameMatch ? userNameMatch[1] : "";
 
-    console.log("提取的数据:", { token, nickname, ticket, userName });
+    logger.debug("提取的数据:", { token, nickname, ticket, userName });
 
     return { token, nickname, ticket, userName };
   }
@@ -154,7 +155,7 @@ export async function ArticleWeixin(data: SyncData) {
       y2_abs,
     };
 
-    console.debug("calculateCropConfig config", ratio, config);
+    logger.debug("calculateCropConfig config", ratio, config);
     return config;
   }
 
@@ -164,7 +165,7 @@ export async function ArticleWeixin(data: SyncData) {
 
     // 获取文件blob
     const blob = await (await fetch(file.url)).blob();
-    console.debug("uploadImage file", file, blob);
+    logger.debug("uploadImage file", file, blob);
 
     // 构建表单数据
     formData.append("type", blob.type);
@@ -192,7 +193,7 @@ export async function ArticleWeixin(data: SyncData) {
     url.searchParams.append("seq", seq);
     url.searchParams.append("t", Math.random().toString());
 
-    console.debug("uploadImage url", url, url.toString());
+    logger.debug("uploadImage url", url, url.toString());
 
     const response = await fetch(url.toString(), {
       method: "POST",
@@ -200,7 +201,7 @@ export async function ArticleWeixin(data: SyncData) {
     });
 
     const result = await response.json();
-    console.debug("uploadImage res", result);
+    logger.debug("uploadImage res", result);
 
     if (result.base_resp.err_msg !== "ok") return null;
 
@@ -421,14 +422,14 @@ export async function ArticleWeixin(data: SyncData) {
     const doc = parser.parseFromString(content, "text/html");
     const images = doc.getElementsByTagName("img");
 
-    console.debug("images", images);
+    logger.debug("images", images);
 
     for (let i = 0; i < images.length; i++) {
       updateProgress(`开始上传 ${i + 1}/${images.length} 张图片`);
       const img = images[i];
       const src = img.getAttribute("src");
       if (src) {
-        console.debug("try replace ", src);
+        logger.debug("try replace ", src);
         const result = await uploadImage({ url: src });
         if (result) {
           img.setAttribute("src", result.url);
@@ -481,8 +482,8 @@ export async function ArticleWeixin(data: SyncData) {
     `;
     shadow.appendChild(tip);
 
-    console.log("herf", window.location.href);
-    console.log("articleData", articleData);
+    logger.debug("herf", window.location.href);
+    logger.debug("articleData", articleData);
 
     // 处理文章内容中的图片
     const updateProgress = (msg: string) => {
@@ -567,7 +568,7 @@ export async function ArticleWeixin(data: SyncData) {
       }, 3000);
     }
 
-    console.error("发布文章失败:", error);
+    logger.error("发布文章失败:", error);
     throw error;
   }
 }

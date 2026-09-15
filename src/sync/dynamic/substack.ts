@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, FileData, SyncData } from "../common";
 
 // Substack Notes - 支持图片和视频
@@ -39,11 +40,11 @@ export async function DynamicSubstack(data: SyncData) {
     // 点击 "New post" 按钮打开编辑器
     const newPostButton = (await waitForElement('button[type="button"][aria-label="New post"]')) as HTMLButtonElement;
     if (!newPostButton) {
-      console.debug("未找到新帖子按钮");
+      logger.debug("未找到新帖子按钮");
       return;
     }
     newPostButton.click();
-    console.debug("已点击新帖子按钮");
+    logger.debug("已点击新帖子按钮");
 
     // 等待编辑器出现
     await waitForElement('div[contenteditable="true"]');
@@ -51,7 +52,7 @@ export async function DynamicSubstack(data: SyncData) {
 
     const editor = document.querySelector('div[contenteditable="true"]') as HTMLDivElement;
     if (!editor) {
-      console.debug("未找到编辑器元素");
+      logger.debug("未找到编辑器元素");
       return;
     }
 
@@ -70,7 +71,7 @@ export async function DynamicSubstack(data: SyncData) {
     const textContent = `${title ? `${title}\n` : ""}${content || ""}${tagSuffix}`;
     pasteEvent.clipboardData.setData("text/plain", textContent);
     editor.dispatchEvent(pasteEvent);
-    console.debug("已填入内容");
+    logger.debug("已填入内容");
 
     // 处理文件上传（图片或视频）
     const hasVideos = videos && videos.length > 0;
@@ -85,14 +86,14 @@ export async function DynamicSubstack(data: SyncData) {
         fileInput = document.querySelector('input[type="file"][accept="video/*"]') as HTMLInputElement;
         if (fileInput && videos[0]) {
           filesToUpload.push(videos[0]);
-          console.debug("准备上传视频");
+          logger.debug("准备上传视频");
         }
       } else if (hasImages) {
         // 上传图片
         fileInput = document.querySelector('input[type="file"][accept="image/*,.heic"]') as HTMLInputElement;
         if (fileInput) {
           filesToUpload.push(...images);
-          console.debug("准备上传图片");
+          logger.debug("准备上传图片");
         }
       }
 
@@ -101,13 +102,13 @@ export async function DynamicSubstack(data: SyncData) {
 
         for (const file of filesToUpload) {
           try {
-            console.debug("正在上传文件:", file.name);
+            logger.debug("正在上传文件:", file.name);
             const response = await fetch(file.url);
             const arrayBuffer = await response.arrayBuffer();
             const uploadFile = new File([arrayBuffer], file.name, { type: file.type || "application/octet-stream" });
             dataTransfer.items.add(uploadFile);
           } catch (error) {
-            console.error("获取文件失败:", error);
+            logger.error("获取文件失败:", error);
           }
         }
 
@@ -115,11 +116,11 @@ export async function DynamicSubstack(data: SyncData) {
           fileInput.files = dataTransfer.files;
           fileInput.dispatchEvent(new Event("change", { bubbles: true }));
           fileInput.dispatchEvent(new Event("input", { bubbles: true }));
-          console.debug("文件上传操作完成");
+          logger.debug("文件上传操作完成");
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }
       } else {
-        console.debug("未找到文件输入元素");
+        logger.debug("未找到文件输入元素");
       }
     }
 
@@ -131,15 +132,15 @@ export async function DynamicSubstack(data: SyncData) {
     const sendButton = Array.from(buttons).find((btn) => btn.textContent?.includes("Post"));
 
     if (sendButton) {
-      console.debug("找到发布按钮");
+      logger.debug("找到发布按钮");
       if (data.isAutoPublish) {
-        console.debug("自动发布已启用，点击发布按钮");
+        logger.debug("自动发布已启用，点击发布按钮");
         sendButton.dispatchEvent(new Event("click", { bubbles: true }));
       }
     } else {
-      console.debug('未找到"Post"按钮');
+      logger.debug('未找到"Post"按钮');
     }
   } catch (error) {
-    console.error("Substack 发布过程中出错:", error);
+    logger.error("Substack 发布过程中出错:", error);
   }
 }

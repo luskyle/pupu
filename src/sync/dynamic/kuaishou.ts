@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, SyncData } from "../common";
 
 /**
@@ -61,7 +62,7 @@ export async function DynamicKuaishou(data: SyncData) {
   // 查找并点击上传图片的tab
   const uploadTab = document.querySelector("div#rc-tabs-0-tab-2") as HTMLElement;
   if (!uploadTab) {
-    console.error("未找到 uploadTab");
+    logger.error("未找到 uploadTab");
     return;
   }
   uploadTab.click();
@@ -70,14 +71,14 @@ export async function DynamicKuaishou(data: SyncData) {
   // 创建 DataTransfer 对象并添加文件
   const dataTransfer = new DataTransfer();
   for (const fileInfo of images) {
-    console.log("try upload file", fileInfo);
+    logger.debug("try upload file", fileInfo);
     try {
       const response = await fetch(fileInfo.url);
       const arrayBuffer = await response.arrayBuffer();
       const file = new File([arrayBuffer], fileInfo.name, { type: fileInfo.type });
       dataTransfer.items.add(file);
     } catch (error) {
-      console.error(`上传图片 ${fileInfo.url} 失败:`, error);
+      logger.error(`上传图片 ${fileInfo.url} 失败:`, error);
     }
   }
 
@@ -86,14 +87,14 @@ export async function DynamicKuaishou(data: SyncData) {
   const uploadButton = Array.from(buttons).find((button) => button.textContent === "上传图片") as HTMLElement;
 
   if (!uploadButton) {
-    console.error("未找到'上传图片'按钮");
+    logger.error("未找到'上传图片'按钮");
     return;
   }
 
   // 执行拖拽上传
   const dropTarget = uploadButton.parentElement?.parentElement as HTMLElement;
   simulateDragAndDrop(dropTarget, dataTransfer);
-  console.log("文件上传操作完成");
+  logger.debug("文件上传操作完成");
 
   // 等待描述输入框出现
   await waitForElement('div[placeholder="添加合适的话题和描述，作品能获得更多推荐～"][contenteditable="true"]');

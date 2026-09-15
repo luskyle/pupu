@@ -1,4 +1,5 @@
 import type { PodcastData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 export async function PodcastXimalaya(data: SyncData) {
   function waitForElement(selector: string, timeout = 15000): Promise<Element> {
@@ -65,9 +66,9 @@ export async function PodcastXimalaya(data: SyncData) {
       editorBody.dispatchEvent(new Event("input", { bubbles: true }));
       editorBody.dispatchEvent(new Event("change", { bubbles: true }));
     } else {
-      console.warn("未能进入喜马拉雅简介 iframe，描述未填充");
+      logger.warn("未能进入喜马拉雅简介 iframe，描述未填充");
     }
   } catch (error) {
-    console.error("喜马拉雅播客上传失败:", error);
+    logger.error("喜马拉雅播客上传失败:", error);
   }
 }

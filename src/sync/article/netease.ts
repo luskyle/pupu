@@ -1,4 +1,5 @@
 import type { ArticleData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 /**
  * 网易号文章发布(experimental,待线上验证)
@@ -61,7 +62,7 @@ export async function ArticleNetease(data: SyncData) {
     // 正文:网易号使用 Draft.js 编辑器(data-contents),通过 paste 注入 HTML
     const editor = (await waitForElement('div[data-contents="true"]')) as HTMLElement;
     if (!editor) {
-      console.error("网易号:未找到正文编辑器");
+      logger.error("网易号:未找到正文编辑器");
       return;
     }
     editor.focus();
@@ -91,10 +92,10 @@ export async function ArticleNetease(data: SyncData) {
       if (publishButton) {
         publishButton.dispatchEvent(new Event("click", { bubbles: true }));
       } else {
-        console.debug("网易号:未找到'发布'按钮");
+        logger.debug("网易号:未找到'发布'按钮");
       }
     }
   } catch (error) {
-    console.error("网易号文章发布出错:", error);
+    logger.error("网易号文章发布出错:", error);
   }
 }

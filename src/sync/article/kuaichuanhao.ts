@@ -1,4 +1,5 @@
 import type { ArticleData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 /**
  * 快传号文章发布(experimental,待线上验证)
@@ -44,7 +45,7 @@ export async function ArticleKuaichuanhao(data: SyncData) {
       'input[type="file"][accept="image/*"][class="preview__input"]',
     ) as HTMLInputElement | null;
     if (!fileInput) {
-      console.debug("快传号:未找到封面上传元素");
+      logger.debug("快传号:未找到封面上传元素");
       return false;
     }
 
@@ -77,7 +78,7 @@ export async function ArticleKuaichuanhao(data: SyncData) {
 
     const editor = document.querySelector('div[contenteditable="true"]') as HTMLElement | null;
     if (!editor) {
-      console.debug("快传号:未找到编辑器元素");
+      logger.debug("快传号:未找到编辑器元素");
       return;
     }
 
@@ -102,9 +103,9 @@ export async function ArticleKuaichuanhao(data: SyncData) {
     if (publishButton && data.isAutoPublish === true) {
       publishButton.dispatchEvent(new Event("click", { bubbles: true }));
     } else if (!publishButton) {
-      console.debug("快传号:未找到发布按钮");
+      logger.debug("快传号:未找到发布按钮");
     }
   } catch (error) {
-    console.error("快传号文章发布出错:", error);
+    logger.error("快传号文章发布出错:", error);
   }
 }

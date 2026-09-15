@@ -3,6 +3,7 @@ import { BotIcon, FileVideo2Icon, HandIcon, SendIcon, TrashIcon, XIcon } from "l
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { Player } from "video-react";
+import { logger } from "~utils/logger";
 import "video-react/dist/video-react.css";
 import InfoModal from "~components/Sync/Modals/InfoModal";
 import type { FileData, SyncData } from "~sync/common";
@@ -64,7 +65,7 @@ const VideoTab: React.FC = () => {
       const window = await chrome.windows.getCurrent({ populate: true });
       await chrome.sidePanel.open({ windowId: window.id });
     } catch (error) {
-      console.error("打开侧边栏发布时出错:", error);
+      logger.error("打开侧边栏发布时出错:", error);
     }
   };
 

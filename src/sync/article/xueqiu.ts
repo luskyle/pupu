@@ -1,5 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ArticleData, SyncData } from "~sync/common";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { logger } from "~utils/logger";
 
 export async function ArticleXueqiu(data: SyncData) {
   // 等待元素出现
@@ -45,11 +46,11 @@ export async function ArticleXueqiu(data: SyncData) {
         return element;
       }
 
-      console.log(`未找到包含文本 "${text}" 的元素，尝试次数：${i + 1}`);
+      logger.debug(`未找到包含文本 "${text}" 的元素，尝试次数：${i + 1}`);
       await new Promise((resolve) => setTimeout(resolve, retryInterval));
     }
 
-    console.error(`在 ${maxRetries} 次尝试后未找到包含文本 "${text}" 的元素`);
+    logger.error(`在 ${maxRetries} 次尝试后未找到包含文本 "${text}" 的元素`);
     return null;
   }
 
@@ -118,14 +119,14 @@ export async function ArticleXueqiu(data: SyncData) {
       titleTextarea.dispatchEvent(new Event("input", { bubbles: true }));
       titleTextarea.dispatchEvent(new Event("change", { bubbles: true }));
     }
-    console.debug("titleTextarea", titleTextarea, titleTextarea?.value, articleData.title?.slice(0, 100));
+    logger.debug("titleTextarea", titleTextarea, titleTextarea?.value, articleData.title?.slice(0, 100));
 
     // 查找编辑器元素
     const editor = document.querySelector('div.ProseMirror[contenteditable="true"]') as HTMLDivElement;
-    console.debug("qlEditor", editor);
+    logger.debug("qlEditor", editor);
 
     if (!editor) {
-      console.debug("未找到编辑器元素");
+      logger.debug("未找到编辑器元素");
       return;
     }
 
@@ -150,22 +151,22 @@ export async function ArticleXueqiu(data: SyncData) {
     const fileInputs = document.querySelectorAll(
       'input[type="file"][accept="image/gif, image/jpeg, image/png"]',
     ) as NodeListOf<HTMLInputElement>;
-    console.debug("fileInputs", fileInputs);
+    logger.debug("fileInputs", fileInputs);
 
     const fileInput = fileInputs[fileInputs.length - 1];
-    console.debug("fileInput", fileInput);
+    logger.debug("fileInput", fileInput);
 
     // 如果有封面图片，上传
     if (articleData.cover) {
       const dataTransfer = new DataTransfer();
-      console.debug("try upload file", articleData.cover);
+      logger.debug("try upload file", articleData.cover);
 
       const response = await fetch(articleData.cover.url);
       const arrayBuffer = await response.arrayBuffer();
       const file = new File([arrayBuffer], articleData.cover.name, { type: articleData.cover.type });
 
       dataTransfer.items.add(file);
-      console.debug("uploaded");
+      logger.debug("uploaded");
 
       if (dataTransfer.files.length > 0 && fileInput) {
         fileInput.files = dataTransfer.files;
@@ -176,15 +177,15 @@ export async function ArticleXueqiu(data: SyncData) {
         const inputEvent = new Event("input", { bubbles: true });
         fileInput.dispatchEvent(inputEvent);
 
-        console.debug("文件上传操作完成");
+        logger.debug("文件上传操作完成");
         await new Promise((resolve) => setTimeout(resolve, 3000));
 
         // 查找确认裁剪按钮
         const confirmButtons = document.querySelectorAll("button");
-        console.debug("confirmButtons", confirmButtons);
+        logger.debug("confirmButtons", confirmButtons);
 
         const confirmButton = Array.from(confirmButtons).find((button) => button.textContent?.includes("确认裁剪"));
-        console.debug("confirmButton", confirmButton);
+        logger.debug("confirmButton", confirmButton);
 
         if (confirmButton) {
           const clickEvent = new Event("click", { bubbles: true });
@@ -196,16 +197,16 @@ export async function ArticleXueqiu(data: SyncData) {
     // 查找发布按钮
     const sendButton = await findElementByText("button", "发布");
 
-    console.debug("sendButton", sendButton);
+    logger.debug("sendButton", sendButton);
 
     if (sendButton) {
       if (data.isAutoPublish) {
-        console.debug("sendButton clicked");
+        logger.debug("sendButton clicked");
         const clickEvent = new Event("click", { bubbles: true });
         sendButton.dispatchEvent(clickEvent);
       }
     } else {
-      console.debug("未找到'发送'按钮");
+      logger.debug("未找到'发送'按钮");
     }
 
     updateTip("内容已填写完成");
@@ -227,7 +228,7 @@ export async function ArticleXueqiu(data: SyncData) {
       }, 3000);
     }
 
-    console.error("发布文章失败:", error);
+    logger.error("发布文章失败:", error);
     throw error;
   }
 }

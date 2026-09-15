@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { FileData, SyncData, VideoData } from "../common";
 
 export async function VideoBaijiahao(data: SyncData) {
@@ -38,12 +39,12 @@ export async function VideoBaijiahao(data: SyncData) {
   async function uploadVideo(file: File): Promise<boolean> {
     const fileInput = (await waitForElementOptional('input[type="file"]')) as HTMLInputElement | null;
     if (!fileInput) {
-      console.error("未找到百家号视频文件输入框");
+      logger.error("未找到百家号视频文件输入框");
       return false;
     }
     await sleep(3000);
 
-    console.log("找到文件输入框:", fileInput);
+    logger.debug("找到文件输入框:", fileInput);
 
     const dataTransfer = new DataTransfer();
     dataTransfer.items.add(file);
@@ -56,7 +57,7 @@ export async function VideoBaijiahao(data: SyncData) {
     const inputEvent = new Event("input", { bubbles: true });
     fileInput.dispatchEvent(inputEvent);
 
-    console.log("文件上传操作完成");
+    logger.debug("文件上传操作完成");
     return true;
   }
 
@@ -67,7 +68,7 @@ export async function VideoBaijiahao(data: SyncData) {
         const uploadCompleteElement = Array.from(spans).find((span) => span.textContent?.includes("上传完成"));
         if (uploadCompleteElement) {
           clearInterval(checkInterval);
-          console.log("视频上传完成");
+          logger.debug("视频上传完成");
           resolve(true);
         }
       }, 1000);
@@ -81,7 +82,7 @@ export async function VideoBaijiahao(data: SyncData) {
 
   async function fetchCoverFile(cover: FileData): Promise<File | null> {
     if (cover.type && !cover.type.includes("image/")) {
-      console.log("Cover is not an image, skipping upload");
+      logger.debug("Cover is not an image, skipping upload");
       return null;
     }
 
@@ -91,23 +92,23 @@ export async function VideoBaijiahao(data: SyncData) {
   }
 
   async function uploadCover(cover: FileData, coverIndex: 0 | 1, label: string): Promise<boolean> {
-    console.log("tryCover", label, cover);
+    logger.debug("tryCover", label, cover);
 
     await waitForElementOptional("div.cheetah-upload span.cheetah-upload div.cheetah-spin-container", 5000);
     const coverUploadContainers = document.querySelectorAll(
       "div.cheetah-upload span.cheetah-upload div.cheetah-spin-container",
     );
-    console.log("coverUploads", coverUploadContainers);
+    logger.debug("coverUploads", coverUploadContainers);
     const coverUploadContainer = coverUploadContainers[coverIndex] as HTMLElement | undefined;
     if (!coverUploadContainer) {
-      console.log(`未找到百家号${label}封面入口`);
+      logger.debug(`未找到百家号${label}封面入口`);
       return false;
     }
 
     const coverUploadButton =
       ((coverUploadContainer.firstChild as HTMLElement | null)?.firstChild as HTMLElement | null) ||
       (coverUploadContainer.firstChild as HTMLElement | null);
-    console.log("coverUploadButton", coverUploadButton);
+    logger.debug("coverUploadButton", coverUploadButton);
     if (!coverUploadButton) return false;
 
     coverUploadButton.click();
@@ -115,7 +116,7 @@ export async function VideoBaijiahao(data: SyncData) {
 
     const modals = document.querySelectorAll("div.cheetah-modal-body");
     const modal = (coverIndex === 1 && modals.length > 1 ? modals[1] : modals[0]) as HTMLElement | undefined;
-    console.log("modal", modal);
+    logger.debug("modal", modal);
     if (!modal) return false;
 
     const fileInput =
@@ -123,12 +124,12 @@ export async function VideoBaijiahao(data: SyncData) {
         "div.cheetah-tabs-content span.cheetah-upload input[name='media'][accept='image/*']",
       ) as HTMLInputElement | null) ||
       (modal.querySelector("div.cheetah-tabs-content input[name='media']") as HTMLInputElement | null);
-    console.log("fileInput", fileInput);
+    logger.debug("fileInput", fileInput);
     if (!fileInput) return false;
 
     const dataTransfer = new DataTransfer();
 
-    console.log("try upload file", cover);
+    logger.debug("try upload file", cover);
     const coverFile = await fetchCoverFile(cover);
     if (!coverFile) return false;
 
@@ -144,14 +145,14 @@ export async function VideoBaijiahao(data: SyncData) {
     const inputEvent = new Event("input", { bubbles: true });
     fileInput.dispatchEvent(inputEvent);
 
-    console.log("文件上传操作触发");
+    logger.debug("文件上传操作触发");
     await sleep(3000);
 
     const doneButtons = modal.querySelectorAll("button");
-    console.log("doneButtons", doneButtons);
+    logger.debug("doneButtons", doneButtons);
 
     const doneButton = Array.from(doneButtons).find((e) => e.textContent?.trim() === "确定");
-    console.log("doneButton", doneButton);
+    logger.debug("doneButton", doneButton);
 
     if (doneButton) {
       (doneButton as HTMLElement).click();
@@ -164,7 +165,7 @@ export async function VideoBaijiahao(data: SyncData) {
     const { content, video, title, tags, cover, verticalCover, horizontalCover } = data.data as VideoData;
 
     if (!video) {
-      console.error("没有视频文件");
+      logger.error("没有视频文件");
       return;
     }
 
@@ -175,12 +176,12 @@ export async function VideoBaijiahao(data: SyncData) {
       type: video.type,
     });
 
-    console.log(`准备上传视频: ${videoFile.name} (${videoFile.type}, ${videoFile.size} bytes)`);
+    logger.debug(`准备上传视频: ${videoFile.name} (${videoFile.type}, ${videoFile.size} bytes)`);
 
     const videoUploadTriggered = await uploadVideo(videoFile);
     const videoUploaded = videoUploadTriggered ? await waitForUploadCompletion().catch(() => false) : false;
     if (!videoUploaded) {
-      console.error("百家号视频未完成上传，跳过后续自动发布");
+      logger.error("百家号视频未完成上传，跳过后续自动发布");
     }
 
     // 等待页面状态稳定
@@ -191,7 +192,7 @@ export async function VideoBaijiahao(data: SyncData) {
     if (titleInput) {
       titleInput.value = title || "";
       titleInput.dispatchEvent(new Event("input", { bubbles: true }));
-      console.log("标题已输入:", title);
+      logger.debug("标题已输入:", title);
     }
 
     // 处理描述输入
@@ -201,7 +202,7 @@ export async function VideoBaijiahao(data: SyncData) {
       const description = (content || title || "").slice(0, 100);
       descriptionInput.value = description;
       descriptionInput.dispatchEvent(new Event("input", { bubbles: true }));
-      console.log("描述已输入:", description);
+      logger.debug("描述已输入:", description);
     }
 
     // Handle tags best-effort.
@@ -210,7 +211,7 @@ export async function VideoBaijiahao(data: SyncData) {
       if (tagInput && tags) {
         for (const tag of tags) {
           tagInput.value = tag;
-          console.log("正在输入标签:", tag);
+          logger.debug("正在输入标签:", tag);
 
           const enterEvent = new KeyboardEvent("keydown", {
             bubbles: true,
@@ -225,7 +226,7 @@ export async function VideoBaijiahao(data: SyncData) {
         }
       }
     } catch (error) {
-      console.warn("百家号标签处理失败，继续发布流程:", error);
+      logger.warn("百家号标签处理失败，继续发布流程:", error);
     }
 
     const verticalCoverFile = verticalCover || cover;
@@ -233,7 +234,7 @@ export async function VideoBaijiahao(data: SyncData) {
       try {
         await uploadCover(coverFile, coverIndex, label);
       } catch (error) {
-        console.warn(`百家号${label}封面上传失败，继续发布流程:`, error);
+        logger.warn(`百家号${label}封面上传失败，继续发布流程:`, error);
       }
     };
 
@@ -254,7 +255,7 @@ export async function VideoBaijiahao(data: SyncData) {
     // 如果需要自动发布
     if (data.isAutoPublish) {
       if (!videoUploaded) {
-        console.warn("百家号自动发布已跳过：视频未成功上传完成");
+        logger.warn("百家号自动发布已跳过：视频未成功上传完成");
         return;
       }
 
@@ -263,13 +264,13 @@ export async function VideoBaijiahao(data: SyncData) {
       ) as HTMLButtonElement;
 
       if (publishButton) {
-        console.log("点击发布按钮");
+        logger.debug("点击发布按钮");
         publishButton.click();
       } else {
-        console.log("未找到发布按钮");
+        logger.debug("未找到发布按钮");
       }
     }
   } catch (error) {
-    console.error("百家号视频发布过程中出错:", error);
+    logger.error("百家号视频发布过程中出错:", error);
   }
 }

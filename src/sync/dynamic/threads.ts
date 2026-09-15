@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, SyncData } from "../common";
 
 // 只支持图文，不支持视频
@@ -116,7 +117,7 @@ export async function DynamicThreads(data: SyncData) {
       dialog.querySelector('div[contenteditable="true"]') ||
       dialog.querySelector('div[aria-label="文本栏为空白。请输入内容，撰写新帖子。"]')) as HTMLElement | null;
     if (!editor) {
-      console.error("未找到编辑器元素");
+      logger.error("未找到编辑器元素");
       return;
     }
     editor.click();
@@ -130,7 +131,7 @@ export async function DynamicThreads(data: SyncData) {
     pasteEvent.clipboardData.setData("text/plain", `${title ? `${title}\n` : ""}${content || ""}${tagSuffix}`);
     editor.dispatchEvent(pasteEvent);
 
-    console.debug("成功填入Threads内容");
+    logger.debug("成功填入Threads内容");
 
     const requestedMediaCount = (images?.length ?? 0) + (videos?.length ?? 0);
     const mediaFiles = [...(images || []), ...(videos?.[0] ? [videos[0]] : [])].slice(0, 20);
@@ -139,7 +140,7 @@ export async function DynamicThreads(data: SyncData) {
       const fileInput = await findMediaFileInput();
 
       if (!fileInput) {
-        console.error("media requested but upload input not found");
+        logger.error("media requested but upload input not found");
       } else {
         const dataTransfer = new DataTransfer();
         for (const media of mediaFiles) {
@@ -152,12 +153,12 @@ export async function DynamicThreads(data: SyncData) {
             const file = new File([blob], media.name, { type: media.type });
             dataTransfer.items.add(file);
           } catch (error) {
-            console.error("获取媒体文件失败:", error);
+            logger.error("获取媒体文件失败:", error);
           }
         }
 
         if (dataTransfer.files.length === 0) {
-          console.error("media requested but upload could not be performed");
+          logger.error("media requested but upload could not be performed");
         } else {
           try {
             fileInput.files = dataTransfer.files;
@@ -166,18 +167,18 @@ export async function DynamicThreads(data: SyncData) {
             fileInput.dispatchEvent(new Event("input", { bubbles: true }));
             attachedMediaCount = dataTransfer.files.length;
           } catch (error) {
-            console.error("media upload could not be performed:", error);
+            logger.error("media upload could not be performed:", error);
           }
         }
       }
     }
 
-    console.debug("成功填入Threads内容和图片");
+    logger.debug("成功填入Threads内容和图片");
 
     // Wait briefly before trying to publish.
     await new Promise((resolve) => setTimeout(resolve, 5000));
     if (data.isAutoPublish && requestedMediaCount > 0 && attachedMediaCount !== requestedMediaCount) {
-      console.error(
+      logger.error(
         `only ${attachedMediaCount} of ${requestedMediaCount} requested media attached; skipping auto-publish to avoid an incomplete post`,
       );
       return;
@@ -188,10 +189,10 @@ export async function DynamicThreads(data: SyncData) {
         publishElement.click();
       } else {
         dispatchPublishShortcut(editor);
-        console.log("已触发 Threads 发布快捷键");
+        logger.debug("已触发 Threads 发布快捷键");
       }
     }
   } catch (error) {
-    console.error("填入Threads内容或上传图片时出错:", error);
+    logger.error("填入Threads内容或上传图片时出错:", error);
   }
 }

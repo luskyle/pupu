@@ -6,6 +6,7 @@
  */
 
 import { escapeHtml } from "~utils/escape-html";
+import { logger } from "~utils/logger";
 import type { DynamicData, FileData, SyncData } from "../common";
 
 /**
@@ -186,7 +187,7 @@ export async function DynamicWeiXinChannel(data: SyncData) {
 
     const fileInput = (await waitForElementOptional('input[type="file"][accept="image/*"]')) as HTMLInputElement | null;
     if (!fileInput) {
-      console.error("media requested but upload input not found");
+      logger.error("media requested but upload input not found");
       return 0;
     }
     const limitedImages = images.slice(0, 18);
@@ -201,15 +202,15 @@ export async function DynamicWeiXinChannel(data: SyncData) {
         }
         const blob = await response.blob();
         const file = new File([blob], image.name, { type: image.type });
-        console.log(`图片文件准备就绪: ${file.name} ${file.type} ${file.size}`);
+        logger.debug(`图片文件准备就绪: ${file.name} ${file.type} ${file.size}`);
         files.push(file);
       } catch (error) {
-        console.error("获取图片失败:", error);
+        logger.error("获取图片失败:", error);
       }
     }
 
     if (files.length === 0) {
-      console.error("media requested but upload could not be performed");
+      logger.error("media requested but upload could not be performed");
       return 0;
     }
 
@@ -240,11 +241,11 @@ export async function DynamicWeiXinChannel(data: SyncData) {
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
     } catch (error) {
-      console.error("media upload could not be performed:", error);
+      logger.error("media upload could not be performed:", error);
       return 0;
     }
 
-    console.log("所有图片上传事件已触发");
+    logger.debug("所有图片上传事件已触发");
     return dataTransfer.files.length;
   }
 
@@ -299,7 +300,7 @@ export async function DynamicWeiXinChannel(data: SyncData) {
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
     } else {
-      console.error("未找到视频号描述输入框");
+      logger.error("未找到视频号描述输入框");
     }
 
     const titleInput = (await waitForElementOptional(
@@ -330,14 +331,14 @@ export async function DynamicWeiXinChannel(data: SyncData) {
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
     } else {
-      console.error("未找到视频号标题输入框");
+      logger.error("未找到视频号标题输入框");
     }
 
     // Wait for content input to settle.
     await new Promise((resolve) => setTimeout(resolve, 5000));
 
     if (data.isAutoPublish && requestedMediaCount > 0 && attachedMediaCount !== requestedMediaCount) {
-      console.error(
+      logger.error(
         `only ${attachedMediaCount} of ${requestedMediaCount} requested media attached; skipping auto-publish to avoid an incomplete post`,
       );
       return;
@@ -376,11 +377,11 @@ export async function DynamicWeiXinChannel(data: SyncData) {
         await new Promise((resolve) => setTimeout(resolve, 50));
       }
     } else if (!publishButton) {
-      console.error('未找到"发表"按钮');
+      logger.error('未找到"发表"按钮');
     } else {
-      console.log("自动发布已关闭，跳过发布操作");
+      logger.debug("自动发布已关闭，跳过发布操作");
     }
   } catch (error) {
-    console.error("WeiXinChannel Dynamic 发布过程中出错:", error);
+    logger.error("WeiXinChannel Dynamic 发布过程中出错:", error);
   }
 }

@@ -1,4 +1,5 @@
 import type { PlasmoCSConfig } from "plasmo";
+import { logger } from "~utils/logger";
 
 /**
  * 小红书创作平台：捕获 closed shadow DOM 的发布按钮。
@@ -87,7 +88,7 @@ if (typeof window !== "undefined" && !window.__xhsShadowRoots) {
       return;
     }
     const result = clickPublish();
-    console.log(
+    logger.debug(
       "[xhs-shadow] 点击发布按钮结果:",
       result,
       result.found

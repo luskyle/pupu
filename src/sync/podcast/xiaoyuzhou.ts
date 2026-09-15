@@ -1,4 +1,5 @@
 import type { PodcastData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 export async function PodcastXiaoyuzhou(data: SyncData) {
   function waitForElement(selector: string, timeout = 15000): Promise<Element> {
@@ -68,6 +69,6 @@ export async function PodcastXiaoyuzhou(data: SyncData) {
       editor.dispatchEvent(new Event("change", { bubbles: true }));
     }
   } catch (error) {
-    console.error("小宇宙播客上传失败:", error);
+    logger.error("小宇宙播客上传失败:", error);
   }
 }

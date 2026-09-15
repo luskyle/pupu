@@ -1,4 +1,5 @@
 import type { ArticleData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 /**
  * 美篇/简篇文章发布(experimental,待线上验证)
@@ -75,7 +76,7 @@ export async function ArticleJianpian(data: SyncData) {
 
     const contentEditor = await waitForContentEditor(titleEditor);
     if (!contentEditor) {
-      console.debug("美篇/简篇:未找到正文编辑器元素");
+      logger.debug("美篇/简篇:未找到正文编辑器元素");
       return;
     }
 
@@ -89,10 +90,10 @@ export async function ArticleJianpian(data: SyncData) {
       if (publishButton) {
         publishButton.dispatchEvent(new Event("click", { bubbles: true }));
       } else {
-        console.debug("美篇/简篇:未找到发布按钮");
+        logger.debug("美篇/简篇:未找到发布按钮");
       }
     }
   } catch (error) {
-    console.error("美篇/简篇文章发布出错:", error);
+    logger.error("美篇/简篇文章发布出错:", error);
   }
 }

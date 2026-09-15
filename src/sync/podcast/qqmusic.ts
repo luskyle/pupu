@@ -1,4 +1,5 @@
 import type { PodcastData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 export async function PodcastQQMusic(data: SyncData) {
   const { title, audio } = data.data as PodcastData;
@@ -38,8 +39,8 @@ export async function PodcastQQMusic(data: SyncData) {
       const fileInput = (await waitForElement('input[type="file"][accept=".mp3,.wav,.m4a,.aac"]')) as HTMLInputElement;
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      console.debug("try upload file", audio);
-      console.debug("fileInput", fileInput);
+      logger.debug("try upload file", audio);
+      logger.debug("fileInput", fileInput);
 
       // 获取文件数据
       const response = await fetch(audio.url);
@@ -55,7 +56,7 @@ export async function PodcastQQMusic(data: SyncData) {
       fileInput.dispatchEvent(new Event("change", { bubbles: true }));
       fileInput.dispatchEvent(new Event("input", { bubbles: true }));
 
-      console.debug("文件上传操作完成");
+      logger.debug("文件上传操作完成");
 
       // 等待上传完成
       await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -65,23 +66,23 @@ export async function PodcastQQMusic(data: SyncData) {
         'input[type="text"][autocomplete="off"][placeholder="请输入作品名称"]',
       ) as HTMLInputElement;
 
-      console.debug("titleInput", titleInput);
+      logger.debug("titleInput", titleInput);
 
       if (titleInput) {
         titleInput.value = title;
         titleInput.dispatchEvent(new Event("input", { bubbles: true }));
       }
     } catch (error) {
-      console.error("上传音频文件时出错:", error);
+      logger.error("上传音频文件时出错:", error);
       throw error;
     }
   }
 
   try {
     await uploadAudioFile();
-    console.debug("QQ音乐播客内容上传完成");
+    logger.debug("QQ音乐播客内容上传完成");
   } catch (error) {
-    console.error("QQ音乐播客上传失败:", error);
+    logger.error("QQ音乐播客上传失败:", error);
     throw error;
   }
 }

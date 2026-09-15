@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { SyncData, VideoData } from "../common";
 
 export async function VideoOkjike(data: SyncData) {
@@ -48,13 +49,13 @@ export async function VideoOkjike(data: SyncData) {
   // 上传视频文件
   async function uploadVideo() {
     if (!video) {
-      console.error("没有视频文件");
+      logger.error("没有视频文件");
       return;
     }
 
     const fileInput = document.querySelector('input[type="file"][accept="video/mp4"]') as HTMLInputElement;
     if (!fileInput) {
-      console.error("未找到文件输入元素");
+      logger.error("未找到文件输入元素");
       return;
     }
 
@@ -68,7 +69,7 @@ export async function VideoOkjike(data: SyncData) {
       const file = new File([blob], video.name, { type: video.type });
       dataTransfer.items.add(file);
     } catch (error) {
-      console.error("上传视频失败:", error);
+      logger.error("上传视频失败:", error);
       return;
     }
 
@@ -97,19 +98,19 @@ export async function VideoOkjike(data: SyncData) {
         while (publishButton.disabled && attempts < 10) {
           await new Promise((resolve) => setTimeout(resolve, 3000));
           attempts++;
-          console.log(`等待发布按钮可用... 尝试 ${attempts}/10`);
+          logger.debug(`等待发布按钮可用... 尝试 ${attempts}/10`);
         }
 
         if (publishButton.disabled) {
-          console.error("发布按钮在10次尝试后仍被禁用");
+          logger.error("发布按钮在10次尝试后仍被禁用");
           return;
         }
 
-        console.log("点击发布按钮");
+        logger.debug("点击发布按钮");
         publishButton.click();
       }
     }
   } catch (error) {
-    console.error("发布过程中出错:", error);
+    logger.error("发布过程中出错:", error);
   }
 }

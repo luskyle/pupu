@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, SyncData } from "../common";
 
 interface WebhookConfig {
@@ -6,7 +7,7 @@ interface WebhookConfig {
 
 // 优先发布图文
 export async function DynamicWebhook(data: SyncData) {
-  console.log("DynamicWebhook", data);
+  logger.debug("DynamicWebhook", data);
   const extraConfig = data.platforms.find((platform) => platform.name === "DYNAMIC_WEBHOOK")
     ?.extraConfig as WebhookConfig;
 
@@ -108,7 +109,7 @@ export async function DynamicWebhook(data: SyncData) {
 
       return true;
     } catch (error) {
-      console.error("Webhook test failed:", error);
+      logger.error("Webhook test failed:", error);
       return false;
     }
   };
@@ -120,7 +121,7 @@ export async function DynamicWebhook(data: SyncData) {
     const isValid = await sendMessageCheck(url, content);
     if (isValid) {
       successCount++;
-      console.log("Webhook成功:", url);
+      logger.debug("Webhook成功:", url);
       floatingTip.updateMessage(`已成功发布到 ${successCount}/${extraConfig.urls.length} 个 Webhook`);
     }
   }

@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, SyncData } from "../common";
 
 // 不支持发布视频
@@ -82,7 +83,7 @@ export async function DynamicBluesky(data: SyncData) {
     if (newPostButton) {
       newPostButton.click();
     } else {
-      console.log("未找到撰写新帖文按钮");
+      logger.debug("未找到撰写新帖文按钮");
       return;
     }
 
@@ -93,7 +94,7 @@ export async function DynamicBluesky(data: SyncData) {
     contentInput.textContent = title ? `${title}\n${content}` : content;
     contentInput.dispatchEvent(new Event("input", { bubbles: true }));
     contentInput.dispatchEvent(new Event("change", { bubbles: true }));
-    console.log("内容已输入:", content);
+    logger.debug("内容已输入:", content);
 
     const limitedImages = images.slice(0, 4);
     if (limitedImages.length > 0) {
@@ -102,7 +103,7 @@ export async function DynamicBluesky(data: SyncData) {
         const response = await fetch(file.url);
         const blob = await response.blob();
         const imageFile = new File([blob], file.name, { type: file.type });
-        console.log(`文件: ${imageFile.name} ${imageFile.type} ${imageFile.size}`);
+        logger.debug(`文件: ${imageFile.name} ${imageFile.type} ${imageFile.size}`);
         imageData.push(imageFile);
       }
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -117,7 +118,7 @@ export async function DynamicBluesky(data: SyncData) {
         const publishButton = findPublishButton();
         if (publishButton) {
           publishButton.click();
-          console.log("已点击发布按钮");
+          logger.debug("已点击发布按钮");
           await new Promise((resolve) => setTimeout(resolve, 3000));
           window.location.reload();
           return;
@@ -125,9 +126,9 @@ export async function DynamicBluesky(data: SyncData) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
       dispatchPublishShortcut(contentInput);
-      console.log("已触发 Bluesky 发布快捷键");
+      logger.debug("已触发 Bluesky 发布快捷键");
     }
   } catch (error) {
-    console.error("bluesky 发布过程中出错:", error);
+    logger.error("bluesky 发布过程中出错:", error);
   }
 }

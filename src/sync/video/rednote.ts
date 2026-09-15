@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { SyncData, VideoData } from "../common";
 
 // 注意：injectFunction 会被 chrome.scripting.executeScript 序列化注入到目标页面，
@@ -40,7 +41,7 @@ export async function VideoRednote(data: SyncData) {
   async function uploadVideo() {
     const fileInput = (await waitForElement('input[type="file"]')) as HTMLInputElement;
     if (!fileInput) {
-      console.error("未找到文件输入元素");
+      logger.error("未找到文件输入元素");
       return;
     }
 
@@ -56,7 +57,7 @@ export async function VideoRednote(data: SyncData) {
         const file = new File([blob], video.name, { type: video.type });
         dataTransfer.items.add(file);
       } catch (error) {
-        console.error(`上传视频 ${video.url} 失败:`, error);
+        logger.error(`上传视频 ${video.url} 失败:`, error);
       }
     }
 
@@ -65,9 +66,9 @@ export async function VideoRednote(data: SyncData) {
       fileInput.dispatchEvent(new Event("change", { bubbles: true }));
       fileInput.dispatchEvent(new Event("input", { bubbles: true }));
       await new Promise((resolve) => setTimeout(resolve, 2000)); // 等待文件处理
-      console.log("文件上传操作完成");
+      logger.debug("文件上传操作完成");
     } else {
-      console.error("没有成功添加任何文件");
+      logger.error("没有成功添加任何文件");
     }
   }
 
@@ -77,10 +78,10 @@ export async function VideoRednote(data: SyncData) {
    */
   async function setScheduledPublishTime(scheduledPublishTime: number): Promise<void> {
     const labels = document.querySelectorAll("label");
-    console.debug("labels -->", labels);
+    logger.debug("labels -->", labels);
 
     const scheduledLabel = Array.from(labels).find((label) => label.textContent?.includes("定时发布"));
-    console.debug("label -->", scheduledLabel);
+    logger.debug("label -->", scheduledLabel);
 
     if (scheduledLabel) {
       (scheduledLabel as HTMLElement).click();
@@ -88,7 +89,7 @@ export async function VideoRednote(data: SyncData) {
     }
 
     const publishTimeInput = document.querySelector('input[placeholder="选择日期和时间"]') as HTMLInputElement;
-    console.debug("publishTimeInput -->", publishTimeInput);
+    logger.debug("publishTimeInput -->", publishTimeInput);
 
     if (publishTimeInput) {
       // 计算时间：添加 8 小时（28800000 毫秒）以调整时区
@@ -103,17 +104,17 @@ export async function VideoRednote(data: SyncData) {
       publishTimeInput.dispatchEvent(new Event("change", { bubbles: true }));
       publishTimeInput.blur();
 
-      console.debug("定时发布时间已设置:", formattedTime);
+      logger.debug("定时发布时间已设置:", formattedTime);
     }
   }
 
   // 辅助函数：上传封面
   async function uploadCover(coverFile: NonNullable<VideoData["cover"]>) {
-    console.debug("tryCover", coverFile);
+    logger.debug("tryCover", coverFile);
     const coverUploadTrigger = document.querySelector("div.noCover.uploadCover") as HTMLElement;
-    console.debug("coverUpload", coverUploadTrigger);
+    logger.debug("coverUpload", coverUploadTrigger);
     if (!coverUploadTrigger) {
-      console.error("未找到封面上传触发器: div.noCover.uploadCover");
+      logger.error("未找到封面上传触发器: div.noCover.uploadCover");
       return;
     }
     coverUploadTrigger.click();
@@ -122,21 +123,21 @@ export async function VideoRednote(data: SyncData) {
     try {
       await waitForElement(fileInputSelector);
     } catch (e) {
-      console.error(`等待元素 ${fileInputSelector} 超时`, e);
+      logger.error(`等待元素 ${fileInputSelector} 超时`, e);
       return;
     }
 
     const fileInput = document.querySelector(fileInputSelector) as HTMLInputElement;
-    console.debug("fileInput", fileInput);
+    logger.debug("fileInput", fileInput);
     if (!fileInput) {
-      console.error("未找到封面上传的文件输入元素");
+      logger.error("未找到封面上传的文件输入元素");
       return;
     }
 
     const dataTransfer = new DataTransfer();
-    console.debug("try upload file", coverFile);
+    logger.debug("try upload file", coverFile);
     if (!coverFile.type.includes("image/")) {
-      console.error("提供的封面文件不是图片");
+      logger.error("提供的封面文件不是图片");
       return;
     }
 
@@ -146,7 +147,7 @@ export async function VideoRednote(data: SyncData) {
       const file = new File([arrayBuffer], coverFile.name, { type: coverFile.type });
       dataTransfer.items.add(file);
     } catch (error) {
-      console.error(`上传封面 ${coverFile.url} 失败:`, error);
+      logger.error(`上传封面 ${coverFile.url} 失败:`, error);
       return;
     }
 
@@ -157,13 +158,13 @@ export async function VideoRednote(data: SyncData) {
     fileInput.files = dataTransfer.files;
     fileInput.dispatchEvent(new Event("change", { bubbles: true }));
     fileInput.dispatchEvent(new Event("input", { bubbles: true }));
-    console.debug("文件上传操作触发");
+    logger.debug("文件上传操作触发");
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const doneButtons = document.querySelectorAll("span");
-    console.debug("doneButtons", doneButtons);
+    logger.debug("doneButtons", doneButtons);
     const doneButton = Array.from(doneButtons).find((btn) => btn.textContent?.trim() === "确定");
-    console.debug("doneButton", doneButton);
+    logger.debug("doneButton", doneButton);
     if (doneButton) {
       (doneButton as HTMLElement).click();
     }
@@ -192,7 +193,7 @@ export async function VideoRednote(data: SyncData) {
   // 填写内容和标签
   const editor = document.querySelector('div[contenteditable="true"]') as HTMLElement;
   if (!editor) {
-    console.error("未找到编辑器元素");
+    logger.error("未找到编辑器元素");
     return;
   }
 
@@ -305,11 +306,11 @@ export async function VideoRednote(data: SyncData) {
     }
 
     if (published) {
-      console.debug("小红书视频：点击发布按钮");
+      logger.debug("小红书视频：点击发布按钮");
       await new Promise((resolve) => setTimeout(resolve, 10000));
       window.location.href = "https://creator.xiaohongshu.com/new/note-manager";
     } else {
-      console.debug("小红书视频：未找到可用发布按钮，跳过自动发布");
+      logger.debug("小红书视频：未找到可用发布按钮，跳过自动发布");
     }
   }
 }

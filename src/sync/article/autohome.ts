@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { ArticleData, FileData, SyncData } from "../common";
 
 export async function ArticleAutohome(data: SyncData) {
@@ -63,7 +64,7 @@ export async function ArticleAutohome(data: SyncData) {
       const blob = await response.blob();
       return new File([blob], fileData.name, { type: fileData.type || blob.type || "application/octet-stream" });
     } catch (error) {
-      console.warn("Autohome cover file fetch failed:", error);
+      logger.warn("Autohome cover file fetch failed:", error);
       return null;
     }
   }
@@ -84,7 +85,7 @@ export async function ArticleAutohome(data: SyncData) {
   function setCheckbox(selector: string, checked: boolean): void {
     const checkbox = document.querySelector(selector) as HTMLInputElement | null;
     if (!checkbox) {
-      console.debug(`Autohome checkbox not found: ${selector}`);
+      logger.debug(`Autohome checkbox not found: ${selector}`);
       return;
     }
 
@@ -96,7 +97,7 @@ export async function ArticleAutohome(data: SyncData) {
   async function uploadCover(cover?: FileData): Promise<boolean> {
     if (!cover) return true;
     if (!cover.url) {
-      console.debug("Autohome cover data has no URL");
+      logger.debug("Autohome cover data has no URL");
       return false;
     }
 
@@ -104,7 +105,7 @@ export async function ArticleAutohome(data: SyncData) {
       (span) => span.textContent === "编辑",
     );
     if (!editCoverButton) {
-      console.debug("Autohome cover edit button not found");
+      logger.debug("Autohome cover edit button not found");
       return false;
     }
 
@@ -112,7 +113,7 @@ export async function ArticleAutohome(data: SyncData) {
     const iframe = (await waitForElementOptional("iframe[name='mofangIframe']", 5000)) as HTMLIFrameElement | null;
     const iframeDocument = iframe?.contentDocument || null;
     if (!iframeDocument) {
-      console.debug("Autohome cover iframe not found");
+      logger.debug("Autohome cover iframe not found");
       return false;
     }
 
@@ -137,7 +138,7 @@ export async function ArticleAutohome(data: SyncData) {
         }, 5000);
       }))) as HTMLInputElement | null;
     if (!fileInput) {
-      console.debug("Autohome cover upload input not found");
+      logger.debug("Autohome cover upload input not found");
       return false;
     }
 
@@ -151,7 +152,7 @@ export async function ArticleAutohome(data: SyncData) {
     if (doneButton) {
       doneButton.click();
     } else {
-      console.debug("Autohome cover done button not found");
+      logger.debug("Autohome cover done button not found");
       return false;
     }
 
@@ -166,9 +167,7 @@ export async function ArticleAutohome(data: SyncData) {
     ].filter(([, filled]) => !filled);
 
     for (const [field] of missing) {
-      console.error(
-        `Autohome required field ${field} not filled; skipping auto-publish to avoid an incomplete article`,
-      );
+      logger.error(`Autohome required field ${field} not filled; skipping auto-publish to avoid an incomplete article`);
     }
 
     return missing.length === 0;
@@ -183,7 +182,7 @@ export async function ArticleAutohome(data: SyncData) {
       "div.button_publish.item.editor-btn.editor-main-btn",
     ) as HTMLElement | null;
     if (!publishButton) {
-      console.debug("Autohome publish button not found");
+      logger.debug("Autohome publish button not found");
       return;
     }
 
@@ -217,10 +216,10 @@ export async function ArticleAutohome(data: SyncData) {
         dispatchInputEvents(titleEl);
         required.title = true;
       } catch (error) {
-        console.error("Autohome title write failed:", error);
+        logger.error("Autohome title write failed:", error);
       }
     } else {
-      console.debug("Autohome title input not found");
+      logger.debug("Autohome title input not found");
     }
 
     const editor = document.querySelector('div[contenteditable="true"]') as HTMLDivElement | null;
@@ -229,10 +228,10 @@ export async function ArticleAutohome(data: SyncData) {
         pasteHtml(editor, htmlContent || "");
         required.body = true;
       } catch (error) {
-        console.error("Autohome body write failed:", error);
+        logger.error("Autohome body write failed:", error);
       }
     } else {
-      console.debug("Autohome body editor not found");
+      logger.debug("Autohome body editor not found");
     }
 
     setCheckbox("input#isOriginal", articleData.original ?? true);
@@ -247,11 +246,11 @@ export async function ArticleAutohome(data: SyncData) {
     try {
       required.cover = await uploadCover(cover);
     } catch (error) {
-      console.error("Autohome cover upload failed:", error);
+      logger.error("Autohome cover upload failed:", error);
       required.cover = false;
     }
     clickPublishIfRequested(required);
   } catch (error) {
-    console.error("汽车之家文章发布失败:", error);
+    logger.error("汽车之家文章发布失败:", error);
   }
 }

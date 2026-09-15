@@ -1,5 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ArticleData, FileData, SyncData } from "~sync/common";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { logger } from "~utils/logger";
 
 export async function Article51CTO(data: SyncData) {
   const articleData = data.data as ArticleData;
@@ -21,10 +22,10 @@ export async function Article51CTO(data: SyncData) {
       }
 
       const result = await response.json();
-      console.debug("getUploadSign result", result);
+      logger.debug("getUploadSign result", result);
       return result.data;
     } catch (error) {
-      console.error("获取上传签名失败:", error);
+      logger.error("获取上传签名失败:", error);
       throw error;
     }
   }
@@ -54,10 +55,10 @@ export async function Article51CTO(data: SyncData) {
       }
 
       const result = await response.json();
-      console.debug("getUploadConfig result", result);
+      logger.debug("getUploadConfig result", result);
       return result.data;
     } catch (error) {
-      console.error("获取上传配置失败:", error);
+      logger.error("获取上传配置失败:", error);
       throw error;
     }
   }
@@ -65,10 +66,10 @@ export async function Article51CTO(data: SyncData) {
   // 上传单个图片
   async function uploadImage(fileInfo: FileData): Promise<string | null> {
     try {
-      console.debug("uploadImage", fileInfo);
+      logger.debug("uploadImage", fileInfo);
 
       const config = await getUploadConfig(fileInfo.type, fileInfo.name);
-      console.debug("uploadConfig", config);
+      logger.debug("uploadConfig", config);
 
       const blob = await (await fetch(fileInfo.url)).blob();
       const file = new File([blob], fileInfo.name, { type: fileInfo.type });
@@ -90,10 +91,10 @@ export async function Article51CTO(data: SyncData) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      console.debug("Image upload result:", response);
+      logger.debug("Image upload result:", response);
       return `https://s2.51cto.com/${config.dir}?x-oss-process=image/watermark,size_14,text_QDUxQ1RP5Y2a5a6i,color_FFFFFF,t_100,g_se,x_10,y_10,shadow_20,type_ZmFuZ3poZW5naGVpdGk=,x-oss-process=image/resize,m_fixed,w_1184`;
     } catch (error) {
-      console.error("上传图片失败:", error);
+      logger.error("上传图片失败:", error);
       return null;
     }
   }
@@ -104,7 +105,7 @@ export async function Article51CTO(data: SyncData) {
     const doc = parser.parseFromString(htmlContent, "text/html");
     const images = doc.getElementsByTagName("img");
 
-    console.debug("images", images);
+    logger.debug("images", images);
 
     for (let i = 0; i < images.length; i++) {
       updateTip(`正在上传第 ${i + 1}/${images.length} 张图片`);
@@ -113,7 +114,7 @@ export async function Article51CTO(data: SyncData) {
       const src = img.getAttribute("src");
 
       if (src) {
-        console.debug("try replace ", src);
+        logger.debug("try replace ", src);
         const fileInfo = imageFiles.find((f) => f.url === src);
 
         if (fileInfo) {
@@ -176,16 +177,16 @@ export async function Article51CTO(data: SyncData) {
       }
 
       const result = await response.json();
-      console.debug("result", result);
+      logger.debug("result", result);
 
       if (result?.data?.did) {
-        console.debug("草稿发布成功");
+        logger.debug("草稿发布成功");
         return result.data.did;
       }
-      console.debug("草稿发布失败", result.message);
+      logger.debug("草稿发布失败", result.message);
       return null;
     } catch (error) {
-      console.error("发布文章失败:", error);
+      logger.error("发布文章失败:", error);
       return null;
     }
   }
@@ -270,7 +271,7 @@ export async function Article51CTO(data: SyncData) {
       }, 3000);
     }
 
-    console.error("发布文章失败:", error);
+    logger.error("发布文章失败:", error);
     throw error;
   }
 }

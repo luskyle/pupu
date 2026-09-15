@@ -1,18 +1,19 @@
+import { logger } from "~utils/logger";
 import type { SyncData, VideoData } from "../common";
 
 export async function VideoDewu(data: SyncData) {
   // 简化说明：此版本专注于拖动策略，其他复杂策略已注释或移除以减少干扰
-  console.log("🎬 VideoDewu函数被调用");
-  console.log("📥 接收到的data参数:", data);
+  logger.debug("🎬 VideoDewu函数被调用");
+  logger.debug("📥 接收到的data参数:", data);
 
   // 防止重复执行
   if ((window as unknown as { __dewuRunning?: boolean }).__dewuRunning) {
-    console.log("⚠️ Dewu脚本已在运行中，跳过重复执行");
+    logger.debug("⚠️ Dewu脚本已在运行中，跳过重复执行");
     return;
   }
   (window as unknown as { __dewuRunning?: boolean }).__dewuRunning = true;
 
-  console.log("🚀 开始执行Dewu视频发布脚本");
+  logger.debug("🚀 开始执行Dewu视频发布脚本");
 
   /**
    * 创建一个在指定毫秒数后解析的 Promise
@@ -37,29 +38,29 @@ export async function VideoDewu(data: SyncData) {
   }
 
   async function uploadVideo(file: File): Promise<void> {
-    console.log("🎬 开始视频上传流程");
+    logger.debug("🎬 开始视频上传流程");
 
     await sleep(3000);
 
     // 确保在"发布视频"标签页
     const videoTab = document.querySelector("#rc-tabs-0-tab-1") as HTMLElement;
     if (videoTab && !videoTab.classList.contains("pd-tabs-tab-active")) {
-      console.log("🖱️ 点击发布视频标签页");
+      logger.debug("🖱️ 点击发布视频标签页");
       videoTab.click();
       await sleep(2000);
     }
 
     const fileInputs = document.querySelectorAll('input[type="file"]');
-    console.log(`🔍 找到 ${fileInputs.length} 个文件输入框`);
+    logger.debug(`🔍 找到 ${fileInputs.length} 个文件输入框`);
 
     if (fileInputs.length === 0) {
       throw new Error("页面上没有找到任何文件输入框");
     }
 
     const videoInput = fileInputs[0] as HTMLInputElement;
-    console.log("✅ 使用第一个文件输入框");
+    logger.debug("✅ 使用第一个文件输入框");
 
-    console.log("📁 准备上传视频文件:", file.name, file.type, file.size);
+    logger.debug("📁 准备上传视频文件:", file.name, file.type, file.size);
 
     const dataTransfer = new DataTransfer();
     dataTransfer.items.add(file);
@@ -68,20 +69,20 @@ export async function VideoDewu(data: SyncData) {
     const changeEvent = new Event("change", { bubbles: true });
     videoInput.dispatchEvent(changeEvent);
 
-    console.log("✅ 视频文件设置完成，开始上传...");
+    logger.debug("✅ 视频文件设置完成，开始上传...");
 
     // 立即返回，不等待上传完成
     return;
   }
 
   async function waitForUploadCompletion(timeout = 30000): Promise<void> {
-    console.log("⏳ 等待视频上传完成...");
+    logger.debug("⏳ 等待视频上传完成...");
     await sleep(timeout);
-    console.log("✅ 视频上传等待完成，继续执行");
+    logger.debug("✅ 视频上传等待完成，继续执行");
   }
 
   async function fillTitle(title: string): Promise<void> {
-    console.log("🔍 开始填写标题:", title);
+    logger.debug("🔍 开始填写标题:", title);
 
     // 等待页面完全加载
     await sleep(3000);
@@ -93,15 +94,15 @@ export async function VideoDewu(data: SyncData) {
       titleInput.value = title;
       titleInput.dispatchEvent(new Event("input", { bubbles: true }));
       titleInput.dispatchEvent(new Event("change", { bubbles: true }));
-      console.log("✅ 标题已填写:", title);
+      logger.debug("✅ 标题已填写:", title);
       return;
     }
 
-    console.log("⚠️ 未找到标题输入框");
+    logger.debug("⚠️ 未找到标题输入框");
   }
 
   async function fillDescription(content: string): Promise<void> {
-    console.log("🔍 开始填写描述:", content);
+    logger.debug("🔍 开始填写描述:", content);
 
     // 等待页面完全加载
     await sleep(5000);
@@ -111,7 +112,7 @@ export async function VideoDewu(data: SyncData) {
     tempDiv.innerHTML = content;
     const plainText = tempDiv.textContent || tempDiv.innerText || "";
 
-    console.log("🔍 查找描述输入框，目标内容:", plainText);
+    logger.debug("🔍 查找描述输入框，目标内容:", plainText);
 
     // 使用简单的选择器找到描述输入框
     const descriptionSelectors = [
@@ -128,7 +129,7 @@ export async function VideoDewu(data: SyncData) {
       for (const element of elements) {
         const el = element as HTMLElement | HTMLTextAreaElement;
         if (el.offsetParent !== null) {
-          console.log(`✅ 找到描述输入框: ${selector}`);
+          logger.debug(`✅ 找到描述输入框: ${selector}`);
 
           // 根据元素类型选择填写方式
           if (el.contentEditable === "true") {
@@ -146,24 +147,24 @@ export async function VideoDewu(data: SyncData) {
           el.dispatchEvent(new Event("change", { bubbles: true }));
           el.dispatchEvent(new Event("blur", { bubbles: true }));
 
-          console.log("✅ 描述已填写:", `${plainText.substring(0, 100)}...`);
+          logger.debug("✅ 描述已填写:", `${plainText.substring(0, 100)}...`);
           return;
         }
       }
     }
 
-    console.log("⚠️ 未找到描述输入框");
+    logger.debug("⚠️ 未找到描述输入框");
   }
 
   async function uploadCover(
     cover: { url: string; name: string; type?: string },
     videoAspectRatio: number,
   ): Promise<void> {
-    console.log("🖼️ 开始上传封面:", cover);
+    logger.debug("🖼️ 开始上传封面:", cover);
 
     try {
       // 步骤1: 点击"编辑封面"按钮
-      console.log("🔍 查找编辑封面按钮...");
+      logger.debug("🔍 查找编辑封面按钮...");
 
       // 通过文本内容查找按钮，避免使用动态CSS类
       const buttons = document.querySelectorAll("button");
@@ -173,34 +174,34 @@ export async function VideoDewu(data: SyncData) {
         const text = button.textContent?.trim();
         if (text?.includes("编辑封面")) {
           editCoverButton = button as HTMLElement;
-          console.log("✅ 通过文本找到编辑封面按钮");
+          logger.debug("✅ 通过文本找到编辑封面按钮");
           break;
         }
       }
 
       if (!editCoverButton) {
-        console.log('❌ 未找到编辑封面按钮，尝试查找包含"封面"的按钮...');
+        logger.debug('❌ 未找到编辑封面按钮，尝试查找包含"封面"的按钮...');
         for (const button of buttons) {
           const text = button.textContent?.trim();
           if (text?.includes("封面")) {
             editCoverButton = button as HTMLElement;
-            console.log("✅ 通过部分文本找到编辑封面按钮");
+            logger.debug("✅ 通过部分文本找到编辑封面按钮");
             break;
           }
         }
       }
 
       if (!editCoverButton) {
-        console.log("❌ 未找到编辑封面按钮");
+        logger.debug("❌ 未找到编辑封面按钮");
         return;
       }
 
-      console.log("✅ 点击编辑封面按钮");
+      logger.debug("✅ 点击编辑封面按钮");
       editCoverButton.click();
       await sleep(3000);
 
       // 步骤2: 点击"上传封面"标签页
-      console.log("🔍 查找上传封面标签页...");
+      logger.debug("🔍 查找上传封面标签页...");
       const uploadCoverTabSelectors = [
         "#rc-tabs-1-tab-2", // 具体的ID
         'div[role="tab"]:contains("上传封面")', // 通过文本查找
@@ -214,7 +215,7 @@ export async function VideoDewu(data: SyncData) {
           for (const tab of tabs) {
             if (tab.textContent?.includes("上传封面")) {
               uploadCoverTab = tab as HTMLElement;
-              console.log("✅ 通过文本找到上传封面标签页");
+              logger.debug("✅ 通过文本找到上传封面标签页");
               break;
             }
           }
@@ -223,19 +224,19 @@ export async function VideoDewu(data: SyncData) {
         }
 
         if (uploadCoverTab) {
-          console.log(`✅ 找到上传封面标签页: ${selector}`);
+          logger.debug(`✅ 找到上传封面标签页: ${selector}`);
           break;
         }
       }
 
       if (uploadCoverTab) {
-        console.log("✅ 点击上传封面标签页");
+        logger.debug("✅ 点击上传封面标签页");
         uploadCoverTab.click();
         await sleep(2000);
       }
 
       // 步骤3: 查找上传区域并触发文件上传
-      console.log("🔍 查找上传区域...");
+      logger.debug("🔍 查找上传区域...");
 
       // 查找包含上传文本的元素
       const uploadTextElements = Array.from(document.querySelectorAll("*")).filter((el) => {
@@ -248,7 +249,7 @@ export async function VideoDewu(data: SyncData) {
       if (uploadTextElements.length > 0) {
         // 找到包含上传文本的元素，然后向上查找其父级容器
         uploadArea = uploadTextElements[0].closest("div") as HTMLElement;
-        console.log("✅ 通过文本找到上传区域");
+        logger.debug("✅ 通过文本找到上传区域");
       } else {
         // 备用方案：查找包含上传图标的区域
         const uploadImages = Array.from(document.querySelectorAll("img")).filter((img) => {
@@ -258,49 +259,49 @@ export async function VideoDewu(data: SyncData) {
 
         if (uploadImages.length > 0) {
           uploadArea = uploadImages[0].closest("div") as HTMLElement;
-          console.log("✅ 通过图标找到上传区域");
+          logger.debug("✅ 通过图标找到上传区域");
         }
       }
 
       if (!uploadArea) {
-        console.log("❌ 未找到上传区域，尝试所有可能的div容器...");
+        logger.debug("❌ 未找到上传区域，尝试所有可能的div容器...");
         // 最后的备用方案：查找模态框内的大div
         const modalDivs = Array.from(document.querySelectorAll('.modal *, .dialog *, [role="dialog"] *'));
         for (const div of modalDivs) {
           if (div.tagName === "DIV" && div.children.length > 0) {
             uploadArea = div as HTMLElement;
-            console.log("✅ 使用模态框内的div作为上传区域");
+            logger.debug("✅ 使用模态框内的div作为上传区域");
             break;
           }
         }
       }
 
       if (!uploadArea) {
-        console.log("❌ 未找到上传区域");
+        logger.debug("❌ 未找到上传区域");
         return;
       }
 
       // 步骤4: 准备封面文件
-      console.log("📁 准备封面文件...");
+      logger.debug("📁 准备封面文件...");
       const response = await fetch(cover.url);
       const arrayBuffer = await response.arrayBuffer();
       const coverFile = new File([arrayBuffer], cover.name, {
         type: cover.type || "image/jpeg",
       });
 
-      console.log("📁 封面文件信息:", coverFile.name, coverFile.size, coverFile.type);
+      logger.debug("📁 封面文件信息:", coverFile.name, coverFile.size, coverFile.type);
 
       // 方法1: 查找现有的文件输入框
-      console.log("🔍 查找现有的文件输入框...");
+      logger.debug("🔍 查找现有的文件输入框...");
       const fileInputs = uploadArea.querySelectorAll('input[type="file"]');
       let targetFileInput: HTMLInputElement | null = null;
 
       if (fileInputs.length > 0) {
         targetFileInput = fileInputs[0] as HTMLInputElement;
-        console.log("✅ 找到现有文件输入框");
+        logger.debug("✅ 找到现有文件输入框");
       } else {
         // 方法2: 创建文件输入框
-        console.log("📝 创建新的文件输入框...");
+        logger.debug("📝 创建新的文件输入框...");
         targetFileInput = document.createElement("input");
         targetFileInput.type = "file";
         targetFileInput.accept = "image/*,.jpg,.jpeg,.png,.webp";
@@ -315,12 +316,12 @@ export async function VideoDewu(data: SyncData) {
       targetFileInput.files = dataTransfer.files;
 
       // 触发文件选择事件
-      console.log("📤 触发文件选择事件...");
+      logger.debug("📤 触发文件选择事件...");
       targetFileInput.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
       await sleep(1000);
 
       // 方法3: 直接点击上传区域触发文件选择
-      console.log("🖱️ 尝试直接点击上传区域...");
+      logger.debug("🖱️ 尝试直接点击上传区域...");
       uploadArea.click();
       await sleep(1000);
 
@@ -329,23 +330,23 @@ export async function VideoDewu(data: SyncData) {
         targetFileInput.remove();
       }
 
-      console.log("✅ 封面文件设置完成");
+      logger.debug("✅ 封面文件设置完成");
 
       // 步骤5: 等待上传完成并选择封面比例
-      console.log("⏳ 等待封面上传完成...");
+      logger.debug("⏳ 等待封面上传完成...");
       await sleep(5000);
 
       // 根据视频比例选择合适的封面裁剪比例
-      console.log("🎯 根据视频比例选择封面裁剪比例:", videoAspectRatio.toFixed(2));
+      logger.debug("🎯 根据视频比例选择封面裁剪比例:", videoAspectRatio.toFixed(2));
       await selectCoverAspectRatio(videoAspectRatio);
     } catch (error) {
-      console.error("❌ 封面上传失败:", error);
+      logger.error("❌ 封面上传失败:", error);
     }
   }
 
   // 关闭封面上传模态框的独立函数
   async function closeCoverModal(): Promise<void> {
-    console.log("🔍 查找模态框确定按钮...");
+    logger.debug("🔍 查找模态框确定按钮...");
     const confirmButtonSelectors = [
       'button:contains("确定")', // 通过文本查找
       ".pd-modal-footer .pd-btn-primary", // 模态框 footer 中的主要按钮
@@ -362,7 +363,7 @@ export async function VideoDewu(data: SyncData) {
           if (button.textContent?.includes("确定") && button.textContent?.length <= 10) {
             // 确保按钮文本相对简短，避免匹配到其他包含"确定"的长文本
             confirmButton = button as HTMLElement;
-            console.log("✅ 通过文本找到确定按钮");
+            logger.debug("✅ 通过文本找到确定按钮");
             break;
           }
         }
@@ -371,23 +372,23 @@ export async function VideoDewu(data: SyncData) {
       }
 
       if (confirmButton && confirmButton.offsetParent !== null) {
-        console.log(`✅ 找到确定按钮: ${selector}`);
+        logger.debug(`✅ 找到确定按钮: ${selector}`);
         break;
       }
     }
 
     if (confirmButton) {
-      console.log("✅ 点击确定按钮完成封面上传");
+      logger.debug("✅ 点击确定按钮完成封面上传");
       confirmButton.click();
       await sleep(3000);
-      console.log("🎉 封面上传完成");
+      logger.debug("🎉 封面上传完成");
     } else {
-      console.log("⚠️ 未找到确定按钮，可能需要手动确认");
+      logger.debug("⚠️ 未找到确定按钮，可能需要手动确认");
     }
   }
 
   async function selectCoverAspectRatio(videoAspectRatio: number): Promise<void> {
-    console.log("🎯 开始选择封面裁剪比例，视频比例:", videoAspectRatio.toFixed(2));
+    logger.debug("🎯 开始选择封面裁剪比例，视频比例:", videoAspectRatio.toFixed(2));
 
     try {
       // 根据视频比例确定推荐的封面裁剪比例
@@ -403,7 +404,7 @@ export async function VideoDewu(data: SyncData) {
         recommendedRatio = "3:4"; // 竖版视频选择 3:4
       }
 
-      console.log("📏 推荐封面裁剪比例:", recommendedRatio);
+      logger.debug("📏 推荐封面裁剪比例:", recommendedRatio);
 
       // 查找并选择推荐的比例
       const allElements = document.querySelectorAll("*");
@@ -414,7 +415,7 @@ export async function VideoDewu(data: SyncData) {
         const text = element.textContent?.trim();
         if (text === recommendedRatio) {
           selectedOption = element as HTMLElement;
-          console.log(`✅ 找到推荐比例: ${recommendedRatio}`);
+          logger.debug(`✅ 找到推荐比例: ${recommendedRatio}`);
           break;
         }
       }
@@ -425,7 +426,7 @@ export async function VideoDewu(data: SyncData) {
           const text = element.textContent?.trim();
           if (text === "4:3") {
             selectedOption = element as HTMLElement;
-            console.log("✅ 找到4:3比例");
+            logger.debug("✅ 找到4:3比例");
             break;
           }
         }
@@ -433,31 +434,31 @@ export async function VideoDewu(data: SyncData) {
 
       // 点击选择的选项
       if (selectedOption) {
-        console.log("✅ 点击封面裁剪比例选项");
+        logger.debug("✅ 点击封面裁剪比例选项");
         selectedOption.click();
         await sleep(3000); // 增加等待时间，确保裁剪界面完全加载
-        console.log("✅ 封面裁剪比例选择完成");
+        logger.debug("✅ 封面裁剪比例选择完成");
 
         // 执行智能撑满和居中策略，确保cropper完全初始化
-        console.log("🎯 开始执行智能裁剪框调整...");
+        logger.debug("🎯 开始执行智能裁剪框调整...");
         await smartExpandAndCenterCropBox();
-        console.log("✅ 智能裁剪框调整完成");
+        logger.debug("✅ 智能裁剪框调整完成");
 
         // 在智能裁剪完成后再关闭模态框
         await closeCoverModal();
       } else {
-        console.log("⚠️ 未找到封面裁剪比例选择选项，跳过此步骤");
+        logger.debug("⚠️ 未找到封面裁剪比例选择选项，跳过此步骤");
         // 即使没有选择比例，也要尝试关闭模态框
         await closeCoverModal();
       }
     } catch (error) {
-      console.error("❌ 封面裁剪比例选择失败:", error);
+      logger.error("❌ 封面裁剪比例选择失败:", error);
     }
   }
 
   // 智能撑满和居中策略 - 纯Cropper API
   async function smartExpandAndCenterCropBox(): Promise<void> {
-    console.log("🎯 开始使用Cropper API撑满和居中裁剪框...");
+    logger.debug("🎯 开始使用Cropper API撑满和居中裁剪框...");
 
     // 等待cropper完全初始化，并尝试多次查找实例
     let cropperInstance = null;
@@ -465,7 +466,7 @@ export async function VideoDewu(data: SyncData) {
     const maxAttempts = 10;
 
     while (!cropperInstance && attempts < maxAttempts) {
-      console.log(`🔍 尝试查找Cropper实例 (${attempts + 1}/${maxAttempts})...`);
+      logger.debug(`🔍 尝试查找Cropper实例 (${attempts + 1}/${maxAttempts})...`);
 
       // 等待时间递减，第一次长一些，后面短一些
       const waitTime = attempts === 0 ? 3000 : 1000;
@@ -476,45 +477,45 @@ export async function VideoDewu(data: SyncData) {
     }
 
     if (!cropperInstance) {
-      console.error("❌ 多次尝试后仍未找到Cropper实例");
+      logger.error("❌ 多次尝试后仍未找到Cropper实例");
       // 提供调试信息
-      console.log(
+      logger.debug(
         "🔍 当前页面元素:",
         document.querySelectorAll('canvas, .cropper-container, [class*="cropper"]').length,
       );
       return;
     }
 
-    console.log("✅ 找到Cropper实例，使用API调整");
+    logger.debug("✅ 找到Cropper实例，使用API调整");
     await adjustUsingCropperAPI(cropperInstance);
   }
 
   // 查找Cropper实例
   function findCropperInstance(): unknown {
-    console.log("🔍 查找Cropper实例...");
+    logger.debug("🔍 查找Cropper实例...");
 
     // 直接查找cropper-hidden的canvas元素
     const hiddenCanvas = document.querySelector("canvas.cropper-hidden");
-    console.log("hiddenCanvas:", hiddenCanvas);
+    logger.debug("hiddenCanvas:", hiddenCanvas);
     const cropperInstance = hiddenCanvas && (hiddenCanvas as { cropper?: unknown }).cropper;
-    console.log("cropperInstance:", cropperInstance);
+    logger.debug("cropperInstance:", cropperInstance);
 
     if (cropperInstance) {
-      console.log("✅ 在canvas.cropper-hidden找到Cropper实例");
+      logger.debug("✅ 在canvas.cropper-hidden找到Cropper实例");
       return cropperInstance;
     }
 
-    console.log("❌ 未找到Cropper实例");
+    logger.debug("❌ 未找到Cropper实例");
     return null;
   }
 
   // 使用Cropper API设置最优裁剪框
   async function adjustUsingCropperAPI(cropperInstance: unknown): Promise<void> {
     try {
-      console.log("=== 设置最优裁剪框尺寸 ===");
+      logger.debug("=== 设置最优裁剪框尺寸 ===");
 
       if (!cropperInstance) {
-        console.error("❌ 未找到Cropper实例");
+        logger.error("❌ 未找到Cropper实例");
         return;
       }
 
@@ -533,7 +534,7 @@ export async function VideoDewu(data: SyncData) {
         typeof cropper.setCropBoxData !== "function" ||
         typeof cropper.render !== "function"
       ) {
-        console.error("❌ Cropper实例缺少必要的方法");
+        logger.error("❌ Cropper实例缺少必要的方法");
         return;
       }
 
@@ -570,7 +571,7 @@ export async function VideoDewu(data: SyncData) {
         height: optimalHeight,
       };
 
-      console.log("设置最优裁剪框:", optimalCropBoxData);
+      logger.debug("设置最优裁剪框:", optimalCropBoxData);
 
       // 应用设置
       cropper.setCropBoxData(optimalCropBoxData);
@@ -584,12 +585,12 @@ export async function VideoDewu(data: SyncData) {
       const widthCoverage = (result.width / cropperContainerData.width) * 100;
       const heightCoverage = (result.height / cropperContainerData.height) * 100;
 
-      console.log("✅ 设置完成！");
-      console.log("最终裁剪框:", result);
-      console.log("容器覆盖率:", `${widthCoverage.toFixed(1)}% x ${heightCoverage.toFixed(1)}%`);
-      console.log("🎉 这是4:3比例下的最大尺寸！");
+      logger.debug("✅ 设置完成！");
+      logger.debug("最终裁剪框:", result);
+      logger.debug("容器覆盖率:", `${widthCoverage.toFixed(1)}% x ${heightCoverage.toFixed(1)}%`);
+      logger.debug("🎉 这是4:3比例下的最大尺寸！");
     } catch (error) {
-      console.error("❌ Cropper API调用失败:", error);
+      logger.error("❌ Cropper API调用失败:", error);
     }
   }
 
@@ -601,73 +602,73 @@ export async function VideoDewu(data: SyncData) {
 
   // 主执行逻辑
   try {
-    console.log("🔍 开始数据结构检查");
-    console.log("📝 data参数:", data);
+    logger.debug("🔍 开始数据结构检查");
+    logger.debug("📝 data参数:", data);
 
     if (!data || !data.data) {
-      console.error("❌ 数据参数为空");
+      logger.error("❌ 数据参数为空");
       return;
     }
 
     const { content, video, title, tags, cover } = data.data as VideoData;
 
     if (!video) {
-      console.error("❌ 缺少视频文件");
+      logger.error("❌ 缺少视频文件");
       return;
     }
 
     // 获取视频元数据
     const metadata = await getVideoMetadata();
     const aspectRatio = metadata.width / metadata.height;
-    console.log("📊 视频信息:", {
+    logger.debug("📊 视频信息:", {
       width: metadata.width,
       height: metadata.height,
       aspectRatio: aspectRatio.toFixed(2),
     });
 
     // 下载视频文件
-    console.log("📥 开始下载视频文件...");
+    logger.debug("📥 开始下载视频文件...");
     const response = await fetch(video.url);
     const arrayBuffer = await response.arrayBuffer();
     const videoFile = new File([arrayBuffer], video.name, {
       type: video.type,
     });
 
-    console.log("✅ 视频文件准备完成");
+    logger.debug("✅ 视频文件准备完成");
 
     // 将标签合并到描述中
     let finalContent = content || "";
     if (tags && tags.length > 0) {
       const tagString = tags.map((tag) => `#${tag}`).join(" ");
       finalContent = `${finalContent} ${tagString}`.trim();
-      console.log("📝 合并后的内容:", finalContent);
+      logger.debug("📝 合并后的内容:", finalContent);
     }
 
     // 先启动视频上传
-    console.log("📤 开始上传视频...");
+    logger.debug("📤 开始上传视频...");
     const uploadPromise = uploadVideo(videoFile).then(async () => {
-      console.log("📤 视频文件已设置，等待上传完成...");
+      logger.debug("📤 视频文件已设置，等待上传完成...");
       await waitForUploadCompletion();
-      console.log("✅ 视频上传完成");
+      logger.debug("✅ 视频上传完成");
     });
 
     // 等待一下确保视频上传已经开始
     await sleep(1000);
 
     // 然后开始填写表单
-    console.log("📝 开始填写表单...");
+    logger.debug("📝 开始填写表单...");
     await fillDescription(finalContent);
     await fillTitle(title || "");
-    console.log("✅ 表单填写完成");
+    logger.debug("✅ 表单填写完成");
 
     // 上传自定义封面
     if (cover) {
-      console.log("🖼️ 开始上传自定义封面...");
+      logger.debug("🖼️ 开始上传自定义封面...");
       await uploadCover(cover, aspectRatio);
     }
 
     // 等待视频上传完成
-    console.log("⏳ 等待视频上传完成...");
+    logger.debug("⏳ 等待视频上传完成...");
     await uploadPromise;
 
     // 自动发布
@@ -675,20 +676,20 @@ export async function VideoDewu(data: SyncData) {
       await sleep(5000);
       const publishButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
       if (publishButton) {
-        console.log("🚀 点击发布按钮");
+        logger.debug("🚀 点击发布按钮");
         publishButton.click();
       } else {
-        console.log("⚠️ 未找到发布按钮");
+        logger.debug("⚠️ 未找到发布按钮");
       }
     }
 
-    console.log("✅ Dewu视频发布完成");
+    logger.debug("✅ Dewu视频发布完成");
   } catch (error) {
-    console.error("❌ Dewu视频发布过程中出错:", error);
+    logger.error("❌ Dewu视频发布过程中出错:", error);
     throw error;
   } finally {
     // 清理状态
-    console.log("🧹 清理执行状态");
+    logger.debug("🧹 清理执行状态");
     (window as unknown as { __dewuRunning?: boolean }).__dewuRunning = false;
   }
 }

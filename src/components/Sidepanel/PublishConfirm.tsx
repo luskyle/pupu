@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import PlatformCheckbox from "~components/Sync/PlatformCheckbox";
 import { type PlatformInfo, type SyncData, getPlatformInfos, getTypePriorityPlatformKeys } from "~sync/common";
 import { processContentForPublish } from "~sync/publish-process";
+import { logger } from "~utils/logger";
 
 export type PublishType = "DYNAMIC" | "VIDEO" | "ARTICLE";
 
@@ -45,7 +46,7 @@ export default function PublishConfirm({ type, data, onDone }: PublishConfirmPro
         const infos = await getPlatformInfos(type);
         if (alive) setPlatforms(infos);
       } catch (error) {
-        console.error("加载平台信息失败:", error);
+        logger.error("加载平台信息失败:", error);
       }
       try {
         const saved = JSON.parse(localStorage.getItem(PLATFORM_STORAGE_KEY[type]) || "[]");

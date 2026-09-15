@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, SyncData } from "../common";
 
 export async function DynamicZSXQ(data: SyncData) {
@@ -40,9 +41,9 @@ export async function DynamicZSXQ(data: SyncData) {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // 点击发帖按钮
-    console.debug("postTopicHead", postTopicHead);
+    logger.debug("postTopicHead", postTopicHead);
     if (!postTopicHead) {
-      console.debug("未找到帖子头部元素");
+      logger.debug("未找到帖子头部元素");
       return;
     }
 
@@ -53,9 +54,9 @@ export async function DynamicZSXQ(data: SyncData) {
 
     // 找到编辑器并填写内容
     const editor = document.querySelector(".ql-editor") as HTMLElement;
-    console.debug("editor", editor);
+    logger.debug("editor", editor);
     if (!editor) {
-      console.debug("未找到编辑器元素");
+      logger.debug("未找到编辑器元素");
       return;
     }
 
@@ -75,14 +76,14 @@ export async function DynamicZSXQ(data: SyncData) {
     editor.blur();
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    console.debug("editor-->", editor, editor.textContent);
+    logger.debug("editor-->", editor, editor.textContent);
 
     // 处理图片上传
     if (images && images.length > 0) {
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-      console.debug("fileInput", fileInput);
+      logger.debug("fileInput", fileInput);
       if (!fileInput) {
-        console.debug("未找到文件输入元素");
+        logger.debug("未找到文件输入元素");
         return;
       }
 
@@ -90,12 +91,12 @@ export async function DynamicZSXQ(data: SyncData) {
       for (const image of images) {
         if (!image.type.startsWith("image/")) continue;
 
-        console.debug("try upload file", image);
+        logger.debug("try upload file", image);
         const response = await fetch(image.url);
         const arrayBuffer = await response.arrayBuffer();
         const file = new File([arrayBuffer], image.name, { type: image.type });
         dataTransfer.items.add(file);
-        console.debug("uploaded");
+        logger.debug("uploaded");
       }
 
       if (dataTransfer.files.length > 0) {
@@ -104,7 +105,7 @@ export async function DynamicZSXQ(data: SyncData) {
         fileInput.dispatchEvent(changeEvent);
         const inputEvent = new Event("input", { bubbles: true });
         fileInput.dispatchEvent(inputEvent);
-        console.debug("文件上传操作完成");
+        logger.debug("文件上传操作完成");
       }
 
       await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -113,16 +114,16 @@ export async function DynamicZSXQ(data: SyncData) {
     // 发布内容
     const submitButtons = document.querySelectorAll(".submit-btn");
     const publishButton = Array.from(submitButtons).find((el) => el.textContent?.includes("发布"));
-    console.debug("publishButton", publishButton);
+    logger.debug("publishButton", publishButton);
 
     if (publishButton && data.isAutoPublish) {
-      console.debug("publishButton clicked");
+      logger.debug("publishButton clicked");
       const clickEvent = new Event("click", { bubbles: true });
       publishButton.dispatchEvent(clickEvent);
     } else {
-      console.debug('未找到"发布"按钮');
+      logger.debug('未找到"发布"按钮');
     }
   } catch (error) {
-    console.error("发布内容时出错:", error);
+    logger.error("发布内容时出错:", error);
   }
 }

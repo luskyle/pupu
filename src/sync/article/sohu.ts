@@ -1,9 +1,10 @@
+import type { ArticleData, SyncData } from "~sync/common";
 /**
  * 搜狐号文章发布(experimental,待线上验证)
  *
  * Sohu ARTICLE DOM fallback 路径实现。选择器与流程需线上回归验证。
  */
-import type { ArticleData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 export async function ArticleSohu(data: SyncData) {
   const articleData = data.data as ArticleData;
@@ -58,7 +59,7 @@ export async function ArticleSohu(data: SyncData) {
     if (publishButton) {
       publishButton.dispatchEvent(new Event("click", { bubbles: true }));
     } else {
-      console.debug("搜狐号:未找到发布按钮");
+      logger.debug("搜狐号:未找到发布按钮");
     }
   }
 
@@ -67,7 +68,7 @@ export async function ArticleSohu(data: SyncData) {
 
     const uploadTrigger = document.querySelector("span.upload-tip") as HTMLElement | null;
     if (!uploadTrigger) {
-      console.debug("搜狐号:未找到封面上传入口");
+      logger.debug("搜狐号:未找到封面上传入口");
       return false;
     }
     uploadTrigger.click();
@@ -81,7 +82,7 @@ export async function ArticleSohu(data: SyncData) {
 
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement | null;
     if (!fileInput) {
-      console.debug("搜狐号:未找到封面文件输入框");
+      logger.debug("搜狐号:未找到封面文件输入框");
       return false;
     }
 
@@ -100,7 +101,7 @@ export async function ArticleSohu(data: SyncData) {
       (element) => element.textContent?.includes("确定"),
     );
     if (!confirmButton) {
-      console.debug("搜狐号:未找到封面确认按钮");
+      logger.debug("搜狐号:未找到封面确认按钮");
       return false;
     }
     confirmButton.dispatchEvent(new Event("click", { bubbles: true }));
@@ -118,14 +119,14 @@ export async function ArticleSohu(data: SyncData) {
     if (titleInput) {
       setControlValue(titleInput, articleData.title?.slice(0, 72) || "");
     } else {
-      console.debug("搜狐号:未找到标题输入框");
+      logger.debug("搜狐号:未找到标题输入框");
     }
 
     const editor = document.querySelector(
       'div.ql-editor[contenteditable="true"], div.ql-editor, div[contenteditable="true"]',
     ) as HTMLElement | null;
     if (!editor) {
-      console.debug("搜狐号:未找到 Quill 编辑器元素");
+      logger.debug("搜狐号:未找到 Quill 编辑器元素");
       return;
     }
 
@@ -139,12 +140,12 @@ export async function ArticleSohu(data: SyncData) {
 
     if (data.isAutoPublish === true) {
       if (!coverUploaded) {
-        console.error("搜狐号:封面未完成，跳过自动发布");
+        logger.error("搜狐号:封面未完成，跳过自动发布");
         return;
       }
       clickPublishButton();
     }
   } catch (error) {
-    console.error("搜狐号文章发布出错:", error);
+    logger.error("搜狐号文章发布出错:", error);
   }
 }

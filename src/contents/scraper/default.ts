@@ -1,4 +1,5 @@
 import { Readability } from "@mozilla/readability";
+import { logger } from "~utils/logger";
 import scrapeCSDNContent from "./csdn";
 import scrapeJianshuContent from "./jianshu";
 import scrapeJuejinContent from "./juejin";
@@ -35,24 +36,24 @@ export default async function scrapeContent(): Promise<ArticleData | undefined> 
 }
 
 async function defaultScraper(): Promise<ArticleData | undefined> {
-  console.debug("default spider ...");
+  logger.debug("default spider ...");
 
   const preprocess = (content: string) => preprocessor(content);
 
   const article = new Readability(document.cloneNode(true) as Document).parse();
 
-  console.debug("Readability article", article);
+  logger.debug("Readability article", article);
 
   if (!article?.content || !article?.title) {
     // alert(chrome.i18n.getMessage("failedToGetArticleContent"));
-    console.log("failedToGetArticleContent");
+    logger.debug("failedToGetArticleContent");
     return;
   }
 
   const cover = document.querySelector('meta[property="og:image"]')?.getAttribute("content") || "";
   const title = article.title || "";
 
-  console.debug("title ", title);
+  logger.debug("title ", title);
 
   const content = article.content || "";
   const excerpt = article.excerpt || "";

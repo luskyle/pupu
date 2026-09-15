@@ -1,4 +1,5 @@
 import type { ArticleData, FileData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 interface UploadConfig {
   filePath: string;
@@ -22,7 +23,7 @@ interface UploadConfig {
 }
 
 export async function ArticleCSDN(data: SyncData) {
-  console.log("ArticleCSDN", data);
+  logger.debug("ArticleCSDN", data);
 
   const articleData = data.data as ArticleData;
 
@@ -81,7 +82,7 @@ export async function ArticleCSDN(data: SyncData) {
 
   // 上传单个图片
   async function uploadSingleImage(fileInfo: FileData, retryCount = 3): Promise<string | null> {
-    console.log(`开始上传图片: ${fileInfo.name}`);
+    logger.debug(`开始上传图片: ${fileInfo.name}`);
 
     for (let i = 0; i < retryCount; i++) {
       try {
@@ -125,12 +126,12 @@ export async function ArticleCSDN(data: SyncData) {
 
         const result = await uploadResponse.json();
         if (result?.data?.imageUrl) {
-          console.log(`图片上传成功: ${result.data.imageUrl}`);
+          logger.debug(`图片上传成功: ${result.data.imageUrl}`);
           return result.data.imageUrl;
         }
         throw new Error("上传返回数据格式错误");
       } catch (error) {
-        console.error(`第 ${i + 1} 次上传失败:`, error);
+        logger.error(`第 ${i + 1} 次上传失败:`, error);
         if (i === retryCount - 1) {
           return null;
         }
@@ -146,7 +147,7 @@ export async function ArticleCSDN(data: SyncData) {
     const doc = parser.parseFromString(htmlContent, "text/html");
     const images = Array.from(doc.getElementsByTagName("img"));
 
-    console.log(`处理文章图片，共 ${images.length} 张`);
+    logger.debug(`处理文章图片，共 ${images.length} 张`);
 
     const uploadPromises = images.map(async (img) => {
       const src = img.getAttribute("src");
@@ -159,7 +160,7 @@ export async function ArticleCSDN(data: SyncData) {
       if (newUrl) {
         img.setAttribute("src", newUrl);
       } else {
-        console.error(`图片处理失败: ${src}`);
+        logger.error(`图片处理失败: ${src}`);
       }
     });
 
@@ -169,7 +170,7 @@ export async function ArticleCSDN(data: SyncData) {
 
   // 发布文章
   async function publishArticle(articleData: ArticleData): Promise<string | null> {
-    console.log("开始发布文章:", articleData.title);
+    logger.debug("开始发布文章:", articleData.title);
 
     articleData.htmlContent = await processContent(articleData.htmlContent, articleData.images);
 
@@ -243,19 +244,19 @@ export async function ArticleCSDN(data: SyncData) {
       });
 
       if (!response.ok) {
-        console.error("发布请求失败:", response.status);
+        logger.error("发布请求失败:", response.status);
         return null;
       }
 
       const result = await response.json();
       if (result.code === 200) {
-        console.log("文章发布成功，ID:", result.data.article_id);
+        logger.debug("文章发布成功，ID:", result.data.article_id);
         return result.data.article_id;
       }
-      console.error("发布失败:", result);
+      logger.error("发布失败:", result);
       return null;
     } catch (error) {
-      console.error("发布过程出错:", error);
+      logger.error("发布过程出错:", error);
       return null;
     }
   }
@@ -326,7 +327,7 @@ export async function ArticleCSDN(data: SyncData) {
       }, 3000);
     }
 
-    console.error("发布文章失败:", error);
+    logger.error("发布文章失败:", error);
     throw error;
   }
 }

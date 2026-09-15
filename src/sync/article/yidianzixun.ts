@@ -1,4 +1,5 @@
 import type { ArticleData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 /**
  * 一点资讯文章发布(experimental,待线上验证)
@@ -42,7 +43,7 @@ export async function ArticleYidianzixun(data: SyncData) {
 
     const fileInput = document.querySelector("input.upload-input-not-found") as HTMLInputElement | null;
     if (!fileInput) {
-      console.debug("一点资讯:未找到封面上传元素");
+      logger.debug("一点资讯:未找到封面上传元素");
       return false;
     }
 
@@ -81,7 +82,7 @@ export async function ArticleYidianzixun(data: SyncData) {
 
     const editor = document.querySelector('div.editor-content[contenteditable="true"]') as HTMLElement | null;
     if (!editor) {
-      console.debug("一点资讯:未找到编辑器元素");
+      logger.debug("一点资讯:未找到编辑器元素");
       return;
     }
 
@@ -105,9 +106,9 @@ export async function ArticleYidianzixun(data: SyncData) {
     if (publishButton && data.isAutoPublish === true) {
       publishButton.dispatchEvent(new Event("click", { bubbles: true }));
     } else if (!publishButton) {
-      console.debug("一点资讯:未找到发布按钮");
+      logger.debug("一点资讯:未找到发布按钮");
     }
   } catch (error) {
-    console.error("一点资讯文章发布出错:", error);
+    logger.error("一点资讯文章发布出错:", error);
   }
 }

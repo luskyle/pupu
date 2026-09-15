@@ -1,5 +1,6 @@
-// Experimental publisher (待线上验证)
 import type { DynamicData, SyncData } from "~sync/common";
+// Experimental publisher (待线上验证)
+import { logger } from "~utils/logger";
 
 export async function DynamicPinterest(data: SyncData) {
   function waitForElement(selector: string, timeout = 15000): Promise<Element> {
@@ -36,16 +37,16 @@ export async function DynamicPinterest(data: SyncData) {
     await waitForElement("input#storyboard-upload-input");
     if (images.length > 0) {
       const fileInputs = document.querySelectorAll('input#storyboard-upload-input[type="file"]');
-      console.debug("fileInputs", fileInputs);
+      logger.debug("fileInputs", fileInputs);
       if (!fileInputs.length) {
-        console.debug("未找到文件输入元素");
+        logger.debug("未找到文件输入元素");
         return;
       }
 
       const fileInput = fileInputs[fileInputs.length - 1] as HTMLInputElement;
       const fileDataTransfer = new DataTransfer();
       for (const image of images) {
-        console.debug("try upload file", image);
+        logger.debug("try upload file", image);
         const response = await fetch(image.url);
         const arrayBuffer = await response.arrayBuffer();
         const file = new File([arrayBuffer], image.name, { type: image.type });
@@ -55,23 +56,23 @@ export async function DynamicPinterest(data: SyncData) {
       fileInput.files = fileDataTransfer.files;
       fileInput.dispatchEvent(new Event("change", { bubbles: true }));
       fileInput.dispatchEvent(new Event("input", { bubbles: true }));
-      console.debug("文件上传操作完成");
+      logger.debug("文件上传操作完成");
     }
 
     await waitForElement("input#storyboard-selector-title:not(:disabled)");
     const titleInput = document.querySelector(
       "input#storyboard-selector-title:not(:disabled)",
     ) as HTMLInputElement | null;
-    console.debug("titleInput", titleInput);
+    logger.debug("titleInput", titleInput);
     if (titleInput) {
       titleInput.value = title || "";
       titleInput.dispatchEvent(new Event("input", { bubbles: true }));
     }
 
     const editor = document.querySelector('div[contenteditable="true"]') as HTMLElement | null;
-    console.debug("qlEditor", editor);
+    logger.debug("qlEditor", editor);
     if (!editor) {
-      console.debug("未找到编辑器元素");
+      logger.debug("未找到编辑器元素");
       return;
     }
 
@@ -88,16 +89,16 @@ export async function DynamicPinterest(data: SyncData) {
     const sendButton = document.querySelector(
       'div[data-test-id="storyboard-creation-nav-done"] button',
     ) as HTMLElement | null;
-    console.debug("sendButton", sendButton);
+    logger.debug("sendButton", sendButton);
     if (sendButton) {
       if (data.isAutoPublish === true) {
-        console.debug("sendButton clicked");
+        logger.debug("sendButton clicked");
         sendButton.dispatchEvent(new Event("click", { bubbles: true }));
       }
     } else {
-      console.debug("未找到'发送'按钮");
+      logger.debug("未找到'发送'按钮");
     }
   } catch (error) {
-    console.error("Pinterest 动态发布失败:", error);
+    logger.error("Pinterest 动态发布失败:", error);
   }
 }

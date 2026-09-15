@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, FileData, SyncData } from "../common";
 
 // 只支持图文，不支持视频
@@ -65,7 +66,7 @@ export async function DynamicXueqiu(data: SyncData) {
 
     const fileInput = await getUploadFileInput();
     if (!fileInput) {
-      console.error("media requested but upload input not found");
+      logger.error("media requested but upload input not found");
       return false;
     }
 
@@ -78,7 +79,7 @@ export async function DynamicXueqiu(data: SyncData) {
     fileInput.dispatchEvent(new Event("change", { bubbles: true }));
     fileInput.dispatchEvent(new Event("input", { bubbles: true }));
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    console.debug("文件上传操作完成");
+    logger.debug("文件上传操作完成");
     return true;
   }
 
@@ -137,7 +138,7 @@ export async function DynamicXueqiu(data: SyncData) {
     inputElement.focus();
     inputElement.dispatchEvent(pasteEvent);
 
-    console.debug("成功填入雪球内容");
+    logger.debug("成功填入雪球内容");
 
     const requestedMediaCount = (images?.length ?? 0) + (videos?.length ?? 0);
     let attachedMediaCount = 0;
@@ -147,7 +148,7 @@ export async function DynamicXueqiu(data: SyncData) {
       const imageFiles: File[] = [];
       for (const file of images) {
         if (!isImageFileData(file)) {
-          console.debug("跳过非图片文件:", file);
+          logger.debug("跳过非图片文件:", file);
           continue;
         }
 
@@ -159,12 +160,12 @@ export async function DynamicXueqiu(data: SyncData) {
           const blob = await response.blob();
           const fileType = file.type || blob.type;
           if (!isImageFileData({ ...file, type: fileType })) {
-            console.debug("跳过非图片文件:", file);
+            logger.debug("跳过非图片文件:", file);
             continue;
           }
           imageFiles.push(new File([blob], file.name, { type: fileType }));
         } catch (error) {
-          console.error("获取图片失败:", error);
+          logger.error("获取图片失败:", error);
         }
       }
 
@@ -178,19 +179,19 @@ export async function DynamicXueqiu(data: SyncData) {
           } catch (error) {
             const uploadedCount = document.querySelectorAll(".img-single-upload").length - currentUploaded.length;
             attachedMediaCount = Math.max(0, Math.min(imageFiles.length, uploadedCount));
-            console.error("image upload confirmation failed:", error);
+            logger.error("image upload confirmation failed:", error);
           }
         }
       }
     }
 
-    console.debug("成功填入雪球内容和图片");
+    logger.debug("成功填入雪球内容和图片");
 
     // Wait briefly before trying to publish.
     await new Promise((resolve) => setTimeout(resolve, 5000));
 
     if (data.isAutoPublish && requestedMediaCount > 0 && attachedMediaCount !== requestedMediaCount) {
-      console.error(
+      logger.error(
         `only ${attachedMediaCount} of ${requestedMediaCount} requested media attached; skipping auto-publish to avoid an incomplete post`,
       );
       return;
@@ -202,20 +203,20 @@ export async function DynamicXueqiu(data: SyncData) {
         try {
           const sendButton = (await waitForElement('a[class="lite-editor__submit"]', 5000)) as HTMLElement;
           sendButton.click();
-          console.log("发送按钮已点击");
+          logger.debug("发送按钮已点击");
           await new Promise((resolve) => setTimeout(resolve, 3000));
           window.location.reload();
           break; // 成功点击后退出循环
         } catch (error) {
-          console.warn(`第 ${attempt + 1} 次尝试查找发送按钮失败:`, error);
+          logger.warn(`第 ${attempt + 1} 次尝试查找发送按钮失败:`, error);
           if (attempt === maxAttempts - 1) {
-            console.error("达到最大尝试次数，无法找到发送按钮");
+            logger.error("达到最大尝试次数，无法找到发送按钮");
           }
           await new Promise((resolve) => setTimeout(resolve, 2000)); // 等待2秒后重试
         }
       }
     }
   } catch (error) {
-    console.error("填入雪球内容或上传图片时出错:", error);
+    logger.error("填入雪球内容或上传图片时出错:", error);
   }
 }

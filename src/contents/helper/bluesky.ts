@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import { createdInputs } from "../helper";
 import { waitForElement } from "./common";
 
@@ -10,13 +11,13 @@ export async function handleBlueskyVideoUpload(event: MessageEvent) {
   isProcessingVideo = true;
   const video = event.data.video;
   if (!video) {
-    console.error("未找到视频");
+    logger.error("未找到视频");
     return;
   }
 
   const uploadVideoButton = await waitForElement('button[data-testid="openGifBtn"]');
   if (!uploadVideoButton) {
-    console.error("未找到上传视频按钮");
+    logger.error("未找到上传视频按钮");
     return;
   }
 
@@ -25,7 +26,7 @@ export async function handleBlueskyVideoUpload(event: MessageEvent) {
 
   const uploadInput = createdInputs.find((input) => input.type === "file");
   if (!uploadInput) {
-    console.error("未找到上传输入框");
+    logger.error("未找到上传输入框");
     return;
   }
 
@@ -53,13 +54,13 @@ export async function handleBlueskyImageUpload(event: MessageEvent) {
   const images = event.data.images;
 
   if (!images || images.length === 0) {
-    console.error("未找到图片");
+    logger.error("未找到图片");
     return;
   }
 
   const uploadButton = (await waitForElement('button[data-testid="openGalleryBtn"]')) as HTMLElement;
   if (!uploadButton) {
-    console.error("未找到上传按钮");
+    logger.error("未找到上传按钮");
     return;
   }
 
@@ -69,7 +70,7 @@ export async function handleBlueskyImageUpload(event: MessageEvent) {
 
   const uploadInput = createdInputs.find((input) => input.type === "file");
   if (!uploadInput) {
-    console.error("未找到上传输入框");
+    logger.error("未找到上传输入框");
     return;
   }
 

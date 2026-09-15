@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import { buildXhsContent, pickXhsTitle } from "~utils/rednote-text";
 import type { DynamicData, SyncData } from "../common";
 
@@ -41,7 +42,7 @@ export async function DynamicRednote(data: SyncData) {
   async function uploadImages() {
     const fileInput = (await waitForElement('input[type="file"]')) as HTMLInputElement;
     if (!fileInput) {
-      console.error("未找到文件输入元素");
+      logger.error("未找到文件输入元素");
       return;
     }
 
@@ -57,7 +58,7 @@ export async function DynamicRednote(data: SyncData) {
         const file = new File([blob], fileInfo.name, { type: fileInfo.type });
         dataTransfer.items.add(file);
       } catch (error) {
-        console.error(`上传图片 ${fileInfo.url} 失败:`, error);
+        logger.error(`上传图片 ${fileInfo.url} 失败:`, error);
       }
     }
 
@@ -65,9 +66,9 @@ export async function DynamicRednote(data: SyncData) {
       fileInput.files = dataTransfer.files;
       fileInput.dispatchEvent(new Event("change", { bubbles: true }));
       await new Promise((resolve) => setTimeout(resolve, 2000)); // 等待文件处理
-      console.log("文件上传操作完成");
+      logger.debug("文件上传操作完成");
     } else {
-      console.error("没有成功添加任何文件");
+      logger.error("没有成功添加任何文件");
     }
   }
 
@@ -98,12 +99,12 @@ export async function DynamicRednote(data: SyncData) {
     const startTime = Date.now();
     while (Date.now() - startTime < timeout) {
       if (await requestUploadDone()) {
-        console.log("所有图片上传已完成");
+        logger.debug("所有图片上传已完成");
         return;
       }
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-    console.warn("等待小红书图片上传完成超时，继续执行");
+    logger.warn("等待小红书图片上传完成超时，继续执行");
   }
 
   if (images && images.length > 0) {
@@ -118,7 +119,7 @@ export async function DynamicRednote(data: SyncData) {
     ) as HTMLElement;
 
     if (!uploadButton) {
-      console.error("未找到上传图文按钮");
+      logger.error("未找到上传图文按钮");
       return;
     }
 
@@ -162,7 +163,7 @@ export async function DynamicRednote(data: SyncData) {
         /标题/.test(placeholderText(e)),
       );
       if (inputTitle) {
-        console.log("[小红书标题] input 命中:", describe(inputTitle));
+        logger.debug("[小红书标题] input 命中:", describe(inputTitle));
         return inputTitle;
       }
 
@@ -171,7 +172,7 @@ export async function DynamicRednote(data: SyncData) {
         document.querySelectorAll<HTMLElement>('[contenteditable="true"], [contenteditable="plaintext-only"]'),
       ).find((e) => e.getBoundingClientRect().width > 100 && /标题/.test(placeholderText(e)));
       if (editableTitle) {
-        console.log("[小红书标题] contenteditable 命中:", describe(editableTitle));
+        logger.debug("[小红书标题] contenteditable 命中:", describe(editableTitle));
         return editableTitle;
       }
 
@@ -180,7 +181,7 @@ export async function DynamicRednote(data: SyncData) {
         document.querySelectorAll<HTMLElement>('[contenteditable="true"], [contenteditable="plaintext-only"]'),
       ).filter((e) => e.getBoundingClientRect().width > 100);
       if (editables.length > 0) {
-        console.log("[小红书标题] contenteditable fallback:", editables.map(describe));
+        logger.debug("[小红书标题] contenteditable fallback:", editables.map(describe));
         editables.sort((a, b) => a.getBoundingClientRect().height - b.getBoundingClientRect().height);
         return editables[0];
       }
@@ -190,7 +191,7 @@ export async function DynamicRednote(data: SyncData) {
         document.querySelectorAll<HTMLElement>('input[type="text"], input:not([type]), input[type="search"]'),
       ).filter((e) => e.getBoundingClientRect().width > 40);
       if (visibleInputs.length > 0) {
-        console.log("[小红书标题] 可见文本输入框:", visibleInputs.map(describe));
+        logger.debug("[小红书标题] 可见文本输入框:", visibleInputs.map(describe));
         visibleInputs.sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top);
         return visibleInputs[0];
       }
@@ -265,16 +266,16 @@ export async function DynamicRednote(data: SyncData) {
       });
 
     const fillResult = await requestFillEditor();
-    console.log("小红书填充结果:", fillResult);
+    logger.debug("小红书填充结果:", fillResult);
 
     // fallback：MAIN world 未响应/未命中时，用 light DOM 兜底
     if (!fillResult.titleFilled) {
       const titleEl = await waitForTitle();
       if (titleEl) {
         setEditableText(titleEl, titleText);
-        console.log("已填写标题(light):", titleText);
+        logger.debug("已填写标题(light):", titleText);
       } else {
-        console.warn("未找到标题输入框，跳过填写标题");
+        logger.warn("未找到标题输入框，跳过填写标题");
       }
     }
     if (!fillResult.contentFilled) {
@@ -285,9 +286,9 @@ export async function DynamicRednote(data: SyncData) {
         contentCandidates.find((e) => /正文|描述|正文描述/.test(placeholderText(e))) || contentCandidates[0] || null;
       if (contentEditor) {
         setEditableText(contentEditor, contentText);
-        console.log("设置内容(light):", content);
+        logger.debug("设置内容(light):", content);
       } else {
-        console.warn("未找到内容编辑器，跳过填写内容");
+        logger.warn("未找到内容编辑器，跳过填写内容");
       }
     }
 
@@ -353,11 +354,11 @@ export async function DynamicRednote(data: SyncData) {
       }
 
       if (published) {
-        console.log("点击发布按钮");
+        logger.debug("点击发布按钮");
         await new Promise((resolve) => setTimeout(resolve, 10000));
         window.location.href = "https://creator.xiaohongshu.com/new/note-manager";
       } else {
-        console.error("[小红书图文] 未找到可用的发布按钮，跳过自动发布");
+        logger.error("[小红书图文] 未找到可用的发布按钮，跳过自动发布");
       }
     }
   }

@@ -1,5 +1,6 @@
 import { Storage } from "@plasmohq/storage";
 import { isHostnameTrusted } from "~utils/domain-match";
+import { logger } from "~utils/logger";
 
 const storage = new Storage({ area: "local" });
 
@@ -21,8 +22,8 @@ export const trustDomainMessageHandler = (request, sender, sendResponse) => {
   if (request.action === "PUPU_EXTENSION_DELETE_TRUSTED_DOMAIN") {
     const { domainId } = request.data;
 
-    console.log("request", request);
-    console.log("domainId", domainId);
+    logger.debug("request", request);
+    logger.debug("domainId", domainId);
 
     if (!domainId) {
       sendResponse({ success: false, message: "缺少域名ID" });

@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { SyncData, VideoData } from "../common";
 
 export async function VideoWeibo(data: SyncData) {
@@ -63,7 +64,7 @@ export async function VideoWeibo(data: SyncData) {
           return;
         }
         if (hasAnyText(completeKeywords)) {
-          console.log("视频上传完成");
+          logger.debug("视频上传完成");
           resolve();
           return;
         }
@@ -72,7 +73,7 @@ export async function VideoWeibo(data: SyncData) {
           button.textContent?.includes("发布"),
         ) as HTMLButtonElement | undefined;
         if (sendButton && !sendButton.disabled) {
-          console.log("发布按钮已可用，视为上传完成");
+          logger.debug("发布按钮已可用，视为上传完成");
           resolve();
           return;
         }
@@ -95,7 +96,7 @@ export async function VideoWeibo(data: SyncData) {
       const response = await fetch(video.url);
       const arrayBuffer = await response.arrayBuffer();
       const videoFile = new File([arrayBuffer], video.name, { type: video.type });
-      console.log(`文件: ${videoFile.name} ${videoFile.type} ${videoFile.size}`);
+      logger.debug(`文件: ${videoFile.name} ${videoFile.type} ${videoFile.size}`);
 
       // 优先选择接受视频格式的文件输入框，回退到页面第一个文件输入框
       const fileInput =
@@ -110,7 +111,7 @@ export async function VideoWeibo(data: SyncData) {
         fileInput.files = dataTransfer.files;
         fileInput.dispatchEvent(new Event("change", { bubbles: true }));
         fileInput.dispatchEvent(new Event("input", { bubbles: true }));
-        console.log("已通过文件输入框触发视频上传");
+        logger.debug("已通过文件输入框触发视频上传");
       } else {
         // 兜底：找不到文件输入框时，回退到"上传视频"按钮区域拖拽上传
         const uploadVideoButton = Array.from(document.querySelectorAll("button")).find((button) =>
@@ -123,7 +124,7 @@ export async function VideoWeibo(data: SyncData) {
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(videoFile);
         simulateDragAndDrop(dragArea, dataTransfer);
-        console.log("已通过拖拽触发视频上传");
+        logger.debug("已通过拖拽触发视频上传");
       }
 
       // 等待视频上传真正完成（而非固定等待），避免上传未完成就进入发布流程
@@ -170,10 +171,10 @@ export async function VideoWeibo(data: SyncData) {
     }
 
     async function uploadCover(coverData: { url: string; name: string; type?: string }) {
-      console.log("tryCover", coverData);
+      logger.debug("tryCover", coverData);
       const cropCoverLink = Array.from(document.querySelectorAll("a")).find((e) => e.textContent?.includes("裁剪封面"));
 
-      console.log("a", cropCoverLink);
+      logger.debug("a", cropCoverLink);
       if (!cropCoverLink) return;
 
       (cropCoverLink as HTMLElement).click();
@@ -182,12 +183,12 @@ export async function VideoWeibo(data: SyncData) {
       const fileInput = document.querySelector<HTMLInputElement>(
         "input[type='file'][accept='.jpg, .jpeg, .bmp, .gif, .png']",
       );
-      console.log("fileInput", fileInput);
+      logger.debug("fileInput", fileInput);
       if (!fileInput) return;
 
       const dataTransfer = new DataTransfer();
 
-      console.log("try upload file", coverData);
+      logger.debug("try upload file", coverData);
       if (!coverData.type || !coverData.type.includes("image/")) {
         return;
       }
@@ -205,11 +206,11 @@ export async function VideoWeibo(data: SyncData) {
       const inputEvent = new Event("input", { bubbles: true });
       fileInput.dispatchEvent(inputEvent);
 
-      console.log("文件上传操作触发");
+      logger.debug("文件上传操作触发");
       await new Promise((e) => setTimeout(e, 3000));
 
       const tab1 = document.querySelector("div.wbpro-tab1");
-      console.log("tab1", tab1);
+      logger.debug("tab1", tab1);
       if (!tab1) return;
 
       const doneButtonsContainer = tab1.nextElementSibling;
@@ -218,10 +219,10 @@ export async function VideoWeibo(data: SyncData) {
       const doneButtons = doneButtonsContainer.querySelectorAll(
         "div.wbpro-layer div.wbpro-layer-btn.woo-box-flex.woo-box-justifyCenter button",
       );
-      console.log("doneButtons", doneButtons);
+      logger.debug("doneButtons", doneButtons);
 
       const doneButton = Array.from(doneButtons).find((e) => "完成" === e.textContent);
-      console.log("doneButton", doneButton);
+      logger.debug("doneButton", doneButton);
       if (doneButton) {
         (doneButton as HTMLElement).click();
       }
@@ -243,22 +244,22 @@ export async function VideoWeibo(data: SyncData) {
         while (sendButton.disabled && attempts < 10) {
           await new Promise((resolve) => setTimeout(resolve, 3000));
           attempts++;
-          console.log(`等待发布按钮启用中... 尝试 ${attempts}/10`);
+          logger.debug(`等待发布按钮启用中... 尝试 ${attempts}/10`);
         }
 
         if (sendButton.disabled) {
           throw new Error("发布按钮在10次尝试后仍然禁用");
         }
 
-        console.log("点击发布按钮");
+        logger.debug("点击发布按钮");
         sendButton.dispatchEvent(new Event("click", { bubbles: true }));
         await new Promise((resolve) => setTimeout(resolve, 3000));
         window.location.reload();
       } else {
-        console.log('未找到"发布"按钮');
+        logger.debug('未找到"发布"按钮');
       }
     }
   } catch (error) {
-    console.error("填入微博内容或上传视频时出错:", error);
+    logger.error("填入微博内容或上传视频时出错:", error);
   }
 }

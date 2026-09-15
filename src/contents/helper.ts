@@ -1,4 +1,5 @@
 import type { PlasmoCSConfig } from "plasmo";
+import { logger } from "~utils/logger";
 import { handleBilibiliImageUpload } from "./helper/bilibili";
 import { handleBlueskyImageUpload, handleBlueskyVideoUpload } from "./helper/bluesky";
 import { handleXiaoheiheImageUpload, handleXiaoheiheVideoUpload } from "./helper/xiaoheihe";
@@ -29,7 +30,7 @@ document.createElement = (tagName, options) => {
 
   if (tagName.toLowerCase() === "input") {
     createdInputs.push(element);
-    console.log("element", element);
+    logger.debug("element", element);
   }
   return element;
 };

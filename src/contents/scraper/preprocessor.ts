@@ -23,7 +23,7 @@ export function preprocessor(content: string, options: PreprocessorOptions = def
       const dataSrc = img.getAttribute("data-src");
       if (dataSrc) {
         img.setAttribute("src", dataSrc);
-        console.debug("设置src为data-src", dataSrc);
+        logger.debug("设置src为data-src", dataSrc);
       }
     });
 
@@ -34,7 +34,7 @@ export function preprocessor(content: string, options: PreprocessorOptions = def
         const img = doc.createElement("img");
         img.setAttribute("src", poster);
         video.parentNode.replaceChild(img, video);
-        console.debug("将视频替换为图片", video, img);
+        logger.debug("将视频替换为图片", video, img);
       } else if (video.parentNode) {
         video.parentNode.removeChild(video);
       }
@@ -50,7 +50,7 @@ export function preprocessor(content: string, options: PreprocessorOptions = def
     // 移除不可编辑的元素
     if (options.removeNonEditableElements) {
       const nonEditableElements = doc.querySelectorAll('*[contenteditable="false"]');
-      console.debug("不可编辑的元素 ", nonEditableElements);
+      logger.debug("不可编辑的元素 ", nonEditableElements);
       nonEditableElements.forEach((el) => el.remove());
     }
 
@@ -65,7 +65,9 @@ export function preprocessor(content: string, options: PreprocessorOptions = def
 
     return doc.body.innerHTML;
   } catch (error) {
-    console.error("预处理内容时出错:", error);
+    logger.error("预处理内容时出错:", error);
     return content; // 发生错误时返回原始内容
   }
 }
+
+import { logger } from "~utils/logger";

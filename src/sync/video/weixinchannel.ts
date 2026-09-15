@@ -5,6 +5,7 @@
  * @date 2024-01-01
  */
 
+import { logger } from "~utils/logger";
 import type { FileData, SyncData, VideoData } from "../common";
 
 /**
@@ -185,7 +186,7 @@ export async function VideoWeiXinChannel(data: SyncData) {
     const inputEvent = new Event("input", { bubbles: true });
     fileInput.dispatchEvent(inputEvent);
 
-    console.log("视频上传事件已触发");
+    logger.debug("视频上传事件已触发");
   }
 
   /**
@@ -199,14 +200,14 @@ export async function VideoWeiXinChannel(data: SyncData) {
   ): Promise<void> {
     try {
       const labels = root.querySelectorAll("label");
-      console.debug("labels -->", labels);
+      logger.debug("labels -->", labels);
 
       const scheduledLabel = Array.from(labels).find((label) => {
-        console.debug("label -->", label.textContent);
+        logger.debug("label -->", label.textContent);
         return label.textContent?.trim() === "定时";
       });
 
-      console.debug("scheduledLabel -->", scheduledLabel);
+      logger.debug("scheduledLabel -->", scheduledLabel);
 
       if (scheduledLabel) {
         (scheduledLabel as HTMLElement).click();
@@ -215,7 +216,7 @@ export async function VideoWeiXinChannel(data: SyncData) {
 
       const publishTimeInput = root.querySelector('input[placeholder="请选择发表时间"]') as HTMLInputElement;
 
-      console.debug("publishTimeInput -->", publishTimeInput);
+      logger.debug("publishTimeInput -->", publishTimeInput);
 
       if (publishTimeInput) {
         // 阻止事件冒泡的处理函数
@@ -245,7 +246,7 @@ export async function VideoWeiXinChannel(data: SyncData) {
           publishTimeInput.defaultValue = formattedTime;
           publishTimeInput.setAttribute("data-value", formattedTime);
 
-          console.debug("设置时间值:", formattedTime, "当前值:", publishTimeInput.value);
+          logger.debug("设置时间值:", formattedTime, "当前值:", publishTimeInput.value);
         } finally {
           // 延迟移除事件监听器
           setTimeout(() => {
@@ -262,7 +263,7 @@ export async function VideoWeiXinChannel(data: SyncData) {
         }
       }
     } catch (error) {
-      console.error("setScheduledPublishTime failed:", error);
+      logger.error("setScheduledPublishTime failed:", error);
     }
   }
 
@@ -293,16 +294,16 @@ export async function VideoWeiXinChannel(data: SyncData) {
    */
   async function uploadCover(cover: FileData, root: Document | ShadowRoot): Promise<void> {
     try {
-      console.debug("tryCover", cover);
+      logger.debug("tryCover", cover);
       const coverUploadButton = root.querySelector("div.cover-preview-wrap > div") as HTMLElement | null;
-      console.debug("coverUpload -->", coverUploadButton);
+      logger.debug("coverUpload -->", coverUploadButton);
       if (!coverUploadButton) return;
 
       // 视频未处理完时封面区会有竖封面蒙层，等它消失再点
       for (let i = 0; i < 20; i++) {
         const mask = root.querySelector("div.vertical-mask-layer");
         if (!mask) break;
-        console.debug("mask is found, wait 3s");
+        logger.debug("mask is found, wait 3s");
         await new Promise((resolve) => setTimeout(resolve, 3000));
       }
 
@@ -311,13 +312,13 @@ export async function VideoWeiXinChannel(data: SyncData) {
 
       const fileInput = root.querySelector("div.cover-control-wrap input[type='file']") as HTMLInputElement | null;
       if (!fileInput) {
-        console.error("封面上传文件输入框未找到");
+        logger.error("封面上传文件输入框未找到");
         return;
       }
 
       const ok = await setCoverFile(fileInput, cover);
       if (!ok) return;
-      console.debug("竖封面上传操作触发");
+      logger.debug("竖封面上传操作触发");
 
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -328,7 +329,7 @@ export async function VideoWeiXinChannel(data: SyncData) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     } catch (error) {
-      console.error("uploadCover failed:", error);
+      logger.error("uploadCover failed:", error);
     }
   }
 
@@ -339,16 +340,16 @@ export async function VideoWeiXinChannel(data: SyncData) {
    */
   async function uploadCoverHorizontal(cover: FileData, root: Document | ShadowRoot): Promise<void> {
     try {
-      console.debug("tryCoverHorizon", cover);
+      logger.debug("tryCoverHorizon", cover);
       const editButton = root.querySelector("div.horizon-img-wrap div.edit-btn") as HTMLElement | null;
-      console.debug("coverUpload -->", editButton);
+      logger.debug("coverUpload -->", editButton);
       if (!editButton) return;
 
       editButton.click();
       await waitForElementOptional("div.btn-directly-edit");
 
       const directlyEditButton = root.querySelector("div.btn-directly-edit > button") as HTMLButtonElement | null;
-      console.debug("editBtn -->", directlyEditButton);
+      logger.debug("editBtn -->", directlyEditButton);
       if (!directlyEditButton) return;
 
       directlyEditButton.click();
@@ -356,13 +357,13 @@ export async function VideoWeiXinChannel(data: SyncData) {
 
       const fileInput = root.querySelector("div.cover-control-wrap input[type='file']") as HTMLInputElement | null;
       if (!fileInput) {
-        console.error("横封面上传文件输入框未找到");
+        logger.error("横封面上传文件输入框未找到");
         return;
       }
 
       const ok = await setCoverFile(fileInput, cover);
       if (!ok) return;
-      console.debug("横封面上传操作触发");
+      logger.debug("横封面上传操作触发");
 
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -372,7 +373,7 @@ export async function VideoWeiXinChannel(data: SyncData) {
         confirmButton.click();
       }
     } catch (error) {
-      console.error("uploadCoverHorizontal failed:", error);
+      logger.error("uploadCoverHorizontal failed:", error);
     }
   }
 
@@ -398,10 +399,10 @@ export async function VideoWeiXinChannel(data: SyncData) {
       const response = await fetch(video.url);
       const blob = await response.blob();
       const videoFile = new File([blob], video.name, { type: video.type });
-      console.log(`视频文件: ${videoFile.name} ${videoFile.type} ${videoFile.size}`);
+      logger.debug(`视频文件: ${videoFile.name} ${videoFile.type} ${videoFile.size}`);
 
       await uploadVideo(videoFile);
-      console.log("视频上传已初始化");
+      logger.debug("视频上传已初始化");
     }
 
     // 等待视频上传完成、标题/描述表单渲染出来
@@ -414,9 +415,9 @@ export async function VideoWeiXinChannel(data: SyncData) {
     if (titleInput) {
       titleInput.value = title || "";
       titleInput.dispatchEvent(new Event("input", { bubbles: true }));
-      console.log("标题已填写:", title);
+      logger.debug("标题已填写:", title);
     } else {
-      console.error("未找到视频号标题输入框");
+      logger.error("未找到视频号标题输入框");
     }
 
     // 处理内容和标签输入
@@ -439,7 +440,7 @@ export async function VideoWeiXinChannel(data: SyncData) {
 
       // 添加标签
       for (const tag of tags) {
-        console.log("添加标签:", tag);
+        logger.debug("添加标签:", tag);
         descriptionInput.focus();
 
         const tagPasteEvent = new ClipboardEvent("paste", {
@@ -465,7 +466,7 @@ export async function VideoWeiXinChannel(data: SyncData) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     } else {
-      console.error("未找到视频号描述输入框");
+      logger.error("未找到视频号描述输入框");
     }
 
     // 处理原创声明（：先勾选，再在声明弹窗内勾选并点「声明原创」）
@@ -488,7 +489,7 @@ export async function VideoWeiXinChannel(data: SyncData) {
         const buttons = root.querySelectorAll('button[type="button"]');
         for (const button of Array.from(buttons)) {
           if (button.textContent === "声明原创") {
-            console.log("点击声明原创按钮");
+            logger.debug("点击声明原创按钮");
             (button as HTMLElement).click();
             await new Promise((resolve) => setTimeout(resolve, 1000));
             break;
@@ -520,16 +521,16 @@ export async function VideoWeiXinChannel(data: SyncData) {
       const buttons = root.querySelectorAll("button");
       const publishButton = Array.from(buttons).find((b) => b.textContent?.trim() === "发表") as HTMLButtonElement;
 
-      console.debug("sendButton", publishButton);
+      logger.debug("sendButton", publishButton);
 
       if (publishButton) {
-        console.debug("sendButton clicked");
+        logger.debug("sendButton clicked");
         publishButton.click();
       } else {
-        console.error('未找到"发表"按钮');
+        logger.error('未找到"发表"按钮');
       }
     }
   } catch (error) {
-    console.error("WeiXinVideo 发布过程中出错:", error);
+    logger.error("WeiXinVideo 发布过程中出错:", error);
   }
 }

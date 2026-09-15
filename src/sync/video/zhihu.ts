@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { SyncData, VideoData } from "../common";
 
 export async function VideoZhihu(data: SyncData) {
@@ -71,7 +72,7 @@ export async function VideoZhihu(data: SyncData) {
   async function uploadVideo(file: File): Promise<boolean> {
     const fileInput = (await waitForElementOptional("input[type=file]")) as HTMLInputElement | null;
     if (!fileInput) {
-      console.log("未找到知乎视频上传文件输入框");
+      logger.debug("未找到知乎视频上传文件输入框");
       return false;
     }
 
@@ -84,14 +85,14 @@ export async function VideoZhihu(data: SyncData) {
     const changeEvent = new Event("change", { bubbles: true });
     fileInput.dispatchEvent(changeEvent);
 
-    console.log("视频上传事件已触发");
+    logger.debug("视频上传事件已触发");
     return true;
   }
 
   async function uploadCover(cover: NonNullable<VideoData["cover"]>): Promise<boolean> {
-    console.debug("tryCover", cover);
+    logger.debug("tryCover", cover);
     const coverButton = (await waitForElementOptional("div.VideoUploadForm-imageEditButton")) as HTMLElement | null;
-    console.debug("coverButton -->", coverButton);
+    logger.debug("coverButton -->", coverButton);
     if (!coverButton) return false;
 
     coverButton.click();
@@ -101,14 +102,14 @@ export async function VideoZhihu(data: SyncData) {
     const localUploadTab = Array.from(uploadTabs).find((tab) => tab.textContent?.trim() === "本地上传") as
       | HTMLElement
       | undefined;
-    console.debug("localUploadDiv -->", localUploadTab);
+    logger.debug("localUploadDiv -->", localUploadTab);
     if (!localUploadTab) return false;
 
     localUploadTab.click();
     const fileInput = (await waitForElementOptional(
       "input[type='file'][accept='image/png,image/jpeg,image/jpg']",
     )) as HTMLInputElement | null;
-    console.debug("fileInput -->", fileInput);
+    logger.debug("fileInput -->", fileInput);
     if (!fileInput || (cover.type && !cover.type.includes("image/"))) return false;
 
     const response = await fetch(cover.url);
@@ -119,14 +120,14 @@ export async function VideoZhihu(data: SyncData) {
     fileInput.files = dataTransfer.files;
     fileInput.dispatchEvent(new Event("change", { bubbles: true }));
     fileInput.dispatchEvent(new Event("input", { bubbles: true }));
-    console.debug("封面上传操作已触发");
+    logger.debug("封面上传操作已触发");
 
     await sleep(1000);
     const buttons = document.querySelectorAll("button");
     const confirmButton = Array.from(buttons).find((button) => button.textContent?.trim() === "确认选择") as
       | HTMLElement
       | undefined;
-    console.debug("doneButton -->", confirmButton);
+    logger.debug("doneButton -->", confirmButton);
     if (!confirmButton) return false;
     confirmButton.click();
     return true;
@@ -152,7 +153,7 @@ export async function VideoZhihu(data: SyncData) {
       5000,
     )) as HTMLTextAreaElement | null;
     if (!textarea) {
-      console.log("未找到知乎视频简介输入框");
+      logger.debug("未找到知乎视频简介输入框");
       return;
     }
 
@@ -169,12 +170,12 @@ export async function VideoZhihu(data: SyncData) {
     let contentEditor: HTMLElement | null = null;
     contentEditor = (await waitForElementOptional('div[contenteditable="true"]', 5000)) as HTMLElement | null;
     if (!contentEditor) {
-      console.debug("未找到话题编辑器");
+      logger.debug("未找到话题编辑器");
       return;
     }
 
     for (const tag of tags.slice(0, 5)) {
-      console.debug("添加标签", tag);
+      logger.debug("添加标签", tag);
       contentEditor.focus();
       const pasteEvent = new ClipboardEvent("paste", {
         bubbles: true,
@@ -189,7 +190,7 @@ export async function VideoZhihu(data: SyncData) {
       if (activeSuggestion) {
         const newTopic = activeSuggestion.querySelector("span.new-topic") as HTMLElement | null;
         if (newTopic?.textContent?.trim() === "创建新话题") {
-          console.debug("创建新话题", tag);
+          logger.debug("创建新话题", tag);
           newTopic.click();
         } else {
           activeSuggestion.click();
@@ -205,7 +206,7 @@ export async function VideoZhihu(data: SyncData) {
     if (data.isAutoPublish !== true) return;
 
     if (!videoUploaded) {
-      console.warn("知乎自动发布已跳过：视频未成功触发上传");
+      logger.warn("知乎自动发布已跳过：视频未成功触发上传");
       return;
     }
 
@@ -213,10 +214,10 @@ export async function VideoZhihu(data: SyncData) {
     const divs = document.querySelectorAll("div");
     const publishButton = Array.from(divs).find((div) => div.textContent?.trim() === "发布") as HTMLElement | undefined;
     if (publishButton) {
-      console.debug("sendButton clicked");
+      logger.debug("sendButton clicked");
       publishButton.click();
     } else {
-      console.debug('未找到"发布"按钮');
+      logger.debug('未找到"发布"按钮');
     }
   }
 
@@ -228,14 +229,14 @@ export async function VideoZhihu(data: SyncData) {
       const response = await fetch(video.url);
       const blob = await response.blob();
       const videoFile = new File([blob], video.name, { type: video.type });
-      console.log(`视频文件: ${videoFile.name} ${videoFile.type} ${videoFile.size}`);
+      logger.debug(`视频文件: ${videoFile.name} ${videoFile.type} ${videoFile.size}`);
 
       videoUploaded = await uploadVideo(videoFile);
       if (videoUploaded) {
-        console.log("视频上传已初始化");
+        logger.debug("视频上传已初始化");
       }
     } else {
-      console.error("没有视频文件");
+      logger.error("没有视频文件");
     }
 
     await sleep(5000);
@@ -246,25 +247,25 @@ export async function VideoZhihu(data: SyncData) {
       titleInput.value = title || content.slice(0, 20);
       titleInput.dispatchEvent(new Event("input", { bubbles: true }));
     } else {
-      console.log("未找到知乎视频标题输入框");
+      logger.debug("未找到知乎视频标题输入框");
     }
 
     // 填写内容
     await fillDescription(description || content);
 
     await addTags(tags).catch((error) => {
-      console.warn("知乎标签处理失败，继续发布流程:", error);
+      logger.warn("知乎标签处理失败，继续发布流程:", error);
     });
 
     if (cover) {
       await uploadCover(cover).catch((error) => {
-        console.warn("知乎封面上传失败，继续发布流程:", error);
+        logger.warn("知乎封面上传失败，继续发布流程:", error);
         return false;
       });
     }
 
     await publishIfAutoEnabled(videoUploaded);
   } catch (error) {
-    console.error("知乎视频发布过程中出错:", error);
+    logger.error("知乎视频发布过程中出错:", error);
   }
 }

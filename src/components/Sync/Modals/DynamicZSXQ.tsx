@@ -3,6 +3,7 @@ import { Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import LightModal from "~components/Sync/Modals/LightModal";
 import { getExtraConfig, saveExtraConfig } from "~sync/extraconfig";
+import { logger } from "~utils/logger";
 
 interface ZsxqGroup {
   group_id: number;
@@ -77,7 +78,7 @@ export default function DynamicZsxq({ platformKey }: ZsxqProps) {
           });
         }
       } catch (error) {
-        console.error("Failed to fetch ZSXQ groups:", error);
+        logger.error("Failed to fetch ZSXQ groups:", error);
       } finally {
         setIsLoading(false);
       }

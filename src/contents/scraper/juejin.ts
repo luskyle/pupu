@@ -1,20 +1,21 @@
+import { logger } from "~utils/logger";
 import type { ArticleData } from "./default";
 import { preprocessor } from "./preprocessor";
 
 export default async function scrapeJuejinContent(): Promise<ArticleData | undefined> {
-  console.debug("juejin spider ...");
+  logger.debug("juejin spider ...");
 
   const cover = document.querySelector('meta[property="og:image"]')?.getAttribute("content") || "";
   const title = document.querySelector('meta[itemprop="headline"]')?.getAttribute("content") || "";
 
-  console.debug("title ", title);
+  logger.debug("title ", title);
 
   const author = document.querySelector(".author-name")?.textContent || "";
   const content = document.querySelector("#article-root")?.innerHTML || "";
   const digest = document.querySelector('meta[name="description"]')?.getAttribute("content") || "";
 
   if (!title || !content) {
-    console.log("failedToGetArticleContent");
+    logger.debug("failedToGetArticleContent");
     return;
   }
 

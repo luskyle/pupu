@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import InfoModal from "~components/Sync/Modals/InfoModal";
 import LightModal from "~components/Sync/Modals/LightModal";
 import { getExtraConfig, saveExtraConfig } from "~sync/extraconfig";
+import { logger } from "~utils/logger";
 
 interface WebhookConfig {
   urls: string[];
@@ -89,7 +90,7 @@ const sendMessageCheck = async (url: string): Promise<{ success: boolean; messag
 
     return { success: true };
   } catch (error) {
-    console.error("Webhook test failed:", error);
+    logger.error("Webhook test failed:", error);
     const message =
       error instanceof Error
         ? chrome.i18n.getMessage("extraConfigWebhookTestFailed", [error.message])

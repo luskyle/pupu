@@ -40,10 +40,12 @@ export async function findElementByText(
       return element;
     }
 
-    console.log(`未找到包含文本 "${text}" 的元素，尝试次数：${i + 1}`);
+    logger.debug(`未找到包含文本 "${text}" 的元素，尝试次数：${i + 1}`);
     await new Promise((resolve) => setTimeout(resolve, retryInterval));
   }
 
-  console.error(`在 ${maxRetries} 次尝试后未找到包含文本 "${text}" 的元素`);
+  logger.error(`在 ${maxRetries} 次尝试后未找到包含文本 "${text}" 的元素`);
   return null;
 }
+
+import { logger } from "~utils/logger";

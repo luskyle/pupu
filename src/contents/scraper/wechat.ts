@@ -1,13 +1,14 @@
+import { logger } from "~utils/logger";
 import type { ArticleData } from "./default";
 import { preprocessor } from "./preprocessor";
 
 export default async function scrapeWeixinContent(): Promise<ArticleData | undefined> {
-  console.debug("weixin spider ...");
+  logger.debug("weixin spider ...");
 
   const cover = document.querySelector('meta[property="og:image"]')?.getAttribute("content") || "";
   const title = document.querySelector("#activity-name")?.textContent || "";
 
-  console.debug("title ", title);
+  logger.debug("title ", title);
 
   const author =
     document.querySelector('meta[name="author"]')?.getAttribute("content") ||
@@ -18,7 +19,7 @@ export default async function scrapeWeixinContent(): Promise<ArticleData | undef
   const digest = document.querySelector('meta[property="og:description"]')?.getAttribute("content") || "";
 
   if (!title || !content) {
-    console.log("failedToGetArticleContent");
+    logger.debug("failedToGetArticleContent");
     return;
   }
 

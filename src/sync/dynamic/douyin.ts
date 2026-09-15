@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, SyncData } from "../common";
 
 // 优先发布图文
@@ -41,17 +42,17 @@ export async function DynamicDouyin(data: SyncData) {
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   const semiTabs = document.querySelector(".semi-tabs.semi-tabs-top");
-  console.debug("semitabs", semiTabs);
+  logger.debug("semitabs", semiTabs);
   if (!semiTabs || !semiTabs.previousElementSibling) {
-    console.error("未找到 semitabs 或其前置元素");
+    logger.error("未找到 semitabs 或其前置元素");
     return;
   }
   const tabsDiv = semiTabs.previousElementSibling.querySelectorAll("div");
-  console.debug("tabsDiv", tabsDiv);
+  logger.debug("tabsDiv", tabsDiv);
   const publishTab = Array.from(tabsDiv).find((e) => e.textContent === "发布图文");
-  console.debug("publishTab", publishTab);
+  logger.debug("publishTab", publishTab);
   if (!publishTab) {
-    console.error("未找到 publishTab");
+    logger.error("未找到 publishTab");
     return;
   }
   (publishTab as HTMLDivElement).click();
@@ -60,15 +61,15 @@ export async function DynamicDouyin(data: SyncData) {
   const fileInput = document.querySelector(
     'input[accept="image/png,image/jpeg,image/jpg,image/bmp,image/webp,image/tif"]',
   ) as HTMLInputElement;
-  console.debug("fileInput", fileInput);
+  logger.debug("fileInput", fileInput);
   if (!fileInput) {
-    console.error("未找到 fileInput");
+    logger.error("未找到 fileInput");
     return;
   }
 
   const dataTransfer = new DataTransfer();
   for (const fileInfo of images) {
-    console.debug("try upload file", fileInfo);
+    logger.debug("try upload file", fileInfo);
     const response = await fetch(fileInfo.url);
     const blob = await response.blob();
     const file = new File([blob], fileInfo.name, { type: fileInfo.type });
@@ -79,11 +80,11 @@ export async function DynamicDouyin(data: SyncData) {
   fileInput.dispatchEvent(changeEvent);
   const inputEvent = new Event("input", { bubbles: true });
   fileInput.dispatchEvent(inputEvent);
-  console.debug("文件上传操作完成");
+  logger.debug("文件上传操作完成");
 
   await waitForElement('input[placeholder="添加作品标题"]');
   const titleInput = document.querySelector('input[placeholder="添加作品标题"]') as HTMLInputElement;
-  console.debug("titleInput", titleInput);
+  logger.debug("titleInput", titleInput);
   if (titleInput) {
     titleInput.value = title || "";
     titleInput.dispatchEvent(new Event("input", { bubbles: true }));
@@ -93,7 +94,7 @@ export async function DynamicDouyin(data: SyncData) {
     'div.zone-container.editor-kit-container.editor.editor-comp-publish[contenteditable="true"]',
   ) as HTMLDivElement;
   if (contentEditor) {
-    console.debug("descriptionInput", contentEditor);
+    logger.debug("descriptionInput", contentEditor);
     contentEditor.focus();
     const pasteEvent = new ClipboardEvent("paste", {
       bubbles: true,
@@ -126,12 +127,12 @@ export async function DynamicDouyin(data: SyncData) {
     const buttons = document.querySelectorAll("button");
     const publishButton = Array.from(buttons).find((e) => e.textContent === "发布");
     if (publishButton) {
-      console.debug("sendButton clicked");
+      logger.debug("sendButton clicked");
       (publishButton as HTMLButtonElement).click();
       await new Promise((resolve) => setTimeout(resolve, 10000));
       window.location.href = "https://creator.douyin.com/creator-micro/content/manage";
     } else {
-      console.debug("未找到'发布'按钮");
+      logger.debug("未找到'发布'按钮");
     }
   }
 }

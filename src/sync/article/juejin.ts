@@ -1,7 +1,8 @@
 import type { ArticleData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 export async function ArticleJuejin(data: SyncData) {
-  console.log("Juejin Article 函数被调用");
+  logger.debug("Juejin Article 函数被调用");
 
   const articleData = data.data as ArticleData;
 
@@ -45,13 +46,13 @@ export async function ArticleJuejin(data: SyncData) {
       titleInput.dispatchEvent(new Event("input", { bubbles: true }));
       titleInput.dispatchEvent(new Event("change", { bubbles: true }));
     }
-    console.debug("titleTextarea", titleInput, titleInput?.value, articleData.title?.slice(0, 100));
+    logger.debug("titleTextarea", titleInput, titleInput?.value, articleData.title?.slice(0, 100));
 
     // 等待编辑器加载
     const editor = document.querySelector('div.CodeMirror-code[role="presentation"]') as HTMLElement;
-    console.debug("qlEditor", editor);
+    logger.debug("qlEditor", editor);
     if (!editor) {
-      console.debug("未找到编辑器元素");
+      logger.debug("未找到编辑器元素");
       return;
     }
 
@@ -74,19 +75,19 @@ export async function ArticleJuejin(data: SyncData) {
     // 查找发布按钮
     const buttons = document.querySelectorAll("button");
     const sendButton = Array.from(buttons).find((btn) => btn.textContent?.includes(" 发布 "));
-    console.debug("sendButton", sendButton);
+    logger.debug("sendButton", sendButton);
 
     if (sendButton) {
       if (data.isAutoPublish) {
-        console.debug("自动发布：点击发布按钮");
+        logger.debug("自动发布：点击发布按钮");
         sendButton.dispatchEvent(new Event("click", { bubbles: true }));
       } else {
-        console.debug("文章准备就绪，等待手动发布");
+        logger.debug("文章准备就绪，等待手动发布");
       }
     } else {
-      console.debug("未找到'发送'按钮");
+      logger.debug("未找到'发送'按钮");
     }
   } catch (error) {
-    console.error("Juejin Article 发布过程中出错:", error);
+    logger.error("Juejin Article 发布过程中出错:", error);
   }
 }

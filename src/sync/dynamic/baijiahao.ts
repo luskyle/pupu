@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, SyncData } from "../common";
 
 // 不支持发布视频
@@ -45,14 +46,14 @@ export async function DynamicBaijiahao(data: SyncData) {
       editor.value = combinedContent;
       editor.dispatchEvent(new Event("input", { bubbles: true }));
       editor.dispatchEvent(new Event("change", { bubbles: true }));
-      console.debug("titleTextarea", editor, editor?.value, combinedContent);
+      logger.debug("titleTextarea", editor, editor?.value, combinedContent);
     }
 
     // 处理图片上传
     if (images.length > 0) {
       const uploadButton = document.querySelector("div.uploader-plus") as HTMLElement;
       if (uploadButton) {
-        console.debug("Found upload image button", uploadButton);
+        logger.debug("Found upload image button", uploadButton);
         uploadButton.dispatchEvent(new Event("click", { bubbles: true }));
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -60,7 +61,7 @@ export async function DynamicBaijiahao(data: SyncData) {
         const tabs = document.querySelectorAll("div.cheetah-tabs-tab-btn");
         const localImageTab = Array.from(tabs).find((tab) => tab.textContent?.includes("本地图片"));
 
-        console.debug("uploadImageTab", localImageTab);
+        logger.debug("uploadImageTab", localImageTab);
         if (localImageTab) {
           localImageTab.dispatchEvent(new Event("click", { bubbles: true }));
           await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -68,10 +69,10 @@ export async function DynamicBaijiahao(data: SyncData) {
 
         // 处理文件上传
         const fileInput = document.querySelector('input[type="file"][accept="image/*"]') as HTMLInputElement;
-        console.debug("fileInput", fileInput);
+        logger.debug("fileInput", fileInput);
 
         if (!fileInput) {
-          console.debug("未找到文件输入元素");
+          logger.debug("未找到文件输入元素");
           return;
         }
 
@@ -79,23 +80,23 @@ export async function DynamicBaijiahao(data: SyncData) {
 
         for (const image of images) {
           if (!image.type.startsWith("image/")) {
-            console.debug("Skipping non-image file:", image);
+            logger.debug("Skipping non-image file:", image);
             continue;
           }
 
-          console.debug("try upload file", image);
+          logger.debug("try upload file", image);
           const response = await fetch(image.url);
           const arrayBuffer = await response.arrayBuffer();
           const file = new File([arrayBuffer], image.name, { type: image.type });
           dataTransfer.items.add(file);
-          console.debug("uploaded");
+          logger.debug("uploaded");
         }
 
         if (dataTransfer.files.length > 0) {
           fileInput.files = dataTransfer.files;
           fileInput.dispatchEvent(new Event("change", { bubbles: true }));
           fileInput.dispatchEvent(new Event("input", { bubbles: true }));
-          console.debug("文件上传操作完成");
+          logger.debug("文件上传操作完成");
         }
 
         // 等待上传完成
@@ -105,13 +106,13 @@ export async function DynamicBaijiahao(data: SyncData) {
         const confirmButtons = document.querySelectorAll("button.cheetah-public");
         const confirmButton = Array.from(confirmButtons).find((button) => button.textContent?.includes("确认"));
 
-        console.debug("confirmButton", confirmButton);
+        logger.debug("confirmButton", confirmButton);
         if (confirmButton) {
-          console.debug("Clicking confirm button for image upload");
+          logger.debug("Clicking confirm button for image upload");
           confirmButton.dispatchEvent(new Event("click", { bubbles: true }));
           await new Promise((resolve) => setTimeout(resolve, 5000));
         } else {
-          console.debug("未找到图片上传确认按钮");
+          logger.debug("未找到图片上传确认按钮");
         }
       }
     }
@@ -122,13 +123,13 @@ export async function DynamicBaijiahao(data: SyncData) {
 
     if (publishButton) {
       if (data.isAutoPublish) {
-        console.debug("点击发布按钮");
+        logger.debug("点击发布按钮");
         publishButton.click();
       }
     } else {
-      console.debug("未找到发布按钮");
+      logger.debug("未找到发布按钮");
     }
   } catch (error) {
-    console.error("百家号发布过程中出错:", error);
+    logger.error("百家号发布过程中出错:", error);
   }
 }

@@ -1,7 +1,8 @@
 import type { ArticleData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 export async function ArticleZhihu(data: SyncData) {
-  console.debug("ArticleZhihu", data);
+  logger.debug("ArticleZhihu", data);
 
   function waitForElement(selector: string, timeout = 10000): Promise<Element> {
     return new Promise((resolve, reject) => {
@@ -49,7 +50,7 @@ export async function ArticleZhihu(data: SyncData) {
       'textarea[placeholder="请输入标题（最多 100 个字）"]',
     )) as HTMLTextAreaElement;
     if (!titleTextarea) {
-      console.debug("未找到标题输入框");
+      logger.debug("未找到标题输入框");
       return false;
     }
 
@@ -57,12 +58,12 @@ export async function ArticleZhihu(data: SyncData) {
     titleTextarea.value = articleData.title?.slice(0, 100) || "";
     titleTextarea.dispatchEvent(new Event("input", { bubbles: true }));
     titleTextarea.dispatchEvent(new Event("change", { bubbles: true }));
-    console.debug("titleTextarea", titleTextarea, titleTextarea.value);
+    logger.debug("titleTextarea", titleTextarea, titleTextarea.value);
 
     // 等待编辑器加载
     const editor = (await waitForElement('div[data-contents="true"]')) as HTMLDivElement;
     if (!editor) {
-      console.debug("未找到编辑器元素");
+      logger.debug("未找到编辑器元素");
       return false;
     }
 
@@ -91,33 +92,33 @@ export async function ArticleZhihu(data: SyncData) {
 
     const fileInput = (await waitForElement('input[type="file"].UploadPicture-input')) as HTMLInputElement;
     if (!fileInput) {
-      console.debug("未找到文件输入元素");
+      logger.debug("未找到文件输入元素");
       return false;
     }
 
     try {
       const coverFile = processedData.cover;
       const dataTransfer = new DataTransfer();
-      console.debug("try upload file", coverFile);
+      logger.debug("try upload file", coverFile);
 
       const response = await fetch(coverFile.url);
       const arrayBuffer = await response.arrayBuffer();
       const file = new File([arrayBuffer], coverFile.name, { type: coverFile.type });
 
       dataTransfer.items.add(file);
-      console.debug("uploaded");
+      logger.debug("uploaded");
 
       if (dataTransfer.files.length > 0) {
         fileInput.files = dataTransfer.files;
         fileInput.dispatchEvent(new Event("change", { bubbles: true }));
         fileInput.dispatchEvent(new Event("input", { bubbles: true }));
-        console.debug("文件上传操作完成");
+        logger.debug("文件上传操作完成");
       }
 
       await new Promise((resolve) => setTimeout(resolve, 5000));
       return true;
     } catch (error) {
-      console.error("上传封面图片失败:", error);
+      logger.error("上传封面图片失败:", error);
       return false;
     }
   }
@@ -129,15 +130,15 @@ export async function ArticleZhihu(data: SyncData) {
     const buttons = document.querySelectorAll("button");
     const publishButton = Array.from(buttons).find((button) => button.textContent?.includes("发布"));
 
-    console.debug("publishButton", publishButton);
+    logger.debug("publishButton", publishButton);
 
     if (!publishButton) {
-      console.debug('未找到"发布"按钮');
+      logger.debug('未找到"发布"按钮');
       return;
     }
 
     if (data.isAutoPublish) {
-      console.debug("publishButton clicked");
+      logger.debug("publishButton clicked");
       publishButton.dispatchEvent(new Event("click", { bubbles: true }));
     }
   }
@@ -156,6 +157,6 @@ export async function ArticleZhihu(data: SyncData) {
 
     await publishArticle();
   } catch (error) {
-    console.error("发布文章失败:", error);
+    logger.error("发布文章失败:", error);
   }
 }

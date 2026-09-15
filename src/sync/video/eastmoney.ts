@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { SyncData, VideoData } from "../common";
 
 export async function VideoEastmoney(data: SyncData) {
@@ -43,11 +44,11 @@ export async function VideoEastmoney(data: SyncData) {
         return element;
       }
 
-      console.log(`未找到包含文本 "${text}" 的元素，尝试次数：${i + 1}`);
+      logger.debug(`未找到包含文本 "${text}" 的元素，尝试次数：${i + 1}`);
       await new Promise((resolve) => setTimeout(resolve, retryInterval));
     }
 
-    console.error(`在 ${maxRetries} 次尝试后未找到包含文本 "${text}" 的元素`);
+    logger.error(`在 ${maxRetries} 次尝试后未找到包含文本 "${text}" 的元素`);
     return null;
   }
 
@@ -63,7 +64,7 @@ export async function VideoEastmoney(data: SyncData) {
     const changeEvent = new Event("change", { bubbles: true });
     fileInput.dispatchEvent(changeEvent);
 
-    console.log("视频上传事件已触发");
+    logger.debug("视频上传事件已触发");
   }
 
   try {
@@ -73,12 +74,12 @@ export async function VideoEastmoney(data: SyncData) {
       const response = await fetch(video.url);
       const blob = await response.blob();
       const videoFile = new File([blob], video.name, { type: video.type });
-      console.log(`视频文件: ${videoFile.name} ${videoFile.type} ${videoFile.size}`);
+      logger.debug(`视频文件: ${videoFile.name} ${videoFile.type} ${videoFile.size}`);
 
       await uploadVideo(videoFile);
-      console.log("视频上传已初始化");
+      logger.debug("视频上传已初始化");
     } else {
-      console.error("没有视频文件");
+      logger.error("没有视频文件");
       return;
     }
 
@@ -110,13 +111,13 @@ export async function VideoEastmoney(data: SyncData) {
     if (data.isAutoPublish) {
       const submitButtonSpan = await findElementByText("span", "发布");
       if (submitButtonSpan) {
-        console.log("点击发布按钮");
+        logger.debug("点击发布按钮");
         submitButtonSpan.parentElement?.click();
       } else {
-        console.log('未找到"发布"按钮');
+        logger.debug('未找到"发布"按钮');
       }
     }
   } catch (error) {
-    console.error("EastmoneyVideo 发布过程中出错:", error);
+    logger.error("EastmoneyVideo 发布过程中出错:", error);
   }
 }

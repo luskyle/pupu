@@ -1,8 +1,9 @@
+import { logger } from "~utils/logger";
 import type { ArticleData } from "./default";
 import { preprocessor } from "./preprocessor";
 
 export default async function scrapeJianshuContent(): Promise<ArticleData | undefined> {
-  console.debug("jianshu spider ...");
+  logger.debug("jianshu spider ...");
 
   // 获取文章基本信息
   const cover = document.querySelector('meta[property="og:image"]')?.getAttribute("content") || "";
@@ -11,10 +12,10 @@ export default async function scrapeJianshuContent(): Promise<ArticleData | unde
   const content = document.querySelector("article")?.innerHTML || "";
   const digest = document.querySelector('meta[property="og:description"]')?.getAttribute("content") || "";
 
-  console.debug("title ", title);
+  logger.debug("title ", title);
 
   if (!title || !content) {
-    console.log("failedToGetArticleContent");
+    logger.debug("failedToGetArticleContent");
     return;
   }
 

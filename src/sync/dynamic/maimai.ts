@@ -1,8 +1,9 @@
 import { escapeHtml } from "~utils/escape-html";
+import { logger } from "~utils/logger";
 import type { DynamicData, SyncData } from "../common";
 
 export async function DynamicMaimai(data: SyncData) {
-  console.log("Maimai 函数被调用");
+  logger.debug("Maimai 函数被调用");
 
   function waitForElement(selector: string, timeout = 10000): Promise<Element> {
     return new Promise((resolve, reject) => {
@@ -41,7 +42,7 @@ export async function DynamicMaimai(data: SyncData) {
 
     // 填写标题（可选）
     const titleInput = document.querySelector("input[placeholder='输入标题会更受欢迎（选填）']") as HTMLInputElement;
-    console.debug("titleInput", titleInput);
+    logger.debug("titleInput", titleInput);
     if (titleInput && title) {
       titleInput.value = title;
       titleInput.dispatchEvent(new Event("input", { bubbles: true }));
@@ -50,9 +51,9 @@ export async function DynamicMaimai(data: SyncData) {
 
     // 填写内容
     const editor = document.querySelector("div[contenteditable]") as HTMLDivElement;
-    console.debug("qlEditor", editor);
+    logger.debug("qlEditor", editor);
     if (!editor) {
-      console.debug("未找到编辑器元素");
+      logger.debug("未找到编辑器元素");
       return;
     }
 
@@ -82,26 +83,26 @@ export async function DynamicMaimai(data: SyncData) {
       ) as HTMLInputElement;
 
       if (!fileInput) {
-        console.debug("未找到文件输入元素");
+        logger.debug("未找到文件输入元素");
         return;
       }
 
       const dataTransfer = new DataTransfer();
       for (let i = 0; i < filesToUpload.length; i++) {
         if (i >= 9) {
-          console.debug("最多上传9张图片");
+          logger.debug("最多上传9张图片");
           break;
         }
         const fileData = filesToUpload[i];
-        console.debug("try upload file", fileData);
+        logger.debug("try upload file", fileData);
         try {
           const response = await fetch(fileData.url);
           const arrayBuffer = await response.arrayBuffer();
           const file = new File([arrayBuffer], fileData.name, { type: fileData.type });
           dataTransfer.items.add(file);
-          console.debug("uploaded");
+          logger.debug("uploaded");
         } catch (error) {
-          console.error("获取文件失败:", error);
+          logger.error("获取文件失败:", error);
         }
       }
 
@@ -109,7 +110,7 @@ export async function DynamicMaimai(data: SyncData) {
         fileInput.files = dataTransfer.files;
         fileInput.dispatchEvent(new Event("change", { bubbles: true }));
         fileInput.dispatchEvent(new Event("input", { bubbles: true }));
-        console.debug("文件上传操作完成");
+        logger.debug("文件上传操作完成");
       }
 
       await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -120,19 +121,19 @@ export async function DynamicMaimai(data: SyncData) {
     // 查找发布按钮
     const buttons = document.querySelectorAll("button");
     const sendButton = Array.from(buttons).find((btn) => btn.textContent?.includes("发动态")) as HTMLButtonElement;
-    console.debug("sendButton", sendButton);
+    logger.debug("sendButton", sendButton);
 
     if (sendButton) {
       if (data.isAutoPublish) {
-        console.debug("自动发布：点击发布按钮");
+        logger.debug("自动发布：点击发布按钮");
         sendButton.dispatchEvent(new Event("click", { bubbles: true }));
       } else {
-        console.debug("帖子准备就绪，等待手动发布");
+        logger.debug("帖子准备就绪，等待手动发布");
       }
     } else {
-      console.debug("未找到'发送'按钮");
+      logger.debug("未找到'发送'按钮");
     }
   } catch (error) {
-    console.error("Maimai 发布过程中出错:", error);
+    logger.error("Maimai 发布过程中出错:", error);
   }
 }

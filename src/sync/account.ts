@@ -1,5 +1,6 @@
 import { Storage } from "@plasmohq/storage";
 import { ping } from "~background/services/api";
+import { logger } from "~utils/logger";
 import { getAlipayAccountInfo } from "./account/alipay";
 import { getBilibiliAccountInfo } from "./account/bilibili";
 import { getChejiahaoAccountInfo } from "./account/chejiahao";
@@ -168,7 +169,7 @@ export async function refreshAccountInfo(
 
   const refreshInfo = refreshAccountInfoMap[accountKey];
   if (!refreshInfo) {
-    console.debug(`No account refresh handler for grouping-only account key: ${accountKey}`);
+    logger.debug(`No account refresh handler for grouping-only account key: ${accountKey}`);
     await removeAccountInfo(accountKey);
     return null;
   }
@@ -176,7 +177,7 @@ export async function refreshAccountInfo(
   const accountInfo = await refreshInfo.getAccountInfo();
 
   if (!accountInfo) {
-    console.error(`获取账号信息失败: ${accountKey}`);
+    logger.error(`获取账号信息失败: ${accountKey}`);
     removeAccountInfo(accountKey);
     return null;
   }
@@ -275,7 +276,7 @@ export async function refreshAllAccountInfo(): Promise<RefreshResult> {
           }
         }
       } catch (error) {
-        console.error(`刷新账号信息失败: ${accountKey}`, error);
+        logger.error(`刷新账号信息失败: ${accountKey}`, error);
         errors[accountKey] = (error as Error).message || chrome.i18n.getMessage("refreshAccountsError");
       }
     }),
@@ -348,9 +349,9 @@ export async function clearAllPlatformCookies(): Promise<void> {
         // 单个 cookie 失败忽略
       }
     }
-    console.log(`[pupu-cache] 平台 Cookie 清理完成：${baseHosts.length} 个域名，删除 ${removed} 个 cookie`);
+    logger.debug(`[pupu-cache] 平台 Cookie 清理完成：${baseHosts.length} 个域名，删除 ${removed} 个 cookie`);
   } catch (error) {
-    console.error("[pupu-cache] 清理平台 Cookie 失败", error);
+    logger.error("[pupu-cache] 清理平台 Cookie 失败", error);
   }
 }
 

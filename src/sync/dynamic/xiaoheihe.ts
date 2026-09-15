@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, SyncData } from "../common";
 
 export async function DynamicXiaoheihe(data: SyncData) {
@@ -56,14 +57,14 @@ export async function DynamicXiaoheihe(data: SyncData) {
           await new Promise((resolve) => setTimeout(resolve, 500));
         }
       } catch {
-        console.debug("未找到标题编辑器元素, 跳过标题填写");
+        logger.debug("未找到标题编辑器元素, 跳过标题填写");
       }
     }
 
     // 填写正文
     const contentEditor = document.querySelector(contentEditorSelector);
     if (!contentEditor) {
-      console.debug("未找到正文编辑器元素");
+      logger.debug("未找到正文编辑器元素");
       return;
     }
 
@@ -85,7 +86,7 @@ export async function DynamicXiaoheihe(data: SyncData) {
         const response = await fetch(file.url);
         const blob = await response.blob();
         const imageFile = new File([blob], file.name, { type: file.type });
-        console.log(`文件: ${imageFile.name} ${imageFile.type} ${imageFile.size}`);
+        logger.debug(`文件: ${imageFile.name} ${imageFile.type} ${imageFile.size}`);
         imageData.push(imageFile);
       }
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -102,7 +103,7 @@ export async function DynamicXiaoheihe(data: SyncData) {
     // 查找发布按钮
     const publishButton = document.querySelector<HTMLButtonElement>("button.editor-publish__btn");
 
-    console.debug("sendButton", publishButton);
+    logger.debug("sendButton", publishButton);
 
     if (publishButton) {
       // 如果找到发布按钮，检查是否可点击
@@ -110,15 +111,15 @@ export async function DynamicXiaoheihe(data: SyncData) {
       while (publishButton.disabled && attempts < 10) {
         await new Promise((resolve) => setTimeout(resolve, 3000));
         attempts++;
-        console.debug(`Waiting for send button to be enabled. Attempt ${attempts}/10`);
+        logger.debug(`Waiting for send button to be enabled. Attempt ${attempts}/10`);
       }
 
       if (publishButton.disabled) {
-        console.debug("Send button is still disabled after 10 attempts");
+        logger.debug("Send button is still disabled after 10 attempts");
         return;
       }
 
-      console.debug("sendButton clicked");
+      logger.debug("sendButton clicked");
       // 点击发布按钮
       const clickEvent = new Event("click", { bubbles: true });
       publishButton.dispatchEvent(clickEvent);
@@ -126,6 +127,6 @@ export async function DynamicXiaoheihe(data: SyncData) {
       throw new Error("未找到发布按钮");
     }
   } catch (error) {
-    console.error("小黑盒发布过程中出错:", error);
+    logger.error("小黑盒发布过程中出错:", error);
   }
 }

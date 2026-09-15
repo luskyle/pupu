@@ -1,5 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ArticleData, FileData, SyncData } from "~sync/common";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { logger } from "~utils/logger";
 
 interface WeiboDraftEndpoint {
   version: string;
@@ -54,7 +55,7 @@ export async function ArticleWeibo(data: SyncData) {
       .join("\n");
     const uidFromPage = extract(pageText);
     if (uidFromPage) {
-      console.log("[微博文章] uid 从当前页面获取:", uidFromPage);
+      logger.debug("[微博文章] uid 从当前页面获取:", uidFromPage);
       return uidFromPage;
     }
     // 诊断：打印页面中含 "uid" 的脚本片段，便于定位真实格式
@@ -62,7 +63,7 @@ export async function ArticleWeibo(data: SyncData) {
       .map((s) => s.textContent || "")
       .filter((t) => /uid/i.test(t))
       .slice(0, 3);
-    console.log(
+    logger.debug(
       "[微博文章] 页面含 uid 的脚本片段:",
       uidSnips.map((s) => s.slice(0, 300)),
     );
@@ -71,16 +72,16 @@ export async function ArticleWeibo(data: SyncData) {
     try {
       const res = await fetch(WEIBO_V3_EDITOR_URL);
       if (!res.ok) {
-        console.warn(`[微博文章] v3 editor request failed: ${res.status} ${res.statusText}`);
+        logger.warn(`[微博文章] v3 editor request failed: ${res.status} ${res.statusText}`);
         return null;
       }
 
       const html = await res.text();
       const uidFromFetch = extract(html);
-      console.log("[微博文章] uid 从 fetch 获取:", uidFromFetch);
+      logger.debug("[微博文章] uid 从 fetch 获取:", uidFromFetch);
       return uidFromFetch;
     } catch (error) {
-      console.warn("[微博文章] v3 editor request failed:", error);
+      logger.warn("[微博文章] v3 editor request failed:", error);
       return null;
     }
   }
@@ -128,14 +129,14 @@ export async function ArticleWeibo(data: SyncData) {
     }
 
     const croppedImageData = canvas.toDataURL(fileInfo.type);
-    console.debug("croppedImageData", croppedImageData, "ratio", ratio);
+    logger.debug("croppedImageData", croppedImageData, "ratio", ratio);
 
     return { ...fileInfo, base64Data: croppedImageData };
   }
 
   // Upload an image to Weibo's shared picture API.
   async function uploadImage(fileInfo: FileData): Promise<{ pid: string; width: number; height: number } | null> {
-    console.debug("uploadImage", fileInfo);
+    logger.debug("uploadImage", fileInfo);
 
     const uploadUrl = new URL("https://picupload.weibo.com/interface/pic_upload.php");
     uploadUrl.searchParams.set("app", "miniblog");
@@ -162,7 +163,7 @@ export async function ArticleWeibo(data: SyncData) {
       if (!response.ok) throw Error(`HTTP error! status: ${response.status}`);
 
       const result = await response.json();
-      console.debug("Image upload result:", result);
+      logger.debug("Image upload result:", result);
 
       const pic = result?.data?.pics?.pic_1;
       if (pic?.pid) {
@@ -170,7 +171,7 @@ export async function ArticleWeibo(data: SyncData) {
       }
       return null;
     } catch (error) {
-      console.debug("Error uploading image:", error);
+      logger.debug("Error uploading image:", error);
       return null;
     }
   }
@@ -185,7 +186,7 @@ export async function ArticleWeibo(data: SyncData) {
     const doc = parser.parseFromString(htmlContent, "text/html");
     const images = doc.getElementsByTagName("img");
 
-    console.debug("images", images);
+    logger.debug("images", images);
 
     for (let i = 0; i < images.length; i++) {
       const img = images[i];
@@ -193,7 +194,7 @@ export async function ArticleWeibo(data: SyncData) {
 
       const src = img.getAttribute("src");
       if (src) {
-        console.debug("try replace ", src);
+        logger.debug("try replace ", src);
         const fileInfo = imageFiles.find((f) => f.url === src);
 
         if (fileInfo) {
@@ -217,12 +218,12 @@ export async function ArticleWeibo(data: SyncData) {
             }
             figure.appendChild(newImg);
             img.replaceWith(figure);
-            console.debug("newUrl", `https://wx2.sinaimg.cn/large/${pid}.jpg`);
+            logger.debug("newUrl", `https://wx2.sinaimg.cn/large/${pid}.jpg`);
           }
         }
       }
     }
-    console.debug("doc.body.innerHTML", doc.body.innerHTML);
+    logger.debug("doc.body.innerHTML", doc.body.innerHTML);
     return doc.body.innerHTML;
   }
 
@@ -289,18 +290,18 @@ export async function ArticleWeibo(data: SyncData) {
     try {
       const response = await fetch(url, init);
       if (!response.ok) {
-        console.debug(`${label} failed: ${response.status} ${response.statusText}`);
+        logger.debug(`${label} failed: ${response.status} ${response.statusText}`);
         return { ok: false };
       }
 
       try {
         return { ok: true, json: await response.json() };
       } catch (error) {
-        console.debug(`${label} returned non-JSON:`, error);
+        logger.debug(`${label} returned non-JSON:`, error);
         return { ok: false };
       }
     } catch (error) {
-      console.debug(`${label} failed:`, error);
+      logger.debug(`${label} failed:`, error);
       return { ok: false };
     }
   }
@@ -323,10 +324,10 @@ export async function ArticleWeibo(data: SyncData) {
       return createResult;
     }
 
-    console.debug(`${endpoint.version} createResult`, createResult.json);
+    logger.debug(`${endpoint.version} createResult`, createResult.json);
     const draftId = createResult.json?.data?.id;
     if (!draftId) {
-      console.debug(`${endpoint.version} 草稿创建失败`, createResult.json?.msg);
+      logger.debug(`${endpoint.version} 草稿创建失败`, createResult.json?.msg);
       return { ok: false, json: createResult.json };
     }
 
@@ -345,7 +346,7 @@ export async function ArticleWeibo(data: SyncData) {
     saveUrl.searchParams.set("_rid", new Date().getTime().toString());
 
     const formData = buildDraftFormData(processedData, coverUrl, draftId);
-    console.debug(`${endpoint.version} formData`, formData);
+    logger.debug(`${endpoint.version} formData`, formData);
 
     const saveResult = await requestDraftJson(
       saveUrl.toString(),
@@ -361,13 +362,13 @@ export async function ArticleWeibo(data: SyncData) {
       return saveResult;
     }
 
-    console.debug(`${endpoint.version} result`, saveResult.json);
+    logger.debug(`${endpoint.version} result`, saveResult.json);
     if (saveResult.json?.code === WEIBO_DRAFT_SUCCESS_CODE) {
-      console.debug("草稿发布成功");
+      logger.debug("草稿发布成功");
       return saveResult;
     }
 
-    console.debug("草稿发布失败", saveResult.json?.msg);
+    logger.debug("草稿发布失败", saveResult.json?.msg);
     return { ok: false, json: saveResult.json };
   }
 
@@ -380,7 +381,7 @@ export async function ArticleWeibo(data: SyncData) {
     const firstResult = await saveDraft(endpoint, processedData, coverUrl, draftId);
     if (firstResult.ok) return firstResult;
 
-    console.debug(`${endpoint.version} draft save failed; retrying once on the same draft`);
+    logger.debug(`${endpoint.version} draft save failed; retrying once on the same draft`);
     return await saveDraft(endpoint, processedData, coverUrl, draftId);
   }
 
@@ -403,14 +404,14 @@ export async function ArticleWeibo(data: SyncData) {
       );
       if (primarySaveResult.ok) return primaryCreateResult.id;
 
-      console.debug(
+      logger.debug(
         `${primaryEndpoint.version} draft save failed after draft ${primaryCreateResult.id}; keeping that draft and skipping v3 fallback`,
       );
       updateTip(`草稿发布失败:${primarySaveResult.json?.msg || "草稿发布失败"}`);
       return null;
     }
 
-    console.debug(`${primaryEndpoint.version} draft create failed; trying ${fallbackEndpoint.version} fallback`);
+    logger.debug(`${primaryEndpoint.version} draft create failed; trying ${fallbackEndpoint.version} fallback`);
 
     const fallbackCreateResult = await createDraft(fallbackEndpoint);
     if (!fallbackCreateResult.id) {
@@ -479,9 +480,9 @@ export async function ArticleWeibo(data: SyncData) {
     async function publishToWeibo() {
       try {
         // Upload and replace article inline images.
-        console.log("[微博文章] 原始 htmlContent 长度:", articleData.htmlContent?.length || 0);
+        logger.debug("[微博文章] 原始 htmlContent 长度:", articleData.htmlContent?.length || 0);
         articleData.htmlContent = await processContent(articleData.htmlContent, articleData.images || [], updateTip);
-        console.log("[微博文章] 处理后的 content 长度:", articleData.htmlContent?.length || 0, "uid:", accountId);
+        logger.debug("[微博文章] 处理后的 content 长度:", articleData.htmlContent?.length || 0, "uid:", accountId);
 
         // Cover upload is optional; missing cover should not block draft creation.
         let coverUrl: string | null = null;
@@ -492,7 +493,7 @@ export async function ArticleWeibo(data: SyncData) {
           if (uploaded) {
             coverUrl = `https://wx2.sinaimg.cn/large/${uploaded.pid}.jpg`;
           } else {
-            console.debug("封面上传失败");
+            logger.debug("封面上传失败");
           }
         }
 
@@ -504,7 +505,7 @@ export async function ArticleWeibo(data: SyncData) {
 
           if (!data.isAutoPublish) {
             const draftUrl = "https://card.weibo.com/article/v3/editor";
-            console.debug("draftUrl", draftUrl);
+            logger.debug("draftUrl", draftUrl);
             window.location.href = draftUrl;
           }
           return true;
@@ -514,7 +515,7 @@ export async function ArticleWeibo(data: SyncData) {
         updateTip("草稿创建失败，请手动操作");
         return false;
       } catch (error) {
-        console.error("发布文章失败:", error);
+        logger.error("发布文章失败:", error);
         return false;
       }
     }
@@ -538,6 +539,6 @@ export async function ArticleWeibo(data: SyncData) {
       }, 3000);
     }
 
-    console.error("发布文章失败:", error);
+    logger.error("发布文章失败:", error);
   }
 }

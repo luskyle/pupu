@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, SyncData } from "../common";
 
 // 不支持发布视频
@@ -37,13 +38,13 @@ export async function DynamicBilibili(data: SyncData) {
       const currentSuccessCount = document.querySelectorAll("div.bili-pics-uploader__item.success").length;
       const newlyUploadedCount = currentSuccessCount - initialCount;
       if (newlyUploadedCount === expectedNewCount) {
-        console.log(`所有 ${expectedNewCount} 张新图片已成功上传`);
+        logger.debug(`所有 ${expectedNewCount} 张新图片已成功上传`);
         return;
       }
       await new Promise((resolve) => setTimeout(resolve, interval));
     }
     const finalSuccessCount = document.querySelectorAll("div.bili-pics-uploader__item.success").length;
-    console.warn(`图片上传检查超时：预期新增 ${expectedNewCount} 张，实际新增 ${finalSuccessCount - initialCount} 张`);
+    logger.warn(`图片上传检查超时：预期新增 ${expectedNewCount} 张，实际新增 ${finalSuccessCount - initialCount} 张`);
   }
 
   async function cleanUploadedImages(): Promise<void> {
@@ -136,6 +137,6 @@ export async function DynamicBilibili(data: SyncData) {
       });
     }
   } catch (error) {
-    console.error("B 站动态发布失败:", error);
+    logger.error("B 站动态发布失败:", error);
   }
 }

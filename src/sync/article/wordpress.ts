@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ArticleData, FileData, SyncData } from "~sync/common";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { logger } from "~utils/logger";
 
 export async function ArticleWordpress(data: SyncData) {
-  console.debug("ArticleWordpress", data);
+  logger.debug("ArticleWordpress", data);
 
   interface WordpressMediaSize {
     source_url?: string;
@@ -43,12 +44,12 @@ export async function ArticleWordpress(data: SyncData) {
 
   // Upload media through the classic editor endpoint.
   async function uploadMediaClassic(fileData: FileData, postId: string): Promise<string | undefined> {
-    console.debug("uploadMediaClassic", fileData);
+    logger.debug("uploadMediaClassic", fileData);
 
     // Read the upload nonce from the classic editor page.
     const uploadNonceMatch = document.body.innerHTML.match(/{"action":"upload-attachment","_wpnonce":"([^"]+)"}/);
     const uploadNonce = uploadNonceMatch?.[1];
-    console.debug("uploadAttachmentNonce", uploadNonce);
+    logger.debug("uploadAttachmentNonce", uploadNonce);
 
     const uploadUrl = `${window.location.origin}/wp-admin/async-upload.php`;
 
@@ -75,25 +76,25 @@ export async function ArticleWordpress(data: SyncData) {
       }
 
       const result = await response.json();
-      console.debug("Image upload result:", result);
+      logger.debug("Image upload result:", result);
 
       return result?.data?.sizes?.large?.url || result?.data?.sizes?.full?.url || result?.data?.sizes?.medium?.url;
     } catch (error) {
-      console.debug("Error uploading image:", error);
+      logger.debug("Error uploading image:", error);
       return undefined;
     }
   }
 
   // Upload media through the REST API endpoint.
   async function uploadMediaApi(fileData: FileData, postId: string): Promise<string | undefined> {
-    console.debug("uploadMediaApi", fileData);
+    logger.debug("uploadMediaApi", fileData);
 
     // Read the REST nonce from the block editor page.
     const nonceMatch = document.body.innerHTML.match(/wp\.apiFetch\.createNonceMiddleware\(([^)]+)\)/);
     const nonceQuote = nonceMatch?.[1];
-    console.debug("nonceQuote", nonceQuote);
+    logger.debug("nonceQuote", nonceQuote);
     const nonce = nonceQuote?.match(/"([^"]+)"/)?.[1];
-    console.debug("nonce", nonce);
+    logger.debug("nonce", nonce);
 
     const uploadUrl = `${window.location.origin}/wp-json/wp/v2/media?_locale=user`;
 
@@ -118,11 +119,11 @@ export async function ArticleWordpress(data: SyncData) {
       }
 
       const result = (await response.json()) as WordpressMediaUploadResult;
-      console.debug("Image upload result:", JSON.stringify(result));
+      logger.debug("Image upload result:", JSON.stringify(result));
 
       return getMediaSourceUrl(result);
     } catch (error) {
-      console.debug("Error uploading image:", error);
+      logger.debug("Error uploading image:", error);
       return undefined;
     }
   }
@@ -146,7 +147,7 @@ export async function ArticleWordpress(data: SyncData) {
     for (const img of Array.from(images)) {
       const originalSrc = img.getAttribute("src");
       if (originalSrc) {
-        console.debug("try replace image:", originalSrc);
+        logger.debug("try replace image:", originalSrc);
         const fileData = imageFiles.find((file) => file.url === originalSrc);
 
         if (fileData) {
@@ -154,7 +155,7 @@ export async function ArticleWordpress(data: SyncData) {
             ? await uploadMediaClassic(fileData, postId)
             : await uploadMediaApi(fileData, postId);
 
-          console.debug("newUrl", newUrl);
+          logger.debug("newUrl", newUrl);
           if (newUrl) {
             img.setAttribute("src", newUrl);
           }
@@ -162,15 +163,15 @@ export async function ArticleWordpress(data: SyncData) {
       }
     }
 
-    console.log("doc.body.innerHTML", doc.body.innerHTML);
+    logger.debug("doc.body.innerHTML", doc.body.innerHTML);
     articleData.htmlContent = doc.body.innerHTML;
-    console.log("articleData.htmlContent", articleData.htmlContent);
+    logger.debug("articleData.htmlContent", articleData.htmlContent);
     return articleData;
   }
 
   // Publish the draft through the classic editor heartbeat autosave endpoint.
   async function publishDraftClassic(articleData: ArticleData, postId: string): Promise<boolean> {
-    console.debug("publishDraftClassic");
+    logger.debug("publishDraftClassic");
 
     const ajaxUrl = `${window.location.origin}/wp-admin/admin-ajax.php`;
     const formData = new FormData();
@@ -208,18 +209,18 @@ export async function ArticleWordpress(data: SyncData) {
       }
 
       const result = await response.json();
-      console.debug("result", result);
+      logger.debug("result", result);
 
       return result?.wp_autosave?.success || false;
     } catch (error) {
-      console.debug("Error publishing draft:", error);
+      logger.debug("Error publishing draft:", error);
       return false;
     }
   }
 
   // Publish the draft through the REST API endpoint.
   async function publishDraftApi(articleData: ArticleData, postId: string): Promise<boolean> {
-    console.debug("publishDraftApi");
+    logger.debug("publishDraftApi");
 
     const nonceMatch = document.body.innerHTML.match(/wp\.apiFetch\.createNonceMiddleware\(([^)]+)\)/);
     const nonceQuote = nonceMatch?.[1];
@@ -247,11 +248,11 @@ export async function ArticleWordpress(data: SyncData) {
       }
 
       const result = await response.json();
-      console.debug("result", result);
+      logger.debug("result", result);
 
       return !!result?.id;
     } catch (error) {
-      console.debug("Error publishing draft:", error);
+      logger.debug("Error publishing draft:", error);
       return false;
     }
   }
@@ -262,7 +263,7 @@ export async function ArticleWordpress(data: SyncData) {
     const postId = postIdInput?.value;
 
     if (!postId) {
-      console.debug("WordPress post ID not found; skipping article publish");
+      logger.debug("WordPress post ID not found; skipping article publish");
       return;
     }
 
@@ -272,7 +273,7 @@ export async function ArticleWordpress(data: SyncData) {
     const { articleData: preparedData, contentIsHtml } = prepareArticleContent(articleData);
     const processedData = await processContent(preparedData, postId, isClassicEditor, contentIsHtml);
 
-    console.debug("processedData", processedData);
+    logger.debug("processedData", processedData);
 
     const success = isClassicEditor
       ? await publishDraftClassic(processedData, postId)
@@ -286,7 +287,7 @@ export async function ArticleWordpress(data: SyncData) {
       window.location.href = `/wp-admin/post.php?post=${postId}&action=edit`;
     }
   } catch (error) {
-    console.debug("发布文章失败:", error);
+    logger.debug("发布文章失败:", error);
     throw error;
   }
 }

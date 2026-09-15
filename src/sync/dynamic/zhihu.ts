@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, SyncData } from "../common";
 
 export async function DynamicZhihu(data: SyncData) {
@@ -42,11 +43,11 @@ export async function DynamicZhihu(data: SyncData) {
     );
 
     if (!postButton) {
-      console.debug('未找到"写想法"元素');
+      logger.debug('未找到"写想法"元素');
       return;
     }
 
-    console.debug("postButton", postButton);
+    logger.debug("postButton", postButton);
     postButton.click();
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -54,7 +55,7 @@ export async function DynamicZhihu(data: SyncData) {
     await waitForElement('textarea[name="title"], textarea[placeholder*="标题"]');
     const titleInput = (document.querySelector('textarea[name="title"]') ||
       document.querySelector('textarea[placeholder*="标题"]')) as HTMLTextAreaElement | null;
-    console.debug("titleInput", titleInput);
+    logger.debug("titleInput", titleInput);
     if (titleInput && title) {
       titleInput.value = title;
       titleInput.dispatchEvent(new Event("input", { bubbles: true }));
@@ -63,9 +64,9 @@ export async function DynamicZhihu(data: SyncData) {
 
     // 查找编辑器并填写内容
     const editorElement = document.querySelector('div[data-contents="true"]') as HTMLDivElement;
-    console.debug("qlEditor", editorElement);
+    logger.debug("qlEditor", editorElement);
     if (!editorElement) {
-      console.debug("未找到编辑器元素");
+      logger.debug("未找到编辑器元素");
       return;
     }
 
@@ -85,10 +86,10 @@ export async function DynamicZhihu(data: SyncData) {
       for (let i = 0; i < images.length; i++) {
         const image = images[i];
         if (i >= 9) {
-          console.debug("Zhihu 最多支持 9 张，跳过");
+          logger.debug("Zhihu 最多支持 9 张，跳过");
           break;
         }
-        console.debug("try upload file", image);
+        logger.debug("try upload file", image);
         const response = await fetch(image.url);
         const arrayBuffer = await response.arrayBuffer();
         const file = new File([arrayBuffer], image.name, { type: image.type });
@@ -114,7 +115,7 @@ export async function DynamicZhihu(data: SyncData) {
       if (uploadingImages.length === 0) break;
 
       const loadingImg = Array.from(uploadingImages).find((img) => (img as HTMLImageElement).src.startsWith("blob"));
-      console.debug("loadingImg", loadingImg);
+      logger.debug("loadingImg", loadingImg);
       if (!loadingImg) break;
 
       await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -124,22 +125,22 @@ export async function DynamicZhihu(data: SyncData) {
     // 发布内容
     const allButtons = document.querySelectorAll("button");
     const sendButton = Array.from(allButtons).find((el) => el.textContent?.includes("发布"));
-    console.debug("sendButton", sendButton);
+    logger.debug("sendButton", sendButton);
 
     if (sendButton) {
       if (data.isAutoPublish) {
-        console.debug("sendButton clicked");
+        logger.debug("sendButton clicked");
         const clickEvent = new Event("click", { bubbles: true });
         sendButton.dispatchEvent(clickEvent);
         await new Promise((resolve) => setTimeout(resolve, 3000));
         window.location.href = "https://www.zhihu.com/follow";
       }
     } else {
-      console.debug('未找到"发送"按钮');
+      logger.debug('未找到"发送"按钮');
     }
 
-    console.debug("成功填入知乎内容和图片");
+    logger.debug("成功填入知乎内容和图片");
   } catch (error) {
-    console.error("填入知乎内容或上传图片时出错:", error);
+    logger.error("填入知乎内容或上传图片时出错:", error);
   }
 }

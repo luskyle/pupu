@@ -1,9 +1,10 @@
+import type { ArticleData, FileData, SyncData } from "~sync/common";
 /**
  * Tencent Cloud article publishing (experimental, needs live verification).
  *
  * This implementation keeps the DOM fill path.
  */
-import type { ArticleData, FileData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 export async function ArticleTencentyun(data: SyncData) {
   const articleData = data.data as ArticleData;
@@ -101,7 +102,7 @@ export async function ArticleTencentyun(data: SyncData) {
       const blob = await response.blob();
       return new File([blob], fileData.name, { type: fileData.type || blob.type || "application/octet-stream" });
     } catch (error) {
-      console.warn("Tencent Cloud cover file fetch failed:", error);
+      logger.warn("Tencent Cloud cover file fetch failed:", error);
       return null;
     }
   }
@@ -168,13 +169,13 @@ export async function ArticleTencentyun(data: SyncData) {
   async function uploadCover(cover?: FileData): Promise<boolean> {
     if (!cover) return true;
     if (!cover.url) {
-      console.debug("Tencent Cloud cover data has no URL");
+      logger.debug("Tencent Cloud cover data has no URL");
       return false;
     }
 
     const fileInput = await waitForCoverFileInputOptional();
     if (!fileInput) {
-      console.debug("Tencent Cloud cover upload input not found; skipping DOM cover upload");
+      logger.debug("Tencent Cloud cover upload input not found; skipping DOM cover upload");
       return false;
     }
 
@@ -196,7 +197,7 @@ export async function ArticleTencentyun(data: SyncData) {
     if (publishButton) {
       publishButton.dispatchEvent(new Event("click", { bubbles: true }));
     } else {
-      console.debug("腾讯云:未找到发布按钮");
+      logger.debug("腾讯云:未找到发布按钮");
     }
   }
 
@@ -207,7 +208,7 @@ export async function ArticleTencentyun(data: SyncData) {
     ].filter(([, filled]) => !filled);
 
     for (const [field] of missing) {
-      console.error(`Tencent Cloud required field ${field} not filled; skipping auto-publish`);
+      logger.error(`Tencent Cloud required field ${field} not filled; skipping auto-publish`);
     }
 
     return missing.length === 0;
@@ -230,7 +231,7 @@ export async function ArticleTencentyun(data: SyncData) {
       setControlValue(titleInput, articleData.title || "");
       required.title = !!articleData.title;
     } else {
-      console.debug("腾讯云:未找到标题输入框");
+      logger.debug("腾讯云:未找到标题输入框");
     }
 
     const summaryInput = document.querySelector('textarea[placeholder*="摘要"], input[placeholder*="摘要"]') as
@@ -250,7 +251,7 @@ export async function ArticleTencentyun(data: SyncData) {
     } else {
       const filledFallback = await fillFallbackEditor(content);
       if (!filledFallback) {
-        console.debug("腾讯云:未找到 Markdown 编辑器");
+        logger.debug("腾讯云:未找到 Markdown 编辑器");
         return;
       }
       required.body = !!content;
@@ -262,6 +263,6 @@ export async function ArticleTencentyun(data: SyncData) {
       await clickPublishButton();
     }
   } catch (error) {
-    console.error("腾讯云文章发布出错:", error);
+    logger.error("腾讯云文章发布出错:", error);
   }
 }

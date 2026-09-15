@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, FileData, SyncData } from "../common";
 
 interface OkjikeConfig {
@@ -36,7 +37,7 @@ export async function DynamicOkjike(data: SyncData) {
 
       timeoutId = setTimeout(() => {
         observer.disconnect();
-        console.warn(`Element with selector "${selector}" not found within ${timeout}ms`);
+        logger.warn(`Element with selector "${selector}" not found within ${timeout}ms`);
         resolve(null);
       }, timeout);
     });
@@ -55,7 +56,7 @@ export async function DynamicOkjike(data: SyncData) {
 
     while (Date.now() < deadline) {
       const uploadingStatus = getUploadingStatus();
-      console.debug("Jike uploading status:", uploadingStatus);
+      logger.debug("Jike uploading status:", uploadingStatus);
       if (uploadingStatus) {
         sawUploading = true;
         await sleep(interval);
@@ -93,14 +94,14 @@ export async function DynamicOkjike(data: SyncData) {
     const limitedFileInfos = fileInfos.slice(0, 9);
 
     if (fileInfos.length > limitedFileInfos.length) {
-      console.debug("Jike supports up to 9 images; skipping extra images");
+      logger.debug("Jike supports up to 9 images; skipping extra images");
     }
 
     for (const fileInfo of limitedFileInfos) {
       try {
         const response = await fetch(fileInfo.url);
         if (!response.ok) {
-          console.error(`Failed to fetch image "${fileInfo.name}": ${response.status} ${response.statusText}`);
+          logger.error(`Failed to fetch image "${fileInfo.name}": ${response.status} ${response.statusText}`);
           continue;
         }
 
@@ -108,7 +109,7 @@ export async function DynamicOkjike(data: SyncData) {
         const fileType = fileInfo.type || blob.type;
         imageFiles.push(new File([blob], fileInfo.name, { type: fileType }));
       } catch (error) {
-        console.error("Failed to prepare Jike image:", error);
+        logger.error("Failed to prepare Jike image:", error);
       }
     }
 
@@ -133,13 +134,13 @@ export async function DynamicOkjike(data: SyncData) {
       });
       editor.dispatchEvent(imagePasteEvent);
     } catch (error) {
-      console.error("Jike paste-based image upload failed:", error);
+      logger.error("Jike paste-based image upload failed:", error);
       return 0;
     }
 
     const uploadFinished = await waitForImageUploadToFinish();
     if (!uploadFinished) {
-      console.error("Jike image upload did not finish before timeout");
+      logger.error("Jike image upload did not finish before timeout");
       return 0;
     }
 
@@ -149,7 +150,7 @@ export async function DynamicOkjike(data: SyncData) {
       return Math.min(attachedCount, files.length);
     }
 
-    console.debug("No Jike paste upload evidence detected; trying file input fallback");
+    logger.debug("No Jike paste upload evidence detected; trying file input fallback");
     return 0;
   }
 
@@ -158,7 +159,7 @@ export async function DynamicOkjike(data: SyncData) {
 
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement | null;
     if (!fileInput) {
-      console.error("media requested but upload input not found");
+      logger.error("media requested but upload input not found");
       return 0;
     }
 
@@ -173,13 +174,13 @@ export async function DynamicOkjike(data: SyncData) {
       fileInput.dispatchEvent(new Event("change", { bubbles: true }));
       fileInput.dispatchEvent(new Event("input", { bubbles: true }));
     } catch (error) {
-      console.error("Jike file input image upload fallback failed:", error);
+      logger.error("Jike file input image upload fallback failed:", error);
       return 0;
     }
 
     const uploadFinished = await waitForImageUploadToFinish();
     if (!uploadFinished) {
-      console.error("Jike image upload did not finish before timeout");
+      logger.error("Jike image upload did not finish before timeout");
       return 0;
     }
 
@@ -189,7 +190,7 @@ export async function DynamicOkjike(data: SyncData) {
       return Math.min(attachedCount, files.length);
     }
 
-    console.error("media requested but no attached image was detected");
+    logger.error("media requested but no attached image was detected");
     return 0;
   }
 
@@ -197,7 +198,7 @@ export async function DynamicOkjike(data: SyncData) {
   async function handleTopicSelection(topic: string) {
     const topicInput = (await waitForElement('input[placeholder="未选择圈子"]')) as HTMLInputElement;
     if (!topicInput) {
-      console.error("未找到话题输入框");
+      logger.error("未找到话题输入框");
       return;
     }
 
@@ -214,7 +215,7 @@ export async function DynamicOkjike(data: SyncData) {
     // Search for topics inside the platform topic container.
     const topicContainer = document.querySelector('div[name="topic"]');
     if (!topicContainer) {
-      console.error("未找到话题容器");
+      logger.error("未找到话题容器");
       return;
     }
 
@@ -226,16 +227,16 @@ export async function DynamicOkjike(data: SyncData) {
 
     // Fall back to the first available topic.
     if (!topicItem && topicElements.length > 0) {
-      console.log("未找到指定话题，选择第一个可用话题");
+      logger.debug("未找到指定话题，选择第一个可用话题");
       topicItem = topicElements[0];
     }
 
-    console.log("选择的话题元素:", topicItem);
+    logger.debug("选择的话题元素:", topicItem);
 
     if (topicItem) {
       (topicItem as HTMLElement).click();
     } else {
-      console.error("没有找到任何可用的话题");
+      logger.error("没有找到任何可用的话题");
     }
   }
 
@@ -244,7 +245,7 @@ export async function DynamicOkjike(data: SyncData) {
       'form div[contenteditable="true"], div[contenteditable="true"][role="textbox"]',
     )) as HTMLDivElement | null;
     if (!inputElement) {
-      console.error("Jike editor not found");
+      logger.error("Jike editor not found");
       return null;
     }
 
@@ -290,7 +291,7 @@ export async function DynamicOkjike(data: SyncData) {
 
     if (data.isAutoPublish) {
       if (requestedImageCount > 0 && attachedImageCount !== requestedImageCount) {
-        console.error(
+        logger.error(
           `only ${attachedImageCount} of ${requestedImageCount} requested images attached; skipping auto-publish to avoid an incomplete post`,
         );
         return;
@@ -299,7 +300,7 @@ export async function DynamicOkjike(data: SyncData) {
       if (requestedImageCount > 0) {
         const uploadFinished = await waitForImageUploadToFinish();
         if (!uploadFinished) {
-          console.error("Jike image upload did not finish before auto-publish");
+          logger.error("Jike image upload did not finish before auto-publish");
           return;
         }
       }
@@ -314,19 +315,19 @@ export async function DynamicOkjike(data: SyncData) {
         while (publishButton.disabled && attempts < 10) {
           await sleep(3000);
           attempts++;
-          console.log(`等待发布按钮可用... 尝试 ${attempts}/10`);
+          logger.debug(`等待发布按钮可用... 尝试 ${attempts}/10`);
         }
 
         if (publishButton.disabled) {
-          console.error("发布按钮在10次尝试后仍被禁用");
+          logger.error("发布按钮在10次尝试后仍被禁用");
           return;
         }
 
-        console.log("点击发布按钮");
+        logger.debug("点击发布按钮");
         publishButton.click();
       }
     }
   } catch (error) {
-    console.error("发布过程中出错:", error);
+    logger.error("发布过程中出错:", error);
   }
 }

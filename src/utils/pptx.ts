@@ -2,6 +2,7 @@ import { toPng as toImagePng } from "html-to-image";
 import html2canvas from "html2canvas";
 import { init as initPptxPreview } from "pptx-preview";
 import type { FileData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 export interface PptxConvertResult {
   /** 每一页幻灯片转换成的图片 */
@@ -32,7 +33,7 @@ async function captureSlide(slideEl: HTMLElement): Promise<Blob> {
     const res = await fetch(dataUrl);
     return await res.blob();
   } catch (error) {
-    console.warn("html-to-image 捕获失败，回退 html2canvas:", error);
+    logger.warn("html-to-image 捕获失败，回退 html2canvas:", error);
     const canvas = await html2canvas(slideEl, {
       scale: PIXEL_RATIO,
       useCORS: true,

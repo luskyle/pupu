@@ -1,7 +1,8 @@
 import type { ArticleData, FileData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 export async function ArticleSegmentfault(data: SyncData) {
-  console.debug("ArticleSegmentfault", data);
+  logger.debug("ArticleSegmentfault", data);
   const articleData = data.data as ArticleData;
 
   // 获取 PHPSESSID cookie
@@ -34,10 +35,10 @@ export async function ArticleSegmentfault(data: SyncData) {
       }
 
       const result = await uploadResponse.json();
-      console.debug("图片上传结果:", result);
+      logger.debug("图片上传结果:", result);
       return result.url;
     } catch (error) {
-      console.error("上传图片错误:", error);
+      logger.error("上传图片错误:", error);
       return null;
     }
   }
@@ -70,10 +71,10 @@ export async function ArticleSegmentfault(data: SyncData) {
       }
 
       const result = await response.json();
-      console.debug("发布结果:", result);
+      logger.debug("发布结果:", result);
       return result.id ?? null;
     } catch (error) {
-      console.error("发布草稿错误:", error);
+      logger.error("发布草稿错误:", error);
       return null;
     }
   }
@@ -84,21 +85,21 @@ export async function ArticleSegmentfault(data: SyncData) {
     const doc = parser.parseFromString(htmlContent, "text/html");
     const images = Array.from(doc.getElementsByTagName("img"));
 
-    console.debug("找到图片元素数量:", images.length);
-    console.debug("可用的文件数据:", imageDatas);
+    logger.debug("找到图片元素数量:", images.length);
+    logger.debug("可用的文件数据:", imageDatas);
 
     const uploadPromises = images.map(async (img) => {
       const src = img.getAttribute("src");
-      console.debug("处理图片 src:", src);
+      logger.debug("处理图片 src:", src);
 
       if (!src) return;
 
       const fileInfo = imageDatas?.find((f) => f.url === src);
-      console.debug("找到对应的文件信息:", fileInfo);
+      logger.debug("找到对应的文件信息:", fileInfo);
 
       if (fileInfo) {
         const newUrl = await uploadImage(fileInfo);
-        console.debug("上传后的新URL:", newUrl);
+        logger.debug("上传后的新URL:", newUrl);
 
         if (newUrl) {
           img.setAttribute("src", newUrl);
@@ -112,7 +113,7 @@ export async function ArticleSegmentfault(data: SyncData) {
 
   // 处理 Markdown 内容中的图片
   async function processMarkdownContent(content: string, imageDatas: FileData[]): Promise<string> {
-    console.debug("开始处理 Markdown 内容:", {
+    logger.debug("开始处理 Markdown 内容:", {
       contentLength: content.length,
       imageDatasCount: imageDatas?.length ?? 0,
     });
@@ -123,7 +124,7 @@ export async function ArticleSegmentfault(data: SyncData) {
     const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
     const matches = Array.from(content.matchAll(imageRegex));
 
-    console.debug(
+    logger.debug(
       "找到 Markdown 图片:",
       matches.map((m) => ({
         url: m[2],
@@ -139,7 +140,7 @@ export async function ArticleSegmentfault(data: SyncData) {
         if (newUrl) {
           const newImageMarkdown = `![${alt}](${newUrl})`;
           processedContent = processedContent.replace(fullMatch, newImageMarkdown);
-          console.debug("图片替换完成:", {
+          logger.debug("图片替换完成:", {
             from: url,
             to: newUrl,
           });
@@ -192,7 +193,7 @@ export async function ArticleSegmentfault(data: SyncData) {
     `;
     shadow.appendChild(tip);
 
-    console.debug("开始处理文章:", {
+    logger.debug("开始处理文章:", {
       hasMarkdown: !!articleData.markdownContent,
       filesCount: articleData.images?.length,
     });
@@ -237,7 +238,7 @@ export async function ArticleSegmentfault(data: SyncData) {
       }, 3000);
     }
 
-    console.error("发布文章失败:", error);
+    logger.error("发布文章失败:", error);
     throw error;
   }
 }

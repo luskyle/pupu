@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import "~style.css";
 import cssText from "data-text:~style.css";
 import { Button, HeroUIProvider, Image } from "@heroui/react";
@@ -46,9 +47,9 @@ const LinkExtension = () => {
       // 解码 base64 并解析 JSON
       const decodedParams = JSON.parse(atob(encodedParams));
       setParams(decodedParams);
-      console.log("decodedParams", decodedParams);
+      logger.debug("decodedParams", decodedParams);
     } catch (error) {
-      console.error("Error parsing parameters:", error);
+      logger.error("Error parsing parameters:", error);
       setParams({
         apiKey: "",
       });
@@ -93,7 +94,7 @@ const LinkExtension = () => {
         window.close();
       }, 3000);
     } catch (error) {
-      console.error("Error handling trust domain:", error);
+      logger.error("Error handling trust domain:", error);
       setFeedback({
         type: "error",
         message: chrome.i18n.getMessage("linkExtensionProcessError"),

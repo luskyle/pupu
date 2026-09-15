@@ -1,8 +1,9 @@
+import { logger } from "~utils/logger";
 import type { ArticleData } from "./default";
 import { preprocessor } from "./preprocessor";
 
 export default async function scrapeCSDNContent(): Promise<ArticleData | undefined> {
-  console.debug("CSDN spider ...");
+  logger.debug("CSDN spider ...");
 
   const preprocess = (content: string) => preprocessor(content);
 
@@ -22,7 +23,7 @@ export default async function scrapeCSDNContent(): Promise<ArticleData | undefin
   const digest = document.querySelector('meta[property="og:description"]')?.getAttribute("content") || "";
 
   if (!title || !content) {
-    console.log("failedToGetArticleContent");
+    logger.debug("failedToGetArticleContent");
     return;
   }
 

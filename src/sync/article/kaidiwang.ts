@@ -1,4 +1,5 @@
 import type { ArticleData, FileData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 /**
  * Kaidiwang article publishing (experimental).
@@ -101,7 +102,7 @@ export async function ArticleKaiDiWang(data: SyncData) {
       pasteEvent.clipboardData?.setData("text/html", html);
       editor.dispatchEvent(pasteEvent);
     } catch (error) {
-      console.debug("Kaidiwang synthetic paste failed; using direct HTML write", error);
+      logger.debug("Kaidiwang synthetic paste failed; using direct HTML write", error);
     }
 
     // Some editors ignore synthetic paste events, so write directly and then notify the framework.
@@ -119,7 +120,7 @@ export async function ArticleKaiDiWang(data: SyncData) {
       const blob = await response.blob();
       return new File([blob], fileData.name, { type: fileData.type || blob.type || "application/octet-stream" });
     } catch (error) {
-      console.warn(`Kaidiwang ${label} file fetch failed:`, error);
+      logger.warn(`Kaidiwang ${label} file fetch failed:`, error);
       return null;
     }
   }
@@ -142,7 +143,7 @@ export async function ArticleKaiDiWang(data: SyncData) {
       const result = (await response.json()) as ImageUploadResult;
       return result?.data || null;
     } catch (error) {
-      console.warn("Kaidiwang inline image upload failed; keeping original inline image URL", error);
+      logger.warn("Kaidiwang inline image upload failed; keeping original inline image URL", error);
       return null;
     }
   }
@@ -194,7 +195,7 @@ export async function ArticleKaiDiWang(data: SyncData) {
     for (const imageElement of imageElements) {
       const src = imageElement.getAttribute("src")?.trim() || "";
       if (!src) {
-        console.debug("Kaidiwang inline image src is empty");
+        logger.debug("Kaidiwang inline image src is empty");
         isFullyPrepared = false;
         continue;
       }
@@ -203,7 +204,7 @@ export async function ArticleKaiDiWang(data: SyncData) {
 
       const imageData = images.find((image) => image.url === src);
       if (!imageData) {
-        console.debug("Kaidiwang inline image data not found; unable to rewrite non-public image URL");
+        logger.debug("Kaidiwang inline image data not found; unable to rewrite non-public image URL");
         isFullyPrepared = false;
         continue;
       }
@@ -228,14 +229,14 @@ export async function ArticleKaiDiWang(data: SyncData) {
   async function uploadCover(cover?: FileData): Promise<boolean> {
     if (!cover) return true;
     if (!cover.url) {
-      console.debug("Kaidiwang cover data has no URL");
+      logger.debug("Kaidiwang cover data has no URL");
       return false;
     }
 
     const fileInput = (document.querySelector("input#cover-file") ||
       (await waitForElementOptional("input#cover-file", 3000))) as HTMLInputElement | null;
     if (!fileInput) {
-      console.debug("Kaidiwang cover upload input not found");
+      logger.debug("Kaidiwang cover upload input not found");
       return false;
     }
 
@@ -262,18 +263,18 @@ export async function ArticleKaiDiWang(data: SyncData) {
   function canAutoPublish(required: RequiredFields): boolean {
     let canPublish = true;
     if (!required.title) {
-      console.error("Kaidiwang required field title not filled; skipping auto-publish");
+      logger.error("Kaidiwang required field title not filled; skipping auto-publish");
       canPublish = false;
     }
     if (!required.body) {
-      console.error("Kaidiwang required field body not filled; skipping auto-publish");
+      logger.error("Kaidiwang required field body not filled; skipping auto-publish");
       canPublish = false;
     } else if (!required.bodyFullyPrepared) {
-      console.error("Kaidiwang inline image upload failed; skipping auto-publish to avoid broken images");
+      logger.error("Kaidiwang inline image upload failed; skipping auto-publish to avoid broken images");
       canPublish = false;
     }
     if (!required.cover) {
-      console.error("Kaidiwang required field cover not filled; skipping auto-publish");
+      logger.error("Kaidiwang required field cover not filled; skipping auto-publish");
       canPublish = false;
     }
     return canPublish;
@@ -287,7 +288,7 @@ export async function ArticleKaiDiWang(data: SyncData) {
       "div.button_publish.item.editor-btn.editor-main-btn",
     ) as HTMLElement | null;
     if (!publishButton) {
-      console.debug("Kaidiwang publish button not found");
+      logger.debug("Kaidiwang publish button not found");
       return;
     }
 
@@ -315,10 +316,10 @@ export async function ArticleKaiDiWang(data: SyncData) {
         setControlValue(titleInput, title);
         required.title = true;
       } catch (error) {
-        console.error("Kaidiwang title write failed:", error);
+        logger.error("Kaidiwang title write failed:", error);
       }
     } else {
-      console.debug("Kaidiwang title input not found or title is empty");
+      logger.debug("Kaidiwang title input not found or title is empty");
     }
 
     const editor = document.querySelector('div[contenteditable="true"]') as HTMLElement | null;
@@ -330,23 +331,23 @@ export async function ArticleKaiDiWang(data: SyncData) {
         if (required.body) {
           required.bodyFullyPrepared = rewriteResult.isFullyPrepared;
         } else {
-          console.error("Kaidiwang body editor remained empty after write; skipping auto-publish");
+          logger.error("Kaidiwang body editor remained empty after write; skipping auto-publish");
         }
       } catch (error) {
-        console.error("Kaidiwang body write failed:", error);
+        logger.error("Kaidiwang body write failed:", error);
       }
     } else {
-      console.debug("Kaidiwang body editor not found or content is empty");
+      logger.debug("Kaidiwang body editor not found or content is empty");
     }
 
     try {
       required.cover = await uploadCover(articleData.cover);
     } catch (error) {
-      console.error("Kaidiwang cover upload failed:", error);
+      logger.error("Kaidiwang cover upload failed:", error);
       required.cover = false;
     }
     clickPublishIfRequested(required);
   } catch (error) {
-    console.error("Kaidiwang article publish failed:", error);
+    logger.error("Kaidiwang article publish failed:", error);
   }
 }

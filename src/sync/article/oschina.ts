@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { ArticleData, FileData, SyncData } from "../common";
 
 export async function ArticleOSChina(data: SyncData) {
@@ -51,7 +52,7 @@ export async function ArticleOSChina(data: SyncData) {
       const blob = await response.blob();
       return new File([blob], fileData.name, { type: fileData.type || blob.type || "application/octet-stream" });
     } catch (error) {
-      console.warn("OSChina cover file fetch failed:", error);
+      logger.warn("OSChina cover file fetch failed:", error);
       return null;
     }
   }
@@ -73,7 +74,7 @@ export async function ArticleOSChina(data: SyncData) {
     try {
       return iframe.contentDocument?.body || null;
     } catch (error) {
-      console.debug("OSChina iframe editor is not accessible:", error);
+      logger.debug("OSChina iframe editor is not accessible:", error);
       return null;
     }
   }
@@ -111,7 +112,7 @@ export async function ArticleOSChina(data: SyncData) {
           body?.isContentEditable || body?.getAttribute("contenteditable") === "true" || designMode === "on";
         if (body && writable) return body;
       } catch (error) {
-        console.debug("OSChina iframe editor is not accessible:", error);
+        logger.debug("OSChina iframe editor is not accessible:", error);
       }
     }
     return null;
@@ -132,7 +133,7 @@ export async function ArticleOSChina(data: SyncData) {
   async function uploadCover(cover?: FileData): Promise<boolean> {
     if (!cover) return true;
     if (!cover.url) {
-      console.debug("OSChina cover data has no URL");
+      logger.debug("OSChina cover data has no URL");
       return false;
     }
 
@@ -140,7 +141,7 @@ export async function ArticleOSChina(data: SyncData) {
     const fileInput = (document.querySelector(selector) ||
       (await waitForElementOptional(selector, 3000))) as HTMLInputElement | null;
     if (!fileInput) {
-      console.debug("OSChina cover upload input not found");
+      logger.debug("OSChina cover upload input not found");
       return false;
     }
 
@@ -160,7 +161,7 @@ export async function ArticleOSChina(data: SyncData) {
     ].filter(([, filled]) => !filled);
 
     for (const [field] of missing) {
-      console.error(`OSChina required field ${field} not filled; skipping auto-publish to avoid an incomplete article`);
+      logger.error(`OSChina required field ${field} not filled; skipping auto-publish to avoid an incomplete article`);
     }
 
     return missing.length === 0;
@@ -175,7 +176,7 @@ export async function ArticleOSChina(data: SyncData) {
       "div.button_publish.item.editor-btn.editor-main-btn",
     ) as HTMLElement | null;
     if (!publishButton) {
-      console.debug("OSChina publish button not found");
+      logger.debug("OSChina publish button not found");
       return;
     }
 
@@ -200,7 +201,7 @@ export async function ArticleOSChina(data: SyncData) {
       const json = (await resp.json()) as { result?: string };
       return json?.result || null;
     } catch (e) {
-      console.warn("OSChina 图片上传失败", file.url, e);
+      logger.warn("OSChina 图片上传失败", file.url, e);
       return null;
     }
   }
@@ -242,10 +243,10 @@ export async function ArticleOSChina(data: SyncData) {
         dispatchInputEvents(titleEl);
         required.title = true;
       } catch (error) {
-        console.error("OSChina title write failed:", error);
+        logger.error("OSChina title write failed:", error);
       }
     } else {
-      console.debug("OSChina title input not found");
+      logger.debug("OSChina title input not found");
     }
 
     const processed = await rewriteImages(htmlContent || "", images);
@@ -256,20 +257,20 @@ export async function ArticleOSChina(data: SyncData) {
         pasteHtml(editor, processed);
         required.body = true;
       } catch (error) {
-        console.error("OSChina body write failed:", error);
+        logger.error("OSChina body write failed:", error);
       }
     } else {
-      console.debug("OSChina body editor not found");
+      logger.debug("OSChina body editor not found");
     }
 
     try {
       required.cover = await uploadCover(cover);
     } catch (error) {
-      console.error("OSChina cover upload failed:", error);
+      logger.error("OSChina cover upload failed:", error);
       required.cover = false;
     }
     clickPublishIfRequested(required);
   } catch (error) {
-    console.error("OSChina 文章发布失败:", error);
+    logger.error("OSChina 文章发布失败:", error);
   }
 }

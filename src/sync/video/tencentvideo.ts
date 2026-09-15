@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { FileData, SyncData, VideoData } from "../common";
 
 export async function VideoTencentVideo(data: SyncData) {
@@ -134,22 +135,22 @@ export async function VideoTencentVideo(data: SyncData) {
     }
 
     if (!publishButton) {
-      console.debug('未找到"发布"按钮');
+      logger.debug('未找到"发布"按钮');
       return;
     }
     if (publishButton.getAttribute("aria-disabled") === "true") {
-      console.debug("发布按钮仍不可用，跳过自动发布");
+      logger.debug("发布按钮仍不可用，跳过自动发布");
       return;
     }
 
-    console.debug("sendButton clicked");
+    logger.debug("sendButton clicked");
     publishButton.dispatchEvent(new Event("click", { bubbles: true }));
   }
 
   try {
     const { title, content, video, cover, horizontalCover, description } = data.data as VideoData;
     if (!video) {
-      console.error("腾讯视频：未提供视频文件");
+      logger.error("腾讯视频：未提供视频文件");
       return;
     }
 
@@ -196,6 +197,6 @@ export async function VideoTencentVideo(data: SyncData) {
 
     await publishIfAutoEnabled();
   } catch (error) {
-    console.error("腾讯视频发布失败:", error);
+    logger.error("腾讯视频发布失败:", error);
   }
 }

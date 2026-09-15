@@ -3,6 +3,7 @@ import { toCanvas, toPng as toImagePng } from "html-to-image";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import type { FileData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 export interface DocxConvertResult {
   /** 每一页转换成的图片 */
@@ -59,7 +60,7 @@ function sanitizeForCapture(root: HTMLElement): void {
   root.querySelectorAll("svg").forEach((el) => {
     const rect = el.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) {
-      console.log("[pupu-docx] sanitize 移除零尺寸SVG:", {
+      logger.debug("[pupu-docx] sanitize 移除零尺寸SVG:", {
         w: rect.width,
         h: rect.height,
         hasImage: !!el.querySelector("image"),
@@ -70,7 +71,7 @@ function sanitizeForCapture(root: HTMLElement): void {
   });
   root.querySelectorAll("img, image").forEach((el) => {
     if (!el.getAttribute("src")) {
-      console.log(
+      logger.debug(
         "[pupu-docx] sanitize 移除无src元素:",
         el.tagName,
         el.getAttribute("href") || "",
@@ -284,7 +285,7 @@ async function capturePage(pageEl: HTMLElement): Promise<Blob> {
     const res = await fetch(dataUrl);
     return await res.blob();
   } catch (error) {
-    console.warn("html-to-image 捕获 Word 页失败，回退 html2canvas:", error);
+    logger.warn("html-to-image 捕获 Word 页失败，回退 html2canvas:", error);
     const canvas = await capturePageWithCanvas(pageEl);
     return await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("canvas toBlob 失败"))), "image/png");
@@ -307,12 +308,12 @@ async function captureSectionCanvas(section: HTMLElement): Promise<HTMLCanvasEle
     // 尺寸校验：canvas 高度应约等于 section 实际高度 × 倍率，异常时回退 html2canvas
     const expected = Math.round(section.offsetHeight * PIXEL_RATIO);
     if (Math.abs(canvas.height - expected) > expected * 0.1) {
-      console.warn("html-to-image 整段捕获高度异常，回退 html2canvas:", canvas.height, expected);
+      logger.warn("html-to-image 整段捕获高度异常，回退 html2canvas:", canvas.height, expected);
       return await capturePageWithCanvas(section);
     }
     return canvas;
   } catch (error) {
-    console.warn("html-to-image 整段捕获失败，回退 html2canvas:", error);
+    logger.warn("html-to-image 整段捕获失败，回退 html2canvas:", error);
     return await capturePageWithCanvas(section);
   }
 }
@@ -377,7 +378,7 @@ export async function convertDocxToImages(
       sanitizeForCapture(section);
       const imgsAfterClean = section.querySelectorAll("img").length;
       const svgsAfterClean = section.querySelectorAll("svg").length;
-      console.log(
+      logger.debug(
         `[pupu-docx] section${secIdx} 清理前 img=${imgsBefore} svg=${svgsBefore}, 清理后 img=${imgsAfterClean} svg=${svgsAfterClean}`,
       );
 
@@ -385,7 +386,7 @@ export async function convertDocxToImages(
       const loaded = [...section.querySelectorAll<HTMLImageElement>("img")].filter(
         (im) => im.complete && im.naturalWidth > 0,
       );
-      console.log(
+      logger.debug(
         `[pupu-docx] section${secIdx} 图片详情:`,
         loaded.map((im) => ({
           w: im.naturalWidth,
@@ -406,7 +407,7 @@ export async function convertDocxToImages(
       // 把视觉上跨页的浮动图片钳制到归属页内，保证图片完整出现在某一页
       clampFloatingImages(section, boundaries);
       const cuts = boundaries.length > 0 ? [0, ...boundaries, totalH] : [0, totalH];
-      console.log(
+      logger.debug(
         `[pupu-docx] section${secIdx} pageH=${pageH.toFixed(1)} totalH=${totalH} 边界=${JSON.stringify(boundaries)} 页数=${cuts.length - 1} 浮动图片=${floatingFixed}`,
       );
       // 限制总转换页数：超过 MAX_PAGES 时截断当前 section，并跳过后续 section
@@ -417,7 +418,7 @@ export async function convertDocxToImages(
       if (cuts.length - 1 > remaining) {
         const limitedCuts = cuts.slice(0, remaining + 1);
         accumulatedPages += limitedCuts.length - 1;
-        console.log(
+        logger.debug(
           `[pupu-docx] section${secIdx} 超过上限，仅保留前 ${limitedCuts.length - 1} 页（共 ${cuts.length - 1} 页）`,
         );
         pages.push({ section, pageH, cuts: limitedCuts });
@@ -499,7 +500,7 @@ async function computeDocxPages(container: HTMLElement): Promise<PreparedDocxPag
     sanitizeForCapture(section);
     const imgsAfterClean = section.querySelectorAll("img").length;
     const svgsAfterClean = section.querySelectorAll("svg").length;
-    console.log(
+    logger.debug(
       `[pupu-docx] section${secIdx} 清理前 img=${imgsBefore} svg=${svgsBefore}, 清理后 img=${imgsAfterClean} svg=${svgsAfterClean}`,
     );
 
@@ -507,7 +508,7 @@ async function computeDocxPages(container: HTMLElement): Promise<PreparedDocxPag
     const loaded = [...section.querySelectorAll<HTMLImageElement>("img")].filter(
       (im) => im.complete && im.naturalWidth > 0,
     );
-    console.log(
+    logger.debug(
       `[pupu-docx] section${secIdx} 图片详情:`,
       loaded.map((im) => ({
         w: im.naturalWidth,
@@ -525,7 +526,7 @@ async function computeDocxPages(container: HTMLElement): Promise<PreparedDocxPag
     const boundaries = computePageBoundaries(section, pageH);
     clampFloatingImages(section, boundaries);
     const cuts = boundaries.length > 0 ? [0, ...boundaries, totalH] : [0, totalH];
-    console.log(
+    logger.debug(
       `[pupu-docx] section${secIdx} pageH=${pageH.toFixed(1)} totalH=${totalH} 边界=${JSON.stringify(boundaries)} 页数=${cuts.length - 1} 浮动图片=${floatingFixed}`,
     );
     const remaining = MAX_PAGES - accumulatedPages;
@@ -535,7 +536,7 @@ async function computeDocxPages(container: HTMLElement): Promise<PreparedDocxPag
     if (cuts.length - 1 > remaining) {
       const limitedCuts = cuts.slice(0, remaining + 1);
       accumulatedPages += limitedCuts.length - 1;
-      console.log(
+      logger.debug(
         `[pupu-docx] section${secIdx} 超过上限，仅保留前 ${limitedCuts.length - 1} 页（共 ${cuts.length - 1} 页）`,
       );
       pages.push({ section, pageH, cuts: limitedCuts });

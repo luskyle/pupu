@@ -1,4 +1,5 @@
 import { type SyncData, type SyncDataPlatform, injectScriptsToTabs } from "~sync/common";
+import { logger } from "~utils/logger";
 
 // Tab Manager || 标签页管理 || START
 export interface TabManagerMessage {
@@ -66,7 +67,7 @@ export const tabsManagerMessageHandler = (request, _sender, sendResponse) => {
         injectScriptsToTabs([{ tab: tabInfo.tab, platformInfo: tabInfo.platformInfo }], info.syncData);
       });
     } else {
-      console.error(`未找到标签页 ID ${tabId} 的信息`);
+      logger.error(`未找到标签页 ID ${tabId} 的信息`);
       sendResponse("error");
       return true;
     }

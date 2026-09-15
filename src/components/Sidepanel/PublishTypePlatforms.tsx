@@ -1,6 +1,7 @@
 import { Card, CardBody, CardHeader, Spinner } from "@heroui/react";
 import { useEffect, useRef, useState } from "react";
 import { type PlatformInfo, getPlatformInfos, getTypePriorityPlatformKeys } from "~sync/common";
+import { logger } from "~utils/logger";
 
 type PublishType = "DYNAMIC" | "VIDEO" | "ARTICLE";
 
@@ -43,7 +44,7 @@ export default function PublishTypePlatforms() {
         const infos = await getPlatformInfos(t);
         if (alive) setPlatforms(infos);
       } catch (error) {
-        console.error("加载平台列表失败:", error);
+        logger.error("加载平台列表失败:", error);
       } finally {
         if (alive) setLoading(false);
       }

@@ -1,9 +1,10 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, SyncData } from "../common";
 
 // 优先发布图文
 export async function DynamicDedao(data: SyncData) {
   const dynamicData = data.data as DynamicData;
-  console.debug("DynamicDedao", data);
+  logger.debug("DynamicDedao", data);
 
   // 辅助函数：等待元素出现
   function waitForElement(selector: string, timeout = 10000): Promise<Element> {
@@ -58,7 +59,7 @@ export async function DynamicDedao(data: SyncData) {
       clipboardEvent.clipboardData?.setData("text/plain", fullContent || "");
       editor.dispatchEvent(clipboardEvent);
     } else {
-      console.debug("未找到编辑器元素");
+      logger.debug("未找到编辑器元素");
     }
   }
 
@@ -68,7 +69,7 @@ export async function DynamicDedao(data: SyncData) {
 
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     if (!fileInput) {
-      console.debug("未找到文件输入元素");
+      logger.debug("未找到文件输入元素");
       return;
     }
 
@@ -78,25 +79,25 @@ export async function DynamicDedao(data: SyncData) {
     for (let i = 0; i < files.length; i++) {
       if (i >= 9) {
         // 得到最多支持9张图片
-        console.debug("最多上传9张图片");
+        logger.debug("最多上传9张图片");
         break;
       }
 
       const fileInfo = files[i];
       if (!fileInfo.type.startsWith("image/")) {
-        console.debug("skip non-image file", fileInfo);
+        logger.debug("skip non-image file", fileInfo);
         continue;
       }
 
       try {
-        console.debug("try upload file", fileInfo);
+        logger.debug("try upload file", fileInfo);
         const response = await fetch(fileInfo.url);
         const arrayBuffer = await response.arrayBuffer();
         const file = new File([arrayBuffer], fileInfo.name, { type: fileInfo.type });
         dataTransfer.items.add(file);
-        console.debug("uploaded");
+        logger.debug("uploaded");
       } catch (error) {
-        console.error("上传文件失败:", error);
+        logger.error("上传文件失败:", error);
       }
     }
 
@@ -104,7 +105,7 @@ export async function DynamicDedao(data: SyncData) {
       fileInput.files = dataTransfer.files;
       fileInput.dispatchEvent(new Event("change", { bubbles: true }));
       fileInput.dispatchEvent(new Event("input", { bubbles: true }));
-      console.debug("文件上传操作完成");
+      logger.debug("文件上传操作完成");
     }
   }
 
@@ -121,15 +122,15 @@ export async function DynamicDedao(data: SyncData) {
         while (retryCount++ < 30) {
           const loadingText = document.querySelector(".pc-file__list-item__loading-text");
           if (!loadingText) break;
-          console.debug(`等待图片上传完成，尝试 ${retryCount}/30`);
+          logger.debug(`等待图片上传完成，尝试 ${retryCount}/30`);
           await new Promise((resolve) => setTimeout(resolve, 1000));
         }
 
-        console.debug("sendButton clicked");
+        logger.debug("sendButton clicked");
         sendButton.dispatchEvent(new Event("click", { bubbles: true }));
       }
     } else {
-      console.debug('未找到"发布"按钮');
+      logger.debug('未找到"发布"按钮');
     }
   }
 
@@ -139,6 +140,6 @@ export async function DynamicDedao(data: SyncData) {
     await uploadFiles();
     await publishDynamic();
   } catch (error) {
-    console.error("发布动态失败:", error);
+    logger.error("发布动态失败:", error);
   }
 }

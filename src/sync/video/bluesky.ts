@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { SyncData, VideoData } from "../common";
 
 // 不支持发布视频
@@ -39,7 +40,7 @@ export async function VideoBluesky(data: SyncData) {
     if (newPostButton) {
       newPostButton.click();
     } else {
-      console.log("未找到撰写新帖文按钮");
+      logger.debug("未找到撰写新帖文按钮");
       return;
     }
 
@@ -51,13 +52,13 @@ export async function VideoBluesky(data: SyncData) {
     contentInput.textContent = title ? `${title}\n${body}` : body;
     contentInput.dispatchEvent(new Event("input", { bubbles: true }));
     contentInput.dispatchEvent(new Event("change", { bubbles: true }));
-    console.log("内容已输入:", content);
+    logger.debug("内容已输入:", content);
 
     if (video) {
       const response = await fetch(video.url);
       const blob = await response.blob();
       const videoFile = new File([blob], video.name, { type: video.type });
-      console.log(`文件: ${videoFile.name} ${videoFile.type} ${videoFile.size}`);
+      logger.debug(`文件: ${videoFile.name} ${videoFile.type} ${videoFile.size}`);
 
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -73,7 +74,7 @@ export async function VideoBluesky(data: SyncData) {
         ) as HTMLButtonElement;
         if (publishButton) {
           publishButton.click();
-          console.log("已点击发布按钮");
+          logger.debug("已点击发布按钮");
           await new Promise((resolve) => setTimeout(resolve, 3000));
           window.location.reload();
           return;
@@ -82,6 +83,6 @@ export async function VideoBluesky(data: SyncData) {
       }
     }
   } catch (error) {
-    console.error("bluesky 发布过程中出错:", error);
+    logger.error("bluesky 发布过程中出错:", error);
   }
 }

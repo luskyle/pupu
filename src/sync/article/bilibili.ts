@@ -1,4 +1,5 @@
 import type { ArticleData, FileData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 export async function ArticleBilibili(data: SyncData) {
   const articleData = data.data as ArticleData;
@@ -76,7 +77,7 @@ export async function ArticleBilibili(data: SyncData) {
       ?.trim()
       .split("=")[1];
 
-    console.debug("biliJct", biliJct);
+    logger.debug("biliJct", biliJct);
     return biliJct || "";
   }
 
@@ -88,7 +89,7 @@ export async function ArticleBilibili(data: SyncData) {
       ?.trim()
       .split("=")[1];
 
-    console.debug("buvid", buvid);
+    logger.debug("buvid", buvid);
     return buvid || "";
   }
 
@@ -97,7 +98,7 @@ export async function ArticleBilibili(data: SyncData) {
     try {
       if (!fileInfo) return null;
 
-      console.debug("uploadDynamicImage", fileInfo);
+      logger.debug("uploadDynamicImage", fileInfo);
       const blob = await (await fetch(fileInfo.url)).blob();
 
       const formData = new FormData();
@@ -119,7 +120,7 @@ export async function ArticleBilibili(data: SyncData) {
         if (!response.ok) throw Error(`HTTP error! status: ${response.status}`);
 
         const result = await response.json();
-        console.debug("Image upload result:", result);
+        logger.debug("Image upload result:", result);
 
         if (result.code === 0 && result.data) {
           return result.data.image_url;
@@ -127,12 +128,12 @@ export async function ArticleBilibili(data: SyncData) {
 
         throw Error(`Upload failed: ${result.message}`);
       } catch (error) {
-        console.error("Error uploading image:", error);
+        logger.error("Error uploading image:", error);
       }
 
       return null;
     } catch (error) {
-      console.debug("上传图片失败:", error);
+      logger.debug("上传图片失败:", error);
       return null;
     }
   }
@@ -143,7 +144,7 @@ export async function ArticleBilibili(data: SyncData) {
     const doc = parser.parseFromString(htmlContent, "text/html");
     const images = Array.from(doc.getElementsByTagName("img"));
 
-    console.debug("images", images);
+    logger.debug("images", images);
 
     for (let i = 0; i < images.length; i++) {
       const img = images[i];
@@ -151,7 +152,7 @@ export async function ArticleBilibili(data: SyncData) {
 
       const src = img.getAttribute("src");
       if (src) {
-        console.debug("try replace ", src);
+        logger.debug("try replace ", src);
         const fileInfo = imageDatas.find((f) => f.url === src);
         const newUrl = await uploadSingleImage(fileInfo);
         if (newUrl) {
@@ -206,7 +207,7 @@ export async function ArticleBilibili(data: SyncData) {
     formData.append("top_video_bvid", "");
     formData.append("csrf", getBiliJct());
 
-    console.debug("formData", formData);
+    logger.debug("formData", formData);
 
     try {
       const response = await fetch("https://api.bilibili.com/x/article/creative/draft/addupdate", {
@@ -216,16 +217,16 @@ export async function ArticleBilibili(data: SyncData) {
       });
 
       const result = await response.json();
-      console.debug("result", result);
+      logger.debug("result", result);
 
       if (result.code === 0) {
-        console.debug("草稿发布成功");
+        logger.debug("草稿发布成功");
         return result.data.aid;
       }
-      console.debug("草稿发布失败", result.message);
+      logger.debug("草稿发布失败", result.message);
       return null;
     } catch (error) {
-      console.debug("发布过程出错:", error);
+      logger.debug("发布过程出错:", error);
       return null;
     }
   }
@@ -260,7 +261,7 @@ export async function ArticleBilibili(data: SyncData) {
 
       alert("同步出了点问题，请稍后再试...");
     } catch (error) {
-      console.debug("发布文章失败:", error);
+      logger.debug("发布文章失败:", error);
 
       showProgress("同步失败，请重试");
       setTimeout(() => {

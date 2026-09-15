@@ -1,7 +1,8 @@
 import type { ArticleData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 export async function ArticleDouban(data: SyncData) {
-  console.debug("ArticleDouban", data);
+  logger.debug("ArticleDouban", data);
 
   function waitForElement(selector: string, timeout = 10000): Promise<Element> {
     return new Promise((resolve, reject) => {
@@ -43,12 +44,12 @@ export async function ArticleDouban(data: SyncData) {
     titleTextarea.value = articleData.title?.slice(0, 100) || "";
     titleTextarea.dispatchEvent(new Event("input", { bubbles: true }));
     titleTextarea.dispatchEvent(new Event("change", { bubbles: true }));
-    console.debug("titleTextarea", titleTextarea, titleTextarea.value);
+    logger.debug("titleTextarea", titleTextarea, titleTextarea.value);
 
     // 等待编辑器加载
     const editor = document.querySelector('div[data-contents="true"], div[contenteditable="true"]') as HTMLDivElement;
     if (!editor) {
-      console.debug("未找到编辑器元素");
+      logger.debug("未找到编辑器元素");
       return false;
     }
 
@@ -71,16 +72,16 @@ export async function ArticleDouban(data: SyncData) {
   // 发布文章
   async function publishArticle(): Promise<void> {
     const previewButton = document.querySelector("a.editor-extra-button-preview");
-    console.debug("previewButton", previewButton);
+    logger.debug("previewButton", previewButton);
 
     if (previewButton) {
       if (data.isAutoPublish) {
-        console.debug("previewButton clicked");
+        logger.debug("previewButton clicked");
         const clickEvent = new Event("click", { bubbles: true });
         previewButton.dispatchEvent(clickEvent);
       }
     } else {
-      console.debug('未找到"预览"按钮');
+      logger.debug('未找到"预览"按钮');
     }
   }
 
@@ -93,6 +94,6 @@ export async function ArticleDouban(data: SyncData) {
 
     await publishArticle();
   } catch (error) {
-    console.error("发布文章失败:", error);
+    logger.error("发布文章失败:", error);
   }
 }

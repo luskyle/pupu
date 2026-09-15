@@ -6,9 +6,11 @@ export async function retryOperation<T>(operation: () => Promise<T>, maxRetries 
       if (attempt === maxRetries) {
         throw error;
       }
-      console.warn(`尝试失败，${maxRetries - attempt}次重试后重新尝试...`);
+      logger.warn(`尝试失败，${maxRetries - attempt}次重试后重新尝试...`);
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
   throw new Error("重试次数已达上限");
 }
+
+import { logger } from "~utils/logger";

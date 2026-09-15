@@ -1,7 +1,8 @@
+import { logger } from "~utils/logger";
 import type { DynamicData, SyncData } from "../common";
 
 export async function DynamicInstagram(data: SyncData) {
-  console.log("Instagram 函数被调用");
+  logger.debug("Instagram 函数被调用");
 
   function waitForElement(selector: string, timeout = 10000): Promise<Element> {
     return new Promise((resolve, reject) => {
@@ -44,10 +45,10 @@ export async function DynamicInstagram(data: SyncData) {
       document.querySelector('svg[aria-label="New post"]') ||
       document.querySelector('svg[aria-label="新貼文"]');
     if (!createPostButton) {
-      console.debug("未找到创建帖子按钮");
+      logger.debug("未找到创建帖子按钮");
       return;
     }
-    console.debug("createPostButton", createPostButton);
+    logger.debug("createPostButton", createPostButton);
     createPostButton.dispatchEvent(new Event("click", { bubbles: true }));
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -58,7 +59,7 @@ export async function DynamicInstagram(data: SyncData) {
       document.querySelector('svg[aria-label="Post"]') ||
       document.querySelector('svg[aria-label="貼文"]');
     if (postTypeButton) {
-      console.debug("postTypeButton", postTypeButton);
+      logger.debug("postTypeButton", postTypeButton);
       postTypeButton.dispatchEvent(new Event("click", { bubbles: true }));
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
@@ -68,21 +69,21 @@ export async function DynamicInstagram(data: SyncData) {
     if (mediaFiles.length > 0) {
       const fileInput = (await waitForElement('input[type="file"]')) as HTMLInputElement;
       if (!fileInput) {
-        console.debug("未找到文件输入元素");
+        logger.debug("未找到文件输入元素");
         return;
       }
-      console.debug("fileInput", fileInput);
+      logger.debug("fileInput", fileInput);
 
       const dataTransfer = new DataTransfer();
       for (const media of mediaFiles) {
-        console.debug("尝试上传文件", media);
+        logger.debug("尝试上传文件", media);
         try {
           const response = await fetch(media.url);
           const arrayBuffer = await response.arrayBuffer();
           const file = new File([arrayBuffer], media.name, { type: media.type });
           dataTransfer.items.add(file);
         } catch (error) {
-          console.error("获取文件失败:", error);
+          logger.error("获取文件失败:", error);
         }
       }
 
@@ -94,7 +95,7 @@ export async function DynamicInstagram(data: SyncData) {
       const inputEvent = new Event("input", { bubbles: true });
       fileInput.dispatchEvent(inputEvent);
 
-      console.debug("媒体文件上传操作完成");
+      logger.debug("媒体文件上传操作完成");
 
       // 等待文件上传完成，视频可能需要更长时间
       const waitTime = videos?.length ? 10000 : 5000;
@@ -109,9 +110,9 @@ export async function DynamicInstagram(data: SyncData) {
         el.textContent?.includes("继续") || el.textContent?.includes("下一步") || el.textContent?.includes("Next"),
     ) as HTMLElement;
 
-    console.debug("continueButton", continueButton);
+    logger.debug("continueButton", continueButton);
     if (!continueButton) {
-      console.debug("未找到继续按钮");
+      logger.debug("未找到继续按钮");
       return;
     }
     continueButton.click();
@@ -124,9 +125,9 @@ export async function DynamicInstagram(data: SyncData) {
         el.textContent?.includes("继续") || el.textContent?.includes("下一步") || el.textContent?.includes("Next"),
     ) as HTMLElement;
 
-    console.debug("continueButton2", continueButton);
+    logger.debug("continueButton2", continueButton);
     if (!continueButton) {
-      console.debug("未找到继续按钮");
+      logger.debug("未找到继续按钮");
       return;
     }
     continueButton.click();
@@ -138,7 +139,7 @@ export async function DynamicInstagram(data: SyncData) {
     );
     const captionEditor = (Array.from(captionEditors).find((el) => {
       const placeholder = el.getAttribute("aria-placeholder");
-      console.debug("ariaPlaceholder", placeholder);
+      logger.debug("ariaPlaceholder", placeholder);
       return (
         placeholder?.includes("输入配文") ||
         placeholder?.includes("输入说明文字") ||
@@ -147,9 +148,9 @@ export async function DynamicInstagram(data: SyncData) {
       );
     }) ?? captionEditors[captionEditors.length - 1]) as HTMLElement;
 
-    console.debug("captionEditor", captionEditor);
+    logger.debug("captionEditor", captionEditor);
     if (!captionEditor) {
-      console.debug("未找到编辑器元素");
+      logger.debug("未找到编辑器元素");
       return;
     }
 
@@ -174,7 +175,7 @@ export async function DynamicInstagram(data: SyncData) {
       document.querySelector('div[aria-label="建立新貼文"][role="dialog"]') ||
       document.querySelector('div[aria-label="Create new post"][role="dialog"]');
 
-    console.debug("createPostDialog", createPostDialog);
+    logger.debug("createPostDialog", createPostDialog);
 
     // 分享按钮的 class 全是混淆值,只能靠文字定位;对话框 aria-label 也会随版本变,
     // 找不到对话框时回退到整个 document 范围查找。
@@ -184,19 +185,19 @@ export async function DynamicInstagram(data: SyncData) {
       (el) => el.textContent?.includes("分享") || el.textContent?.includes("Share"),
     ) as HTMLElement;
 
-    console.debug("shareButton", shareButton);
+    logger.debug("shareButton", shareButton);
     if (!shareButton) {
-      console.debug("未找到分享按钮");
+      logger.debug("未找到分享按钮");
       return;
     }
 
     if (data.isAutoPublish) {
-      console.debug("自动发布：点击分享按钮");
+      logger.debug("自动发布：点击分享按钮");
       shareButton.dispatchEvent(new Event("click", { bubbles: true }));
     } else {
-      console.debug("帖子准备就绪，等待手动发布");
+      logger.debug("帖子准备就绪，等待手动发布");
     }
   } catch (error) {
-    console.error("InstagramDynamic 发布过程中出错:", error);
+    logger.error("InstagramDynamic 发布过程中出错:", error);
   }
 }

@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { AccountInfo } from "../common";
 
 /**
@@ -23,7 +24,7 @@ export async function getDayuAccountInfo(): Promise<AccountInfo | null> {
 
     // 检查是否登录
     if (!responseData.success || !responseData.data) {
-      console.warn("未检测到大鱼号登录状态");
+      logger.warn("未检测到大鱼号登录状态");
       return null;
     }
 
@@ -40,7 +41,7 @@ export async function getDayuAccountInfo(): Promise<AccountInfo | null> {
 
     return result;
   } catch (error) {
-    console.error("获取大鱼号账户信息失败:", error);
+    logger.error("获取大鱼号账户信息失败:", error);
 
     // 如果API调用失败，尝试从页面获取基本信息
     try {
@@ -60,7 +61,7 @@ export async function getDayuAccountInfo(): Promise<AccountInfo | null> {
         return result;
       }
     } catch (pageError) {
-      console.error("从页面获取大鱼号信息也失败:", pageError);
+      logger.error("从页面获取大鱼号信息也失败:", pageError);
     }
 
     return null;

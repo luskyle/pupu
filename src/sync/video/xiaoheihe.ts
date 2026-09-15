@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { SyncData, VideoData } from "../common";
 
 // 不支持发布视频
@@ -58,14 +59,14 @@ export async function VideoXiaoheihe(data: SyncData) {
           await new Promise((resolve) => setTimeout(resolve, 500));
         }
       } catch {
-        console.debug("未找到标题编辑器元素, 跳过标题填写");
+        logger.debug("未找到标题编辑器元素, 跳过标题填写");
       }
     }
 
     // 填写正文
     const contentEditor = document.querySelector(contentEditorSelector);
     if (!contentEditor) {
-      console.debug("未找到正文编辑器元素");
+      logger.debug("未找到正文编辑器元素");
       return;
     }
 
@@ -83,7 +84,7 @@ export async function VideoXiaoheihe(data: SyncData) {
       const response = await fetch(video.url);
       const blob = await response.blob();
       const videoFile = new File([blob], video.name, { type: video.type });
-      console.log(`文件: ${videoFile.name} ${videoFile.type} ${videoFile.size}`);
+      logger.debug(`文件: ${videoFile.name} ${videoFile.type} ${videoFile.size}`);
 
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -99,7 +100,7 @@ export async function VideoXiaoheihe(data: SyncData) {
         ) as HTMLButtonElement;
         if (publishButton) {
           publishButton.click();
-          console.log("已点击发布按钮");
+          logger.debug("已点击发布按钮");
           await new Promise((resolve) => setTimeout(resolve, 3000));
           window.location.reload();
           return;
@@ -108,6 +109,6 @@ export async function VideoXiaoheihe(data: SyncData) {
       }
     }
   } catch (error) {
-    console.error("小黑盒发布过程中出错:", error);
+    logger.error("小黑盒发布过程中出错:", error);
   }
 }

@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { SyncData, VideoData } from "../common";
 
 export async function VideoKuaishou(data: SyncData) {
@@ -48,13 +49,13 @@ export async function VideoKuaishou(data: SyncData) {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     if (!video) {
-      console.error("没有视频文件");
+      logger.error("没有视频文件");
       return;
     }
 
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     if (!fileInput) {
-      console.error("未找到文件输入元素");
+      logger.error("未找到文件输入元素");
       return;
     }
 
@@ -74,9 +75,9 @@ export async function VideoKuaishou(data: SyncData) {
 
       fileInput.dispatchEvent(new Event("change", { bubbles: true }));
       fileInput.dispatchEvent(new Event("input", { bubbles: true }));
-      console.log("文件上传操作完成");
+      logger.debug("文件上传操作完成");
     } catch (error) {
-      console.error("上传视频失败:", error);
+      logger.error("上传视频失败:", error);
     }
   }
 
@@ -89,14 +90,14 @@ export async function VideoKuaishou(data: SyncData) {
     );
 
     if (!coverSettingsSpan) {
-      console.error('未找到 "封面设置" 按钮');
+      logger.error('未找到 "封面设置" 按钮');
       return;
     }
 
     const coverUploadButton = coverSettingsSpan.parentElement?.nextElementSibling?.firstChild
       ?.firstChild as HTMLElement;
     if (!coverUploadButton) {
-      console.error("未找到封面上传区域");
+      logger.error("未找到封面上传区域");
       return;
     }
 
@@ -105,7 +106,7 @@ export async function VideoKuaishou(data: SyncData) {
     try {
       await waitForElement("div.ant-modal-body");
     } catch (error) {
-      console.error("封面设置弹窗未出现", error);
+      logger.error("封面设置弹窗未出现", error);
       return;
     }
     await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -126,14 +127,14 @@ export async function VideoKuaishou(data: SyncData) {
     );
 
     if (!uploadCoverDiv) {
-      console.error('未找到 "上传封面" 按钮');
+      logger.error('未找到 "上传封面" 按钮');
       return;
     }
     (uploadCoverDiv as HTMLElement).click();
 
     const fileInput = (await waitForElement("div.ant-modal-body input[type='file']")) as HTMLInputElement;
     if (!fileInput) {
-      console.error("未找到封面上传的 file input");
+      logger.error("未找到封面上传的 file input");
       return;
     }
 
@@ -150,12 +151,12 @@ export async function VideoKuaishou(data: SyncData) {
         const file = new File([buffer], cover.name, { type: cover.type });
         dataTransfer.items.add(file);
       } catch (error) {
-        console.error("上传封面失败:", error);
+        logger.error("上传封面失败:", error);
       }
     }
 
     if (dataTransfer.files.length === 0) {
-      console.error("没有要上传的封面文件");
+      logger.error("没有要上传的封面文件");
       return;
     }
 
@@ -172,7 +173,7 @@ export async function VideoKuaishou(data: SyncData) {
     if (confirmButton) {
       confirmButton.click();
     } else {
-      console.error("未找到'确认'按钮");
+      logger.error("未找到'确认'按钮");
     }
   }
 
@@ -246,10 +247,10 @@ export async function VideoKuaishou(data: SyncData) {
 
   if (publishButton) {
     if (data.isAutoPublish) {
-      console.log("发布按钮已点击");
+      logger.debug("发布按钮已点击");
       publishButton.click();
     }
   } else {
-    console.log('未找到"发布"按钮');
+    logger.debug('未找到"发布"按钮');
   }
 }

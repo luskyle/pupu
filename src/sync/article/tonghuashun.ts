@@ -1,4 +1,5 @@
 import type { ArticleData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 /**
  * 同花顺文章发布(experimental,待线上验证)
@@ -42,7 +43,7 @@ export async function ArticleTonghuashun(data: SyncData) {
 
     const selectFromLibrary = document.querySelector("div.select-from-library") as HTMLElement | null;
     if (!selectFromLibrary) {
-      console.debug("同花顺:未找到图库选择入口");
+      logger.debug("同花顺:未找到图库选择入口");
       return;
     }
 
@@ -51,7 +52,7 @@ export async function ArticleTonghuashun(data: SyncData) {
 
     const fileInput = document.querySelector("input#upfile") as HTMLInputElement | null;
     if (!fileInput) {
-      console.debug("同花顺:未找到封面上传元素");
+      logger.debug("同花顺:未找到封面上传元素");
       return;
     }
 
@@ -110,7 +111,7 @@ export async function ArticleTonghuashun(data: SyncData) {
     const editorIframe = document.getElementById("ueditor_0") as HTMLIFrameElement | null;
     const editorBody = editorIframe?.contentDocument?.body;
     if (!editorBody) {
-      console.debug("同花顺:未找到编辑器 iframe");
+      logger.debug("同花顺:未找到编辑器 iframe");
       return;
     }
 
@@ -132,9 +133,9 @@ export async function ArticleTonghuashun(data: SyncData) {
     if (publishButton && data.isAutoPublish === true) {
       publishButton.dispatchEvent(new Event("click", { bubbles: true }));
     } else if (!publishButton) {
-      console.debug("同花顺:未找到发布按钮");
+      logger.debug("同花顺:未找到发布按钮");
     }
   } catch (error) {
-    console.error("同花顺文章发布出错:", error);
+    logger.error("同花顺文章发布出错:", error);
   }
 }

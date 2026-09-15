@@ -1,4 +1,5 @@
 import type { PodcastData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 export async function PodcastLiZhi(data: SyncData) {
   const { title, description, audio } = data.data as PodcastData;
@@ -38,8 +39,8 @@ export async function PodcastLiZhi(data: SyncData) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-      console.debug("try upload file", audio);
-      console.debug("fileInput", fileInput);
+      logger.debug("try upload file", audio);
+      logger.debug("fileInput", fileInput);
 
       // 获取文件数据
       const response = await fetch(audio.url);
@@ -48,7 +49,7 @@ export async function PodcastLiZhi(data: SyncData) {
       const fileName = `${title.replaceAll(".", "_")}.${extension}`;
       const file = new File([arrayBuffer], fileName, { type: audio.type });
 
-      console.debug("uploadFile", file);
+      logger.debug("uploadFile", file);
 
       // 创建 DataTransfer 对象并添加文件
       const dataTransfer = new DataTransfer();
@@ -59,7 +60,7 @@ export async function PodcastLiZhi(data: SyncData) {
       fileInput.dispatchEvent(new Event("change", { bubbles: true }));
       fileInput.dispatchEvent(new Event("input", { bubbles: true }));
 
-      console.debug("文件上传操作完成");
+      logger.debug("文件上传操作完成");
 
       // 等待上传完成
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -68,9 +69,9 @@ export async function PodcastLiZhi(data: SyncData) {
       const spans = document.querySelectorAll("span");
       const otherSettingSpan = Array.from(spans).find((span) => span.textContent === "其他设置");
 
-      console.debug("otherSettingSpan", otherSettingSpan);
+      logger.debug("otherSettingSpan", otherSettingSpan);
       if (!otherSettingSpan) {
-        console.debug("未找到其他设置元素");
+        logger.debug("未找到其他设置元素");
         return;
       }
 
@@ -80,14 +81,14 @@ export async function PodcastLiZhi(data: SyncData) {
 
       // 填写标题
       const titleInput = document.querySelector("input#name") as HTMLInputElement;
-      console.debug("titleInput", titleInput);
+      logger.debug("titleInput", titleInput);
 
       // 填写描述
       const qlEditor = document.querySelector('div[contenteditable="true"]') as HTMLDivElement;
-      console.debug("qlEditor", qlEditor);
+      logger.debug("qlEditor", qlEditor);
 
       if (!qlEditor) {
-        console.debug("未找到编辑器元素");
+        logger.debug("未找到编辑器元素");
         return;
       }
 
@@ -95,16 +96,16 @@ export async function PodcastLiZhi(data: SyncData) {
       qlEditor.dispatchEvent(new Event("input", { bubbles: true }));
       qlEditor.dispatchEvent(new Event("change", { bubbles: true }));
     } catch (error) {
-      console.error("上传音频文件时出错:", error);
+      logger.error("上传音频文件时出错:", error);
       throw error;
     }
   }
 
   try {
     await uploadAudioFile();
-    console.debug("荔枝播客内容上传完成");
+    logger.debug("荔枝播客内容上传完成");
   } catch (error) {
-    console.error("荔枝播客上传失败:", error);
+    logger.error("荔枝播客上传失败:", error);
     throw error;
   }
 }

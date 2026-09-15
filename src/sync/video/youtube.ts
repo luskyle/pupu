@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { SyncData, VideoData } from "../common";
 
 export async function VideoYoutube(data: SyncData) {
@@ -24,24 +25,24 @@ export async function VideoYoutube(data: SyncData) {
 
       setTimeout(() => {
         observer.disconnect();
-        console.warn(`Element with selector "${selector}" not found within ${timeout}ms`);
+        logger.warn(`Element with selector "${selector}" not found within ${timeout}ms`);
         resolve(null);
       }, timeout);
     });
   }
 
   async function uploadCover(cover: { url: string; name: string; type?: string }) {
-    console.debug("Trying to upload cover", cover);
+    logger.debug("Trying to upload cover", cover);
 
     const coverInput = (await waitForElement("input#file-loader.ytcp-thumbnail-uploader", 5000)) as HTMLInputElement;
 
     if (!coverInput) {
-      console.error("Could not find the thumbnail uploader input.");
+      logger.error("Could not find the thumbnail uploader input.");
       return;
     }
 
     if (!cover.type || !cover.type.includes("image/")) {
-      console.error("Cover file is not an image or type is missing.");
+      logger.error("Cover file is not an image or type is missing.");
       return;
     }
 
@@ -59,7 +60,7 @@ export async function VideoYoutube(data: SyncData) {
     coverInput.files = dataTransfer.files;
     coverInput.dispatchEvent(new Event("change", { bubbles: true }));
     coverInput.dispatchEvent(new Event("input", { bubbles: true }));
-    console.debug("Cover file upload events dispatched.");
+    logger.debug("Cover file upload events dispatched.");
   }
   try {
     const videoData = data.data as VideoData;
@@ -71,7 +72,7 @@ export async function VideoYoutube(data: SyncData) {
     // 等待上传按钮出现并点击
     const uploadIcon = await waitForElement("ytcp-icon-button#upload-icon");
     if (!uploadIcon) {
-      console.error("未找到上传按钮");
+      logger.error("未找到上传按钮");
       return;
     }
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -80,15 +81,15 @@ export async function VideoYoutube(data: SyncData) {
 
     // 处理视频上传
     if (!videoData.video) {
-      console.error("没有视频文件");
+      logger.error("没有视频文件");
       return;
     }
 
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    console.debug("fileInput", fileInput);
+    logger.debug("fileInput", fileInput);
 
     if (!fileInput) {
-      console.error("未找到文件输入框");
+      logger.error("未找到文件输入框");
       return;
     }
 
@@ -104,24 +105,24 @@ export async function VideoYoutube(data: SyncData) {
 
     fileInput.dispatchEvent(new Event("change", { bubbles: true }));
     fileInput.dispatchEvent(new Event("input", { bubbles: true }));
-    console.debug("文件上传操作完成");
+    logger.debug("文件上传操作完成");
 
     // 等待标题输入框出现
     const titleArea = await waitForElement("#title-textarea");
     if (!titleArea) {
-      console.error("未找到 title-textarea");
+      logger.error("未找到 title-textarea");
       return;
     }
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
     // 处理标题输入
-    console.debug("titleArea", titleArea);
+    logger.debug("titleArea", titleArea);
 
     const titleInput = titleArea.querySelector("#textbox") as HTMLElement;
-    console.debug("titleInput", titleInput);
+    logger.debug("titleInput", titleInput);
 
     if (!titleInput) {
-      console.error("未找到 titleInput");
+      logger.error("未找到 titleInput");
       return;
     }
 
@@ -144,7 +145,7 @@ export async function VideoYoutube(data: SyncData) {
     const descriptionArea = document.querySelector("#description-textarea");
     if (descriptionArea) {
       const descriptionInput = descriptionArea.querySelector("#textbox") as HTMLElement;
-      console.debug("descriptionInput", descriptionInput);
+      logger.debug("descriptionInput", descriptionInput);
 
       if (descriptionInput) {
         descriptionInput.focus();
@@ -172,13 +173,13 @@ export async function VideoYoutube(data: SyncData) {
 
     if (publishButton) {
       if (data.isAutoPublish) {
-        console.debug("sendButton clicked");
+        logger.debug("sendButton clicked");
         (publishButton as HTMLElement).click();
       }
     } else {
-      console.debug("未找到'发布'按钮");
+      logger.debug("未找到'发布'按钮");
     }
   } catch (error) {
-    console.error("YoutubeVideo 发布过程中出错:", error);
+    logger.error("YoutubeVideo 发布过程中出错:", error);
   }
 }

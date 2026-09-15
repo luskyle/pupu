@@ -1,3 +1,4 @@
+import { logger } from "~utils/logger";
 import type { ArticleData, FileData, SyncData } from "../common";
 
 export async function ArticleSMZDM(data: SyncData) {
@@ -43,7 +44,7 @@ export async function ArticleSMZDM(data: SyncData) {
       const blob = await response.blob();
       return new File([blob], fileData.name, { type: fileData.type || blob.type || "application/octet-stream" });
     } catch (error) {
-      console.warn("SMZDM cover file fetch failed:", error);
+      logger.warn("SMZDM cover file fetch failed:", error);
       return null;
     }
   }
@@ -84,7 +85,7 @@ export async function ArticleSMZDM(data: SyncData) {
   async function uploadCover(cover?: FileData): Promise<boolean> {
     if (!cover) return true;
     if (!cover.url) {
-      console.debug("SMZDM cover data has no URL");
+      logger.debug("SMZDM cover data has no URL");
       return false;
     }
 
@@ -92,7 +93,7 @@ export async function ArticleSMZDM(data: SyncData) {
     const changeLongImageButton = findElementByText("div.thumb-cover > div, button, span", "更换长图");
     const coverEntry = uploadButton || changeLongImageButton;
     if (!coverEntry) {
-      console.debug("SMZDM cover upload entry not found");
+      logger.debug("SMZDM cover upload entry not found");
       return false;
     }
 
@@ -102,7 +103,7 @@ export async function ArticleSMZDM(data: SyncData) {
     const fileInput = (document.querySelector('input[name="file"]') ||
       (await waitForElementOptional('input[name="file"]', 3000))) as HTMLInputElement | null;
     if (!fileInput) {
-      console.debug("SMZDM cover file input not found");
+      logger.debug("SMZDM cover file input not found");
       return false;
     }
 
@@ -112,7 +113,7 @@ export async function ArticleSMZDM(data: SyncData) {
     await sleep(3000);
     const uploadCoverButton = document.querySelector("div.upload-cover") as HTMLElement | null;
     if (!uploadCoverButton) {
-      console.debug("SMZDM set-cover button not found");
+      logger.debug("SMZDM set-cover button not found");
       return false;
     }
 
@@ -124,7 +125,7 @@ export async function ArticleSMZDM(data: SyncData) {
       confirmCoverButton.click();
       await sleep(3000);
     } else {
-      console.debug("SMZDM confirm-cover button not found");
+      logger.debug("SMZDM confirm-cover button not found");
     }
 
     const okButton = findElementByText("button.ok-btn", "确认");
@@ -132,7 +133,7 @@ export async function ArticleSMZDM(data: SyncData) {
       okButton.click();
       await sleep(3000);
     } else {
-      console.debug("SMZDM final cover confirm button not found");
+      logger.debug("SMZDM final cover confirm button not found");
     }
 
     return true;
@@ -156,7 +157,7 @@ export async function ArticleSMZDM(data: SyncData) {
     ].filter(([, filled]) => !filled);
 
     for (const [field] of missing) {
-      console.error(`SMZDM required field ${field} not filled; skipping auto-publish to avoid an incomplete article`);
+      logger.error(`SMZDM required field ${field} not filled; skipping auto-publish to avoid an incomplete article`);
     }
 
     return missing.length === 0;
@@ -169,7 +170,7 @@ export async function ArticleSMZDM(data: SyncData) {
 
     const publishButton = findElementByText("button", " 发布 ");
     if (!publishButton) {
-      console.debug("SMZDM publish button not found");
+      logger.debug("SMZDM publish button not found");
       return;
     }
 
@@ -195,10 +196,10 @@ export async function ArticleSMZDM(data: SyncData) {
         dispatchInputEvents(titleEl);
         required.title = true;
       } catch (error) {
-        console.error("SMZDM title write failed:", error);
+        logger.error("SMZDM title write failed:", error);
       }
     } else {
-      console.debug("SMZDM title input not found");
+      logger.debug("SMZDM title input not found");
     }
 
     const editor = document.querySelector('div.ProseMirror[contenteditable="true"]') as HTMLDivElement | null;
@@ -211,20 +212,20 @@ export async function ArticleSMZDM(data: SyncData) {
         pasteHtml(editor, stripImgAlt(htmlContent || ""));
         required.body = true;
       } catch (error) {
-        console.error("SMZDM body write failed:", error);
+        logger.error("SMZDM body write failed:", error);
       }
     } else {
-      console.debug("SMZDM ProseMirror editor not found");
+      logger.debug("SMZDM ProseMirror editor not found");
     }
 
     try {
       required.cover = await uploadCover(cover);
     } catch (error) {
-      console.error("SMZDM cover upload failed:", error);
+      logger.error("SMZDM cover upload failed:", error);
       required.cover = false;
     }
     clickPublishIfRequested(required);
   } catch (error) {
-    console.error("什么值得买文章发布失败:", error);
+    logger.error("什么值得买文章发布失败:", error);
   }
 }

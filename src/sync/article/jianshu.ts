@@ -1,4 +1,5 @@
 import type { ArticleData, FileData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 // 上传图片的配置接口
 interface UploadConfig {
@@ -7,7 +8,7 @@ interface UploadConfig {
 }
 
 export async function ArticleJianshu(data: SyncData) {
-  console.log("ArticleJianshu", data);
+  logger.debug("ArticleJianshu", data);
 
   const articleData = data.data as ArticleData;
 
@@ -24,10 +25,10 @@ export async function ArticleJianshu(data: SyncData) {
 
   // 上传单个图片
   async function uploadImage(fileInfo: FileData): Promise<string | null> {
-    console.log("uploadImage", fileInfo);
+    logger.debug("uploadImage", fileInfo);
 
     const config = await getUploadConfig(fileInfo.name);
-    console.log("uploadConfig", config);
+    logger.debug("uploadConfig", config);
 
     const response = await fetch(fileInfo.url);
     const blob = await response.blob();
@@ -49,11 +50,11 @@ export async function ArticleJianshu(data: SyncData) {
       }
 
       const result = await uploadResponse.json();
-      console.log("Image upload result:", result);
+      logger.debug("Image upload result:", result);
 
       return result?.url || null;
     } catch (error) {
-      console.log("Error uploading image:", error);
+      logger.debug("Error uploading image:", error);
       return null;
     }
   }
@@ -64,14 +65,14 @@ export async function ArticleJianshu(data: SyncData) {
     const doc = parser.parseFromString(htmlContent, "text/html");
     const images = doc.getElementsByTagName("img");
 
-    console.log("images", images);
+    logger.debug("images", images);
 
     for (let i = 0; i < images.length; i++) {
       const img = images[i];
       const src = img.getAttribute("src");
 
       if (src) {
-        console.log("try replace ", src);
+        logger.debug("try replace ", src);
         const fileInfo = imageDatas.find((f) => f.url === src);
         const newUrl = await uploadImage(fileInfo);
         if (newUrl) {
@@ -92,12 +93,12 @@ export async function ArticleJianshu(data: SyncData) {
     });
 
     if (!notebooksResponse.ok) {
-      console.error(`HTTP error! status: ${notebooksResponse.status}`);
+      logger.error(`HTTP error! status: ${notebooksResponse.status}`);
       return null;
     }
 
     const notebooks = await notebooksResponse.json();
-    console.log("Notebooks:", notebooks);
+    logger.debug("Notebooks:", notebooks);
 
     const notebookId = notebooks[0]?.id || null;
 
@@ -117,12 +118,12 @@ export async function ArticleJianshu(data: SyncData) {
     });
 
     if (!createResponse.ok) {
-      console.error(`HTTP error! status: ${createResponse.status}`);
+      logger.error(`HTTP error! status: ${createResponse.status}`);
       return null;
     }
 
     const createResult = await createResponse.json();
-    console.log("result", createResult);
+    logger.debug("result", createResult);
 
     const noteId = createResult.id;
 
@@ -143,18 +144,18 @@ export async function ArticleJianshu(data: SyncData) {
     });
 
     if (!updateResponse.ok) {
-      console.error(`HTTP error! status: ${updateResponse.status}`);
+      logger.error(`HTTP error! status: ${updateResponse.status}`);
       return null;
     }
 
     const updateResult = await updateResponse.json();
-    console.log("updateResult", updateResult);
+    logger.debug("updateResult", updateResult);
 
     if (createResult.id) {
-      console.log("草稿发布成功");
+      logger.debug("草稿发布成功");
       return `https://www.jianshu.com/writer#/notebooks/${notebookId}/notes/${noteId}/writing`;
     }
-    console.error("草稿发布失败", createResult.message);
+    logger.error("草稿发布失败", createResult.message);
     return null;
   }
 

@@ -1,4 +1,5 @@
 import type { ArticleData, FileData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 /**
  * Jiankangjie article publishing (experimental).
@@ -101,7 +102,7 @@ export async function ArticleJianKangJie(data: SyncData) {
       pasteEvent.clipboardData?.setData("text/html", html);
       editor.dispatchEvent(pasteEvent);
     } catch (error) {
-      console.debug("Jiankangjie synthetic paste failed; using direct HTML write", error);
+      logger.debug("Jiankangjie synthetic paste failed; using direct HTML write", error);
     }
 
     // Some editors ignore synthetic paste events, so write directly and then notify the framework.
@@ -119,7 +120,7 @@ export async function ArticleJianKangJie(data: SyncData) {
       const blob = await response.blob();
       return new File([blob], fileData.name, { type: fileData.type || blob.type || "application/octet-stream" });
     } catch (error) {
-      console.warn(`Jiankangjie ${label} file fetch failed:`, error);
+      logger.warn(`Jiankangjie ${label} file fetch failed:`, error);
       return null;
     }
   }
@@ -145,7 +146,7 @@ export async function ArticleJianKangJie(data: SyncData) {
       const result = (await response.json()) as ImageUploadResult;
       return result?.url ? `https://files.cn-healthcare.com/${result.url}` : null;
     } catch (error) {
-      console.warn("Jiankangjie inline image upload failed; keeping original inline image URL", error);
+      logger.warn("Jiankangjie inline image upload failed; keeping original inline image URL", error);
       return null;
     }
   }
@@ -197,7 +198,7 @@ export async function ArticleJianKangJie(data: SyncData) {
     for (const imageElement of imageElements) {
       const src = imageElement.getAttribute("src")?.trim() || "";
       if (!src) {
-        console.debug("Jiankangjie inline image src is empty");
+        logger.debug("Jiankangjie inline image src is empty");
         isFullyPrepared = false;
         continue;
       }
@@ -206,7 +207,7 @@ export async function ArticleJianKangJie(data: SyncData) {
 
       const imageData = images.find((image) => image.url === src);
       if (!imageData) {
-        console.debug("Jiankangjie inline image data not found; unable to rewrite non-public image URL");
+        logger.debug("Jiankangjie inline image data not found; unable to rewrite non-public image URL");
         isFullyPrepared = false;
         continue;
       }
@@ -231,14 +232,14 @@ export async function ArticleJianKangJie(data: SyncData) {
   async function uploadCover(cover?: FileData): Promise<boolean> {
     if (!cover) return true;
     if (!cover.url) {
-      console.debug("Jiankangjie cover data has no URL");
+      logger.debug("Jiankangjie cover data has no URL");
       return false;
     }
 
     const fileInput = (document.querySelector("input#cover-file") ||
       (await waitForElementOptional("input#cover-file", 3000))) as HTMLInputElement | null;
     if (!fileInput) {
-      console.debug("Jiankangjie cover upload input not found");
+      logger.debug("Jiankangjie cover upload input not found");
       return false;
     }
 
@@ -258,18 +259,18 @@ export async function ArticleJianKangJie(data: SyncData) {
   function canAutoPublish(required: RequiredFields): boolean {
     let canPublish = true;
     if (!required.title) {
-      console.error("Jiankangjie required field title not filled; skipping auto-publish");
+      logger.error("Jiankangjie required field title not filled; skipping auto-publish");
       canPublish = false;
     }
     if (!required.body) {
-      console.error("Jiankangjie required field body not filled; skipping auto-publish");
+      logger.error("Jiankangjie required field body not filled; skipping auto-publish");
       canPublish = false;
     } else if (!required.bodyFullyPrepared) {
-      console.error("Jiankangjie inline image upload failed; skipping auto-publish to avoid broken images");
+      logger.error("Jiankangjie inline image upload failed; skipping auto-publish to avoid broken images");
       canPublish = false;
     }
     if (!required.cover) {
-      console.error("Jiankangjie required field cover not filled; skipping auto-publish");
+      logger.error("Jiankangjie required field cover not filled; skipping auto-publish");
       canPublish = false;
     }
     return canPublish;
@@ -283,7 +284,7 @@ export async function ArticleJianKangJie(data: SyncData) {
       "div.button_publish.item.editor-btn.editor-main-btn",
     ) as HTMLElement | null;
     if (!publishButton) {
-      console.debug("Jiankangjie publish button not found");
+      logger.debug("Jiankangjie publish button not found");
       return;
     }
 
@@ -308,17 +309,17 @@ export async function ArticleJianKangJie(data: SyncData) {
         setControlValue(titleInput, title);
         required.title = true;
       } catch (error) {
-        console.error("Jiankangjie title write failed:", error);
+        logger.error("Jiankangjie title write failed:", error);
       }
     } else {
-      console.debug("Jiankangjie title input not found or title is empty");
+      logger.debug("Jiankangjie title input not found or title is empty");
     }
 
     const summaryTextarea = document.querySelector("textarea.summary-textarea") as HTMLTextAreaElement | null;
     if (summaryTextarea) {
       setControlValue(summaryTextarea, articleData.digest?.slice(0, 150) || "");
     } else {
-      console.debug("Jiankangjie summary textarea not found");
+      logger.debug("Jiankangjie summary textarea not found");
     }
 
     const editor = document.querySelector('div#myEditor[contenteditable="true"]') as HTMLElement | null;
@@ -330,23 +331,23 @@ export async function ArticleJianKangJie(data: SyncData) {
         if (required.body) {
           required.bodyFullyPrepared = rewriteResult.isFullyPrepared;
         } else {
-          console.error("Jiankangjie body editor remained empty after write; skipping auto-publish");
+          logger.error("Jiankangjie body editor remained empty after write; skipping auto-publish");
         }
       } catch (error) {
-        console.error("Jiankangjie body write failed:", error);
+        logger.error("Jiankangjie body write failed:", error);
       }
     } else {
-      console.debug("Jiankangjie body editor not found or content is empty");
+      logger.debug("Jiankangjie body editor not found or content is empty");
     }
 
     try {
       required.cover = await uploadCover(articleData.cover);
     } catch (error) {
-      console.error("Jiankangjie cover upload failed:", error);
+      logger.error("Jiankangjie cover upload failed:", error);
       required.cover = false;
     }
     clickPublishIfRequested(required);
   } catch (error) {
-    console.error("Jiankangjie article publish failed:", error);
+    logger.error("Jiankangjie article publish failed:", error);
   }
 }

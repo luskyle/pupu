@@ -1,10 +1,11 @@
+import TurndownService from "turndown";
+import type { ArticleData, FileData, SyncData } from "~sync/common";
 /**
  * Aliyun article publishing (experimental, needs live verification).
  *
  * Aliyun ARTICLE DOM path.
  */
-import TurndownService from "turndown";
-import type { ArticleData, FileData, SyncData } from "~sync/common";
+import { logger } from "~utils/logger";
 
 export async function ArticleAliyun(data: SyncData) {
   const articleData = data.data as ArticleData;
@@ -75,7 +76,7 @@ export async function ArticleAliyun(data: SyncData) {
       const blob = await response.blob();
       return new File([blob], fileData.name, { type: fileData.type || blob.type || "application/octet-stream" });
     } catch {
-      console.warn("Aliyun inline image fetch failed; skipping inline image");
+      logger.warn("Aliyun inline image fetch failed; skipping inline image");
       return null;
     }
   }
@@ -83,7 +84,7 @@ export async function ArticleAliyun(data: SyncData) {
   async function uploadInlineImage(fileData: FileData): Promise<string | null> {
     const csrf = getCookie("c_csrf");
     if (!csrf) {
-      console.debug("Aliyun c_csrf cookie not found; keeping original inline image URL");
+      logger.debug("Aliyun c_csrf cookie not found; keeping original inline image URL");
       return null;
     }
 
@@ -111,7 +112,7 @@ export async function ArticleAliyun(data: SyncData) {
       const uploadUrl = uploadUrlResult.data?.uploadUrl?.replace(/^http:\/\//, "https://");
       const imageUrl = uploadUrlResult.data?.imageUrl || null;
       if (!uploadUrl || !imageUrl) {
-        console.debug("aliyun: invalid upload-url response; skipping inline image");
+        logger.debug("aliyun: invalid upload-url response; skipping inline image");
         return null;
       }
 
@@ -127,7 +128,7 @@ export async function ArticleAliyun(data: SyncData) {
 
       return imageUrl;
     } catch {
-      console.warn("Aliyun inline image upload failed; keeping original inline image URL");
+      logger.warn("Aliyun inline image upload failed; keeping original inline image URL");
       return null;
     }
   }
@@ -143,7 +144,7 @@ export async function ArticleAliyun(data: SyncData) {
 
       const imageData = images.find((image) => image.url === src);
       if (!imageData) {
-        console.debug("Aliyun inline image data not found; keeping original inline image URL");
+        logger.debug("Aliyun inline image data not found; keeping original inline image URL");
         continue;
       }
 
@@ -198,7 +199,7 @@ export async function ArticleAliyun(data: SyncData) {
     if (publishButton) {
       publishButton.dispatchEvent(new Event("click", { bubbles: true }));
     } else {
-      console.debug("阿里云:未找到发布按钮");
+      logger.debug("阿里云:未找到发布按钮");
     }
   }
 
@@ -209,7 +210,7 @@ export async function ArticleAliyun(data: SyncData) {
     ].filter(([, filled]) => !filled);
 
     for (const [field] of missing) {
-      console.error(`Aliyun required field ${field} not filled; skipping auto-publish`);
+      logger.error(`Aliyun required field ${field} not filled; skipping auto-publish`);
     }
 
     return missing.length === 0;
@@ -229,7 +230,7 @@ export async function ArticleAliyun(data: SyncData) {
       setControlValue(titleInput, articleData.title || "");
       required.title = !!articleData.title;
     } else {
-      console.debug("阿里云:未找到标题输入框");
+      logger.debug("阿里云:未找到标题输入框");
     }
 
     const summaryTextarea = document.querySelector('textarea[placeholder="请填写摘要"]') as HTMLTextAreaElement | null;
@@ -239,7 +240,7 @@ export async function ArticleAliyun(data: SyncData) {
 
     const markdownTextarea = document.querySelector("textarea.textarea") as HTMLTextAreaElement | null;
     if (!markdownTextarea) {
-      console.debug("阿里云:未找到 Markdown 编辑器 textarea");
+      logger.debug("阿里云:未找到 Markdown 编辑器 textarea");
       return;
     }
 
@@ -252,6 +253,6 @@ export async function ArticleAliyun(data: SyncData) {
       await clickPublishButton();
     }
   } catch (error) {
-    console.error("阿里云文章发布出错:", error);
+    logger.error("阿里云文章发布出错:", error);
   }
 }
