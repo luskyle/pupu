@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>pupu 🐙 — 多平台内容发布浏览器扩展</title>
+    <meta name="description" content="pupu 是一款多平台内容发布浏览器扩展：一次编辑，轻松将内容同步发布到微博、小红书、知乎、抖音、B站、微信公众号等数十个平台。" />
+    <meta name="theme-color" content="#7c5cff" />
+    <link rel="icon" href="assets/icon.png" />
+    <link rel="stylesheet" href="assets/site.css" />
+    <meta property="og:title" content="pupu 🐙 — 多平台内容发布浏览器扩展" />
+    <meta property="og:description" content="一次编辑，轻松将内容同步发布到多个社交平台。" />
+    <meta property="og:image" content="assets/icon.png" />
+    <meta property="og:type" content="website" />
+  </head>
+  <body>
+    <nav class="nav">
+      <div class="wrap nav-inner">
+        <a class="nav-brand" href="./">
+          <img src="assets/icon.png" alt="pupu Logo" />
+          <span>pupu</span>
+        </a>
+        <div class="nav-links">
+          <a href="#features">特性</a>
+          <a href="#platforms">支持平台</a>
+          <a href="#install">安装</a>
+          <a href="guide.html">使用文档</a>
+          <a href="https://github.com/luskyle/pupu" target="_blank" rel="noreferrer">GitHub</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <div class="wrap">
+        <img class="hero-logo" src="assets/icon.png" alt="pupu Logo" />
+        <h1>pupu 🐙</h1>
+        <p class="tagline">一款多平台内容发布浏览器扩展，一次编辑，轻松将内容同步发布到多个社交平台。</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://github.com/luskyle/pupu/releases/latest" target="_blank" rel="noreferrer">
+            ⬇️ 下载最新版 <span id="release-version">v0.2.4</span>
+          </a>
+          <a class="btn btn-ghost" href="guide.html">📖 使用文档</a>
+          <a class="btn btn-ghost" href="https://github.com/luskyle/pupu" target="_blank" rel="noreferrer">⭐ GitHub 仓库</a>
+        </div>
+        <div class="pills">
+          <span class="pill"><strong>Chrome MV3</strong> 扩展</span>
+          <span class="pill">当前版本 <strong id="current-version">0.2.4</strong></span>
+          <span class="pill">最新发布 <strong id="release-date">—</strong></span>
+          <span class="pill"><strong>MIT</strong> 许可</span>
+        </div>
+      </div>
+    </header>
+
+    <section id="features">
+      <div class="wrap">
+        <h2>✨ 特性</h2>
+        <p class="section-lead">针对「一次编辑、多平台分发」的场景设计，尽量把重复的复制粘贴收敛成一次操作。</p>
+        <div class="grid">
+          <div class="card">
+            <span class="emoji">🧭</span>
+            <h3>极简布局</h3>
+            <p>动态 / 视频 / 文章三个发布 Tab 加关于页；发布时通过侧边栏选择平台并确认。</p>
+          </div>
+          <div class="card">
+            <span class="emoji">🚀</span>
+            <h3>自动 / 手动发布</h3>
+            <p>底部开关一键切换：自动发布会在填充后直接发布，手动发布只填充内容，由你自己确认。</p>
+          </div>
+          <div class="card">
+            <span class="emoji">🖼️</span>
+            <h3>动态</h3>
+            <p>只填内容即可；支持添加图片、导入 PPT / PDF（自动逐页转图片随动态发布）。</p>
+            <p>内容工具栏提供 <code>#</code> 话题（支持选中文字一键包裹为 <code>#话题#</code>）与 emoji 分类面板（9 类，含颜文字），输入框内话题实时高亮预览。</p>
+          </div>
+          <div class="card">
+            <span class="emoji">🎬</span>
+            <h3>视频</h3>
+            <p>上传视频并发布到支持视频的平台。</p>
+          </div>
+          <div class="card">
+            <span class="emoji">📝</span>
+            <h3>文章</h3>
+            <p>导入本地 Markdown 并可视化编辑 / 预览渲染，图片随正文一起发布。</p>
+          </div>
+          <div class="card">
+            <span class="emoji">📌</span>
+            <h3>平台分组</h3>
+            <p>动态 / 视频 / 文章各自的首选平台单独列出，其余平台归入「其它」，不用在几十个平台里逐个找。</p>
+          </div>
+          <div class="card">
+            <span class="emoji">🗂️</span>
+            <h3>侧边栏联动</h3>
+            <p>侧边栏显示当前编辑类型的平台列表，切换 Tab 实时跟随；切到「关于」页时自动关闭侧边栏。</p>
+          </div>
+          <div class="card">
+            <span class="emoji">🧠</span>
+            <h3>平台细节适配</h3>
+            <p>例如发布到小红书时自动将 <code>#话题#</code> 转为小红书格式 <code>#话题[话题]#</code>；标题超过 20 字自动跳过标题。</p>
+          </div>
+          <div class="card">
+            <span class="emoji">🧑‍🎨</span>
+            <h3>账户头像（12 生肖）</h3>
+            <p>顶栏账户头像按当前月份显示 12 生肖，悬停同时显示生肖与星座；点击头像一键展开侧边栏，可刷新账号 / 清空账号缓存。</p>
+          </div>
+          <div class="card">
+            <span class="emoji">🔄</span>
+            <h3>刷新账号</h3>
+            <p>仅点击「刷新账号」才真正抓取各平台账号，打开侧边栏秒开；已登录平台排最前，常用平台其次。</p>
+          </div>
+          <div class="card">
+            <span class="emoji">🌗</span>
+            <h3>暗 / 亮主题</h3>
+            <p>默认暗色主题，顶栏一键切换浅色 / 暗色。</p>
+          </div>
+          <div class="card">
+            <span class="emoji">💨</span>
+            <h3>轻量弹窗</h3>
+            <p>提示 / 确认 / 配置弹窗均为纯 CSS 轻量弹窗，不依赖重型动画库，弹出跟手流畅。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="platforms">
+      <div class="wrap">
+        <h2>🌐 支持平台</h2>
+        <p class="section-lead">按发布类型分组，每组标出的平台是该类型下默认列在首位的「首选平台」。</p>
+        <div class="platforms">
+          <div class="platform-group">
+            <h3>🖼️ 动态</h3>
+            <div class="tags">
+              <span class="tag lead">微博</span>
+              <span class="tag lead">小红书</span>
+              <span class="tag lead">知乎</span>
+              <span class="tag lead">X</span>
+              <span class="tag lead">脸书</span>
+            </div>
+          </div>
+          <div class="platform-group">
+            <h3>🎬 视频</h3>
+            <div class="tags">
+              <span class="tag lead">抖音</span>
+              <span class="tag lead">快手</span>
+              <span class="tag lead">微信视频号</span>
+              <span class="tag lead">bilibili</span>
+              <span class="tag lead">微博</span>
+              <span class="tag lead">小红书</span>
+              <span class="tag lead">Youtube</span>
+            </div>
+          </div>
+          <div class="platform-group">
+            <h3>📝 文章</h3>
+            <div class="tags">
+              <span class="tag lead">微信公众号</span>
+              <span class="tag lead">知乎</span>
+              <span class="tag lead">CSDN</span>
+              <span class="tag lead">51CTO</span>
+            </div>
+          </div>
+          <div class="platform-group">
+            <h3>➕ 其它平台（部分）</h3>
+            <div class="tags">
+              <span class="tag">掘金</span>
+              <span class="tag">简书</span>
+              <span class="tag">思否</span>
+              <span class="tag">少数派</span>
+              <span class="tag">豆瓣</span>
+              <span class="tag">雪球</span>
+              <span class="tag">即刻</span>
+              <span class="tag">今日头条</span>
+              <span class="tag">百家号</span>
+              <span class="tag">网易号</span>
+              <span class="tag">搜狐号</span>
+              <span class="tag">企鹅号</span>
+              <span class="tag">大鱼号</span>
+              <span class="tag">一点号</span>
+              <span class="tag">东方财富</span>
+              <span class="tag">得物</span>
+              <span class="tag">小黑盒</span>
+              <span class="tag">脉脉</span>
+              <span class="tag">知识星球</span>
+              <span class="tag">阿里云</span>
+              <span class="tag">腾讯云</span>
+              <span class="tag">WordPress</span>
+              <span class="tag">Medium</span>
+              <span class="tag">Instagram</span>
+              <span class="tag">TikTok</span>
+              <span class="tag">LinkedIn</span>
+              <span class="tag">Reddit</span>
+              <span class="tag">Pinterest</span>
+              <span class="tag">Threads</span>
+              <span class="tag">BlueSky</span>
+              <span class="tag">V2EX</span>
+              <span class="tag">Webhook</span>
+            </div>
+          </div>
+        </div>
+        <div class="note">
+          各平台图标内置本地、离线可用，国内平台按流量池排序置前。没有你需要的平台？欢迎到
+          <a href="https://github.com/luskyle/pupu/issues" target="_blank" rel="noreferrer">GitHub Issues</a> 提交反馈。
+        </div>
+      </div>
+    </section>
+
+    <section id="install">
+      <div class="wrap">
+        <h2>🚀 安装</h2>
+        <p class="section-lead">pupu 以未打包扩展（unpacked）形式安装，目前需要手动下载并加载。</p>
+        <ol class="steps">
+          <li>
+            <h3>下载压缩包</h3>
+            <p>
+              到
+              <a href="https://github.com/luskyle/pupu/releases/latest" target="_blank" rel="noreferrer">Releases</a>
+              下载最新的 <code>pupu-v*.zip</code>，解压到任意目录（目录中应能看到 <code>manifest.json</code>）。
+            </p>
+          </li>
+          <li>
+            <h3>打开扩展管理页</h3>
+            <p>在 Chrome / Edge 地址栏输入 <code>chrome://extensions</code> 并回车。</p>
+          </li>
+          <li>
+            <h3>开启开发者模式</h3>
+            <p>打开右上角的「开发者模式」开关。</p>
+          </li>
+          <li>
+            <h3>加载已解压的扩展程序</h3>
+            <p>点击左上角「加载已解压的扩展程序」，选择第 1 步解压出的目录即可。</p>
+          </li>
+        </ol>
+        <div class="note">
+          也可以直接从源码构建：<code>pnpm install &amp;&amp; pnpm build:ci</code>，产物在 <code>build/chrome-mv3-prod/</code>，压缩包为
+          <code>build/pupu-v&lt;version&gt;.zip</code>。
+        </div>
+      </div>
+    </section>
+
+    <section id="disabled">
+      <div class="wrap">
+        <h2>⏸️ 暂时屏蔽的功能</h2>
+        <p class="section-lead">以下功能由于效果 / 稳定性暂不理想，已从界面中暂时屏蔽（相关代码与依赖保留，便于后续恢复）。</p>
+        <div class="grid">
+          <div class="card">
+            <h3>🎬 动态发视频</h3>
+            <p>动态 Tab 的「添加视频」入口已屏蔽（动态视频发布流程尚不稳定），仅保留图片。</p>
+          </div>
+          <div class="card">
+            <h3>📄 Word/WPS 导入</h3>
+            <p>动态导入 Word/WPS 转图片功能已屏蔽（渲染效果不佳），PPT / PDF 导入保留。</p>
+          </div>
+          <div class="card">
+            <h3>😆 在线表情包（GIF）</h3>
+            <p>在线 GIF 表情包搜索 / 插入已屏蔽（在线源稳定性不足），emoji 面板与颜文字保留。</p>
+          </div>
+          <div class="card">
+            <h3>🔗 插入链接</h3>
+            <p>动态内容工具栏的「插入链接」已屏蔽，<code>#</code> 话题与 emoji 保留。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="stack">
+      <div class="wrap">
+        <h2>🧱 技术栈</h2>
+        <p class="section-lead">基于 Plasmo 的 Chrome MV3 扩展，React 18 + TypeScript 开发。</p>
+        <table>
+          <tbody>
+            <tr>
+              <th>扩展框架</th>
+              <td><a href="https://www.plasmo.com/" target="_blank" rel="noreferrer">Plasmo</a>（Chrome MV3）</td>
+            </tr>
+            <tr>
+              <th>界面</th>
+              <td>React 18、TypeScript、Tailwind CSS、HeroUI、lucide-react</td>
+            </tr>
+            <tr>
+              <th>Markdown</th>
+              <td>marked（HTML 渲染）、turndown（HTML 转 Markdown）</td>
+            </tr>
+            <tr>
+              <th>文件导入</th>
+              <td>pptx-preview（PPT 逐页转图）、pdfjs-dist（PDF 逐页渲染转图）</td>
+            </tr>
+            <tr>
+              <th>截图与预览</th>
+              <td>html-to-image、html2canvas、react-viewer</td>
+            </tr>
+            <tr>
+              <th>工程化</th>
+              <td>pnpm、Biome（检查 / 格式化）、husky + lint-staged、commitlint</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap footer-inner">
+        <div>
+          pupu · Logo 图标来自
+          <a href="https://github.com/twitter/twemoji" target="_blank" rel="noreferrer">Twemoji</a>（CC BY 4.0）
+        </div>
+        <div class="footer-links">
+          <a href="guide.html">使用文档</a>
+          <a href="https://github.com/luskyle/pupu" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="https://github.com/luskyle/pupu/releases" target="_blank" rel="noreferrer">Releases</a>
+          <a href="https://github.com/luskyle/pupu/issues" target="_blank" rel="noreferrer">反馈</a>
+        </div>
+      </div>
+      <div class="wrap" style="margin-top: 14px">
+        ⚠️ 本项目为个人学习 / 交流项目，请遵守各平台的使用规范与当地法律法规。
+      </div>
+    </footer>
+
+    <script>
+      // 从 GitHub Releases 拉取最新版本号，失败时保留页面上的静态兜底文本。
+      (async () => {
+        try {
+          const res = await fetch("https://api.github.com/repos/luskyle/pupu/releases/latest", {
+            headers: { Accept: "application/vnd.github+json" },
+          });
+          if (!res.ok) return;
+          const data = await res.json();
+          if (!data.tag_name) return;
+          const version = String(data.tag_name).replace(/^v/, "");
+          document.getElementById("release-version").textContent = "v" + version;
+          document.getElementById("current-version").textContent = version;
+          document.getElementById("release-date").textContent = data.published_at
+            ? new Date(data.published_at).toISOString().slice(0, 10)
+            : "—";
+        } catch {
+          /* 离线或接口限流时忽略，页面继续使用静态版本号 */
+        }
+      })();
+    </script>
+  </body>
+</html>

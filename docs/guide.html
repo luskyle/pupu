@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>使用文档 — pupu 🐙</title>
+    <meta name="description" content="pupu 浏览器扩展的安装、使用、构建与常见问题说明。" />
+    <meta name="theme-color" content="#7c5cff" />
+    <link rel="icon" href="assets/icon.png" />
+    <link rel="stylesheet" href="assets/site.css" />
+  </head>
+  <body>
+    <nav class="nav">
+      <div class="wrap nav-inner">
+        <a class="nav-brand" href="./">
+          <img src="assets/icon.png" alt="pupu Logo" />
+          <span>pupu</span>
+        </a>
+        <div class="nav-links">
+          <a href="index.html">首页</a>
+          <a href="#install">安装</a>
+          <a href="#usage">使用</a>
+          <a href="#build">构建</a>
+          <a href="#faq">常见问题</a>
+          <a href="https://github.com/luskyle/pupu" target="_blank" rel="noreferrer">GitHub</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="wrap doc">
+      <div class="doc-layout">
+        <aside class="doc-toc">
+          <ol>
+            <li><a href="#install">安装</a></li>
+            <li><a href="#usage">使用</a></li>
+            <li><a href="#platforms">平台与分组</a></li>
+            <li><a href="#account">账号与侧边栏</a></li>
+            <li><a href="#build">本地开发与构建</a></li>
+            <li><a href="#cicd">CI / CD 与发布</a></li>
+            <li><a href="#faq">常见问题</a></li>
+            <li><a href="#permissions">权限说明</a></li>
+          </ol>
+        </aside>
+
+        <div class="doc-body">
+          <h1 style="margin-top: 0">使用文档</h1>
+          <p class="section-lead">
+            pupu 是一款多平台内容发布浏览器扩展：一次编辑，轻松将内容同步发布到多个社交平台。当前版本为
+            <span id="current-version">0.2.4</span>。
+          </p>
+
+          <h2 id="install">安装</h2>
+          <p>pupu 提供已经打包好的扩展压缩包，无需自己编译即可安装使用。</p>
+          <ol class="steps">
+            <li>
+              <h3>下载并解压</h3>
+              <p>
+                在
+                <a href="https://github.com/luskyle/pupu/releases/latest" target="_blank" rel="noreferrer"
+                  >Releases</a
+                >
+                页面下载最新的 <code>pupu-v&lt;version&gt;.zip</code>，解压到任意目录。解压后目录中应当直接能看到
+                <code>manifest.json</code>。
+              </p>
+            </li>
+            <li>
+              <h3>打开扩展管理页</h3>
+              <p>在 Chrome / Edge 地址栏输入 <code>chrome://extensions</code>。</p>
+            </li>
+            <li>
+              <h3>开启开发者模式</h3>
+              <p>打开页面右上角的「开发者模式」开关。</p>
+            </li>
+            <li>
+              <h3>加载已解压的扩展程序</h3>
+              <p>点击左上角「加载已解压的扩展程序」，选中第 1 步解压出的目录。</p>
+            </li>
+          </ol>
+          <div class="note">
+            安装后点击工具栏的 pupu 图标会自动打开扩展主界面（选项页），侧边栏用于平台选择与账号管理。
+          </div>
+
+          <h2 id="usage">使用</h2>
+          <h3>发布类型</h3>
+          <ul>
+            <li><strong>动态</strong>：只填内容即可。支持添加图片、导入 PPT / PDF 并自动逐页转图片随动态发布。</li>
+            <li><strong>视频</strong>：上传视频并发布到支持视频的平台。</li>
+            <li><strong>文章</strong>：导入本地 Markdown，可视化编辑 / 预览渲染，图片随正文一起发布。</li>
+          </ul>
+
+          <h3>自动 / 手动发布</h3>
+          <p>
+            底部开关可一键切换发布模式：<strong>自动发布</strong>在内容填充完成后直接提交；<strong>手动发布</strong
+            >只把内容填充到各平台页面，由你确认后再发布。首次使用建议先用手动发布确认各平台填充效果。
+          </p>
+
+          <h3>内容工具栏</h3>
+          <ul>
+            <li>用 <code>#</code> 包裹文字即可添加话题，例如 <code>#今日好物#</code>；选中文字可一键包裹为 <code>#话题#</code>。</li>
+            <li>输入框内的话题会实时蓝色高亮预览。</li>
+            <li>emoji 分类面板共 9 类，包含颜文字。</li>
+            <li>发布到小红书时会自动把 <code>#话题#</code> 转换为小红书格式 <code>#话题[话题]#</code>；标题超过 20 字会自动跳过标题。</li>
+          </ul>
+
+          <h2 id="platforms">平台与分组</h2>
+          <p>动态 / 视频 / 文章各自的首选平台会单独列出，其余平台统一归入「其它」分组。</p>
+          <table>
+            <thead>
+              <tr>
+                <th>发布类型</th>
+                <th>首选平台</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>动态</th>
+                <td>微博、小红书、知乎、X、脸书</td>
+              </tr>
+              <tr>
+                <th>视频</th>
+                <td>抖音、快手、微信视频号、bilibili、微博、小红书、Youtube</td>
+              </tr>
+              <tr>
+                <th>文章</th>
+                <td>微信公众号、知乎、CSDN、51CTO</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            其它平台包括掘金、简书、思否、少数派、豆瓣、雪球、即刻、今日头条、百家号、网易号、搜狐号、企鹅号、大鱼号、一点号、东方财富、得物、小黑盒、脉脉、知识星球、阿里云、腾讯云、WordPress、Medium、Instagram、TikTok、LinkedIn、Reddit、Pinterest、Threads、BlueSky、V2EX、Webhook 等，完整列表可在扩展内的平台选择面板查看。
+          </p>
+          <p>
+            各平台图标内置在扩展本地、离线可用，国内平台按流量池排序置前。部分平台（如即刻、Webhook、知识星球、WordPress）需要先配置圈子 / 地址 / 星球等附加信息。
+          </p>
+
+          <h2 id="account">账号与侧边栏</h2>
+          <ul>
+            <li>侧边栏显示当前编辑类型的平台列表，切换 Tab 时实时跟随；切到「关于」页会自动关闭侧边栏。</li>
+            <li>顶栏账户头像按当前月份显示 12 生肖，悬停同时显示生肖与星座。点击头像可一键展开侧边栏。</li>
+            <li>
+              账号<strong>不会在打开侧边栏时自动刷新</strong>，只有点击「刷新账号」才会真正抓取各平台账号；已登录的平台排在最前，常用平台其次，其余平台折叠收纳。
+            </li>
+            <li>「清空账号缓存」需二次确认，清空后会自动重新刷新一次账号。</li>
+          </ul>
+
+          <h2 id="build">本地开发与构建</h2>
+          <p>需要 Node.js 与 <a href="https://pnpm.io/" target="_blank" rel="noreferrer">pnpm</a>。</p>
+          <pre><code>pnpm install
+pnpm dev        # 启动 Plasmo 开发模式（热更新）</code></pre>
+          <p>构建产物的命令有两个：</p>
+          <pre><code>pnpm build      # 版本号 +1 → 构建 → 复制 PDF worker / 平台图标 → 打包 zip
+pnpm build:ci   # 同上，但不修改版本号（CI 使用）</code></pre>
+          <p>
+            构建产物位于 <code>build/chrome-mv3-prod/</code>，压缩包为 <code>build/pupu-v&lt;version&gt;.zip</code>。
+          </p>
+          <div class="note">
+            <strong>注意：</strong>构建后会自动执行 <code>scripts/copy-pdf-worker.mjs</code>，把 PDF worker、PDF 图像解码器
+            WASM 与离线平台图标复制进产物。若直接使用 <code>npx plasmo build</code>，需要手动补跑该脚本，否则 PDF
+            转图片与平台图标会缺失。
+          </div>
+          <h3>代码检查</h3>
+          <pre><code>pnpm lint       # 代码检查（Biome）
+pnpm lint:fix   # 自动修复
+pnpm format     # 格式化</code></pre>
+
+          <h2 id="cicd">CI / CD 与发布</h2>
+          <p>仓库内置三条 GitHub Actions 工作流：</p>
+          <table>
+            <thead>
+              <tr>
+                <th>工作流</th>
+                <th>触发条件</th>
+                <th>作用</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><code>CI</code></th>
+                <td>push 到 main、PR、手动</td>
+                <td>安装依赖 → <code>pnpm lint</code> → <code>pnpm build:ci</code>，校验产物并上传 zip 与解压目录为构建产物</td>
+              </tr>
+              <tr>
+                <th><code>Release</code></th>
+                <td>推送 <code>v*</code> 标签、手动</td>
+                <td>把 package.json 版本号同步为标签版本 → 构建 → 校验 manifest 版本 → 创建 Release 并附上 zip</td>
+              </tr>
+              <tr>
+                <th><code>Deploy Pages</code></th>
+                <td>push 到 main 且改动 <code>docs/**</code>、手动</td>
+                <td>把 <code>docs/</code> 目录部署到 GitHub Pages（本站在此发布）</td>
+              </tr>
+            </tbody>
+          </table>
+          <h3>发布一个版本</h3>
+          <pre><code>git tag v0.2.5
+git push origin v0.2.5</code></pre>
+          <p>
+            推送标签后，Release 工作流会自动构建 <code>pupu-v0.2.5.zip</code>、校验扩展 manifest 中的版本号与标签一致，并发布到
+            Releases 页面。也可以在 Actions 页面手动运行 <code>Release</code> 工作流并填写版本号，它会自动创建对应标签。
+          </p>
+
+          <h2 id="faq">常见问题</h2>
+          <h3>扩展里的 PDF / 平台图标显示不出来？</h3>
+          <p>
+            通常是没有执行复制脚本导致的。重新运行 <code>pnpm build:ci</code>（或 <code>pnpm dev</code>）即可，产物中应当存在
+            <code>pdf.worker.min.mjs</code>、<code>wasm/</code> 与 <code>assets/platforms/</code>。
+          </p>
+          <h3>为什么标题没有发布出去？</h3>
+          <p>部分平台（如小红书）标题有长度限制，超过 20 字时会自动跳过标题，只发布正文内容。</p>
+          <h3>为什么打开侧边栏没有显示我的账号？</h3>
+          <p>
+            账号只在点击「刷新账号」时抓取，不会自动刷新。请先在各平台登录，再点击「刷新账号」；若仍未显示，可尝试「清空账号缓存」后重新刷新。
+          </p>
+          <h3>遇到问题或想新增平台？</h3>
+          <p>
+            欢迎到
+            <a href="https://github.com/luskyle/pupu/issues" target="_blank" rel="noreferrer">GitHub Issues</a>
+            反馈，或在扩展内点击「提交反馈」/「发送邮件」。
+          </p>
+
+          <h2 id="permissions">权限说明</h2>
+          <p>扩展申请的权限与用途如下（见 <code>package.json</code> 中的 <code>manifest</code> 字段）：</p>
+          <table>
+            <thead>
+              <tr>
+                <th>权限</th>
+                <th>用途</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><code>host_permissions</code></th>
+                <td>访问 <code>https://*/*</code> 与本地地址，用于在目标平台页面填充 / 发布内容</td>
+              </tr>
+              <tr>
+                <th><code>cookies</code></th>
+                <td>读取各平台的登录状态，用于判断账号是否已登录</td>
+              </tr>
+              <tr>
+                <th><code>tabs</code> / <code>tabGroups</code></th>
+                <td>为每个同步任务打开管理标签页，并在侧边栏中管理这些标签</td>
+              </tr>
+              <tr>
+                <th><code>scripting</code></th>
+                <td>向目标页面注入内容填充与抓取脚本</td>
+              </tr>
+              <tr>
+                <th><code>activeTab</code></th>
+                <td>在当前活动标签页上执行用户主动触发的操作</td>
+              </tr>
+              <tr>
+                <th><code>sidePanel</code></th>
+                <td>提供平台选择与账号管理的侧边栏界面</td>
+              </tr>
+              <tr>
+                <th><code>background</code></th>
+                <td>在后台协调各平台标签页与同步任务</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            扩展会把内容发布到你自己已经登录的平台；除此之外，扩展会请求项目自身的同步服务
+            <code>https://pupu.app</code>（开发模式下为 <code>http://localhost:3000</code>）用于账号数据同步。设置页的「可信域名」
+            用于授权特定网站调用扩展的发布能力，请只添加你信任的域名。
+          </p>
+
+          <div class="note">
+            本项目为个人学习 / 交流项目，请遵守各平台的使用规范与当地法律法规。
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="wrap footer-inner">
+        <div>pupu · 由 <a href="https://github.com/luskyle" target="_blank" rel="noreferrer">luskyle</a> 开发维护</div>
+        <div class="footer-links">
+          <a href="index.html">首页</a>
+          <a href="https://github.com/luskyle/pupu" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="https://github.com/luskyle/pupu/releases" target="_blank" rel="noreferrer">Releases</a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      (async () => {
+        try {
+          const res = await fetch("https://api.github.com/repos/luskyle/pupu/releases/latest", {
+            headers: { Accept: "application/vnd.github+json" },
+          });
+          if (!res.ok) return;
+          const data = await res.json();
+          if (!data.tag_name) return;
+          document.getElementById("current-version").textContent = String(data.tag_name).replace(/^v/, "");
+        } catch {
+          /* 离线或接口限流时忽略 */
+        }
+      })();
+    </script>
+  </body>
+</html>
