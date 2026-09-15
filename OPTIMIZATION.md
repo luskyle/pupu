@@ -23,6 +23,8 @@
 | 2026-09-15 | 审计修正：P0-1 实际存在 **2 处**（原文只记了 1 处）；P0-2 中「DynamicTab 同样需处理」为**误报**（该处已做转义）；新增发现 P1-7 |
 | 2026-09-15 | 完成第二批修复：P1-7、P1-4、P1-5（部分）、P1-6（部分）；P1-1 继续补测（共 66 个用例） |
 | 2026-09-15 | 新增发现：`engines` 字段会让 Parcel 构建失败（见 P1-5）；语言包校验自动化后又查出 3 个真实缺陷；`escapeHtml` 放错模块导致分包 +70 KB（见 P2-1） |
+| 2026-09-15 | 完成第三批：P0-3（日志全量收敛）、P2-1、P2-2、P2-3（PNG 部分）、P2-5（部分）；P2-4 经查证后**主动推迟**（理由见该条） |
+| 2026-09-15 | 第三批实测：`options` 首包 4191 → 1845 KB、`popup` 369 → 139 KB、平台图标 872 → 684 KB、zip 4.29 → 4.14 MB |
 
 ## 结论摘要
 
@@ -30,7 +32,7 @@
 | --- | --- | --- | --- | --- | --- |
 | P0 | 可信域名通配符匹配可被绕过（**2 处**） | `trust-domain.ts:52-54`、`contents/extension.ts:24-26` | 加子域点边界判断 | 小 | **已修复** |
 | P0 | Markdown 预览与发布载荷未消毒 | `ArticleTab.tsx:71,263` | 接入 DOMPurify | 小 | **已修复** |
-| P0 | 生产代码 1153 处 `console.log` | 70 个文件 | 落地分级 logger | 中 | 待办 |
+| P0 | 生产代码 1153 处 `console.log` | 70 个文件 | 落地分级 logger | 中 | **已修复**（迁移 2311 处，src 内 console 归零） |
 | P1 | 零测试（183 文件 / 3.8 万行） | 无 test 脚本、0 测试文件 | 引入 vitest，先测纯函数 | 中大 | **进行中**（66 个用例，已接入 CI） |
 | P1 | husky 钩子未生效 | `.husky/` 下只有 `_` | 补 `pre-commit` / `commit-msg` | 小 | **已修复** |
 | P1 | TS `strict: false` + 67 处 `any` | plasmo tsconfig.base | 分步开严格模式 | 大 | 待办 |
@@ -38,11 +40,11 @@
 | P1 | 环境不固定（无 `engines` / `packageManager`） | package.json | 补版本声明 | 小 | **部分完成**（`packageManager` + `.nvmrc`；`engines` 因 Parcel 冲突不可用） |
 | P1 | 分支无保护、Dependabot 关闭 | `gh api` 查询结果 | 开启必需检查与依赖告警 | 小 | **部分完成**（Dependabot 已配置；分支保护见下方说明） |
 | P1 | 动态适配器把用户文本未转义拼进 `innerHTML` | `maimai.ts:59`、`weixinchannel.ts:253` | 先转义再拼 `<br>` | 小 | **已修复** |
-| P2 | 产物 18 MB，重库全静态引入 | options chunk 4.16 MB | 重库改动态 `import()` | 中 | 待办 |
-| P2 | popup 包 369 KB 只为跳转 | `popup/index.tsx` | 去掉无用 shadow CSS | 小 | 待办 |
-| P2 | 平台图标 872 KB，单图最大 144 KB | 按 16–24px 显示 | 统一压到 32px | 小 | 待办 |
-| P2 | `wasm/` 约 1 MB 为可选兜底件 | pdfjs fallback 与 quickjs | 评估剔除 | 小 | 待办 |
-| P2 | 死代码 / 死依赖 | `utils/docx.ts` 0 引用等 | 清理依赖声明 | 小 | 待办 |
+| P2 | 产物 18 MB，重库全静态引入 | options chunk 4.16 MB | 重库改动态 `import()` | 中 | **已修复**（options 首包 4191 → 1845 KB） |
+| P2 | popup 包 369 KB 只为跳转 | `popup/index.tsx` | 去掉无用 shadow CSS | 小 | **已修复**（369 → 139 KB，余量为 React 下限） |
+| P2 | 平台图标 872 KB，单图最大 144 KB | 按 16–24px 显示 | 统一压到 32px | 小 | **PNG 已完成**（872 → 684 KB）；ICO 402 KB 待办 |
+| P2 | `wasm/` 约 1 MB 为可选兜底件 | pdfjs fallback 与 quickjs | 评估剔除 | 小 | **已查证，主动推迟**（见该条） |
+| P2 | 死代码 / 死依赖 | `utils/docx.ts` 0 引用等 | 清理依赖声明 | 小 | **部分完成**（移除 `uuid`、`@iconify/react`；docx 依赖按项目意图保留） |
 | P2 | 英文语言包缺 3 个 key | en 缺 `optionsCoverImage` 等 | 补齐 | 小 | **已修复** |
 | P3 | 一批大版本升级积压 | React 18 / HeroUI 2 / Tailwind 3 | 一次一个 PR | 大 | 待办 |
 | P4 | 未上架商店、隐私说明缺失、权限过宽 | `host_permissions: https://*/*` | 上架 + 补文档 + 收窄权限 | 中 | 待办 |
@@ -192,6 +194,17 @@ console.log("domainId", domainId);
 - 生产构建下默认只保留 `warn` / `error`（用构建期常量或 `process.env.NODE_ENV` 裁剪 `debug` / `info`）；
 - 敏感字段（request、cookies、token）**永不落日志**；
 - 然后按文件分批把 1153 处 `console.log` 换成 `logger.debug/info/warn/error`，优先处理 `src/background/**`（安全敏感）与 `src/sync/**`（噪音最多、最容易泄漏账号信息）。
+
+**实际处理**（2026-09-15）：**全量完成**。
+
+- 新增 `src/utils/logger.ts`（零依赖，含 7 个用例）：`debug`/`info` 仅开发环境输出，`warn`/`error` 始终输出；
+  开发环境 `debug` 走 `console.log` 以**保持改造前的可见性**（`console.debug` 会被 DevTools 收进 Verbose 过滤）；
+  生产环境可在扩展页面控制台执行 `window.__PUPU_DEBUG__ = true` 临时打开全部级别，无需重新打包。
+- **迁移了 2311 处**调用（`src/` 内 `console.*` 归零，logger 实现与测试文件除外），覆盖 `sync/{video,article,dynamic,account,podcast}`、`contents`、`components`、`utils`、`tabs`、`background`。
+- 迁移方式：脚本逐行替换 + 跳过注释行，插入 import；随后由 `pnpm lint` / `typecheck` / `test` / `build:ci` 全量校验。
+- **发布前专门核查**：产物中 `process.env.NODE_ENV` 已全部被 Plasmo 替换（0 残留），因此 service worker 与内容脚本里不会出现 `process is not defined`。
+
+**仍然待办**：语言包里的「运行日志」页签（`optionsRunningLogs` 等 key）**至今没有实现**（那些 key 在 `src/` 里零引用）。本次只做了「不再喷日志」，把日志接入可视化面板是独立的一件事。
 
 ---
 
@@ -462,11 +475,35 @@ zip:               4.29 MB  →  4.36 MB
 
 审核时请一并留意：`~utils/sanitize`（DOMPurify + marked）、`~utils/pdf`（pdfjs）、`~utils/pptx`（pptx-preview + 两个截图库）都属于「重量级」模块，只有真正需要它们的入口才应导入。
 
+**实际处理**（2026-09-15）：已把 `~utils/pdf` 与 `~utils/pptx` 改为**按需加载**（在 `DynamicTab` 的处理函数里 `await import(...)`）。
+
+实测结果：
+
+```
+options 首包（首次加载需解析执行的量）:  4191 KB → 1845 KB   （-56%）
+新增按需分包:  pptx.<hash>.js 1927 KB、pdf.<hash>.js 456 KB
+```
+
+产物核对（无浏览器时能做的验证）：`options` 包中确实引用了这两个分包名、分包确实在 zip 内、且 `options` 首包已不含 pdfjs 主库（检索 `PDFDocumentLoadingTask` 为 0）。
+
+**一个必须说清的结论：动态导入优化的是「首次加载/解析」，不是「下载体积」。**
+zip 仅从 4.29 MB 降到 4.14 MB（其中绝大部分来自图标压缩），因为分包仍然要打进包里、只会在用到时才被拉取。想真正减小下载体积，必须**删掉**资源或依赖（见 P2-3 / P2-4 / P2-5）。
+
+**关于 video-react（约 180 KB）**：它是以 JSX 组件形式使用的，需额外套一层 `React.lazy` + Suspense 才能延后加载。**未做** —— 因为 P2-5 计划用原生 `<video>` 直接移除这个停更库，先加包装层属于会被丢弃的改动。
+
 ### P2-2 popup 包 369 KB，只为跳转一次
 
 `src/popup/index.tsx` 的实际逻辑是 `chrome.runtime.openOptionsPage()` 后 `window.close()`，**渲染一个空 div**；但它 `import "~style.css"` 并且用 `data-text:~style.css` 建了一个**永远不会被渲染**的 shadow 容器 —— 于是整套 Tailwind 被塞进了这个 stub。
 
 **建议**：删掉 `data-text` / `getStyle` / `getShadowContainer` 这套 Plasmo 模板样板（该页不渲染 UI），只保留跳转逻辑。预期 369 KB → 接近 0。
+
+**实际处理**（2026-09-15）：已精简为只保留 `useEffect` + `return null`，删除 `~style.css` / `data-text:~style.css` 与三个 shadow 相关导出。
+
+```
+popup 包:  369 KB → 139 KB
+```
+
+**139 KB 是下限**：已核实其中就是 React + ReactDOM + scheduler（`createRoot` 渲染空组件也需要它们），不再有可削的部分。同时核查了 Plasmo 为 popup 生成的静态入口：它只使用 `Component.default`，**完全不引用**被删掉的那三个导出（0 次）。
 
 ### P2-3 平台图标 872 KB（76 个文件，按 16–24px 显示）
 
@@ -482,6 +519,15 @@ zip:               4.29 MB  →  4.36 MB
 
 **建议**：统一重采样到 32×32（或转 webp/ico），预计可省约 **800 KB** —— 对 4.3 MB 的包来说是接近 20% 的削减。
 
+**实际处理**（2026-09-15）：完成 **PNG 部分**。
+
+- 用 sharp 把 20 个 PNG 重采样到 64×64（渲染 20px × 3 倍屏 = 60px，留余量），并加 `withoutEnlargement` 避免放大：
+  **238 KB → 47 KB**（`qingting.png` 单文件 144 KB → 3 KB，原图是 2048×2048）；
+- 整套图标目录 **872 KB → 684 KB**；只替换「确实变小且透明度未变」的文件，否则跳过（实测跳过了 7 个已足够小的文件）。
+- 新增 `src/platform-icons.test.ts`：双向校验「src 中引用的图标都存在」+「assets 下没有无人引用的图标」，并含一条防扫描失效的数量断言。图标是字符串路径引用，写错扩展名只会表现为破图，这个测试把它变成会失败的检查。
+
+**ICO 部分未做（402 KB）**：先查证了可行性 —— 46 个 `.ico` 中有 **44 个是 BMP(DIB) 编码**、仅 2 个内嵌 PNG，而 sharp（libvips）**不支持读取 ICO**；此外 `.ico` 的引用分散在 5 个文件共 75 处（`sync/{article,video,dynamic,account,podcast}.ts`）。也就是说要做完整转换需要一个 DIB 解码器 + 改 75 处引用，收益 402 KB 但改动面较大且容易改错扩展名（`platform-icons.test.ts` 现在能兜住这类错误）。建议作为独立一项处理。
+
 ### P2-4 `wasm/` 约 1 MB 属可选兜底件
 
 | 文件 | 体积 | 说明 |
@@ -493,6 +539,27 @@ zip:               4.29 MB  →  4.36 MB
 Chrome MV3 环境**一定**有 WebAssembly，因此两个 `*_nowasm_fallback.js`（583 KB）在扩展里是永远不会走到的路径；`quickjs` 取决于是否需要 PDF 内嵌 JS。
 
 **建议**：先在 `scripts/copy-pdf-worker.mjs` 里排除这两个 fallback 文件，**实机验证扫描版 PDF（JBIG2/CCITT 与 JPEG2000 编码）渲染正常**后再提交。属「需实机验收」项。
+
+**实际处理**（2026-09-15）：**已查证，主动推迟**（不做）。
+
+原以为「Chrome 一定有 WASM，所以兜底件是死代码」，但读了 pdfjs 的实现后发现兜底不是静态判断，而是**尝试-失败回落**：
+
+```js
+async #getJsModule(fallbackCallback) {
+  let instance = null;
+  try {
+    const mod = await import(`${WasmImage.#wasmUrl}${this._noWasmFilename}`);   // 动态 import
+    instance = mod.default();
+  } catch (ex) {
+    warn(`#getJsModule: ${ex}`);
+  }
+  fallbackCallback(instance);            // ← 拿不到就是 null
+}
+```
+
+因此删掉这两个文件后，一旦 WASM 实例化失败（浏览器策略/开关、CSP、id 变化等），动态 `import()` 会 404 → `fallbackCallback(null)` → **扫描版 PDF 静默渲染成空白**，而不是报错。这个失败模式用户可见、且我在没有浏览器的情况下**无法验证**，所以不纳入本次发布。
+
+**接入方式（验证后可一行启用）**：在 `scripts/copy-pdf-worker.mjs` 里排除这两个文件即可（`wasm/` 目录复制处加一个文件名过滤），收益 **583 KB**（zip 的约 13%）。验证方法：导入一本**扫描版** PDF（JBIG2/CCITT 或 JPEG2000 编码，例如黑白扫描书），确认逐页转图正常。
 
 ### P2-5 死代码与死依赖
 
@@ -511,6 +578,31 @@ Chrome MV3 环境**一定**有 WebAssembly，因此两个 `*_nowasm_fallback.js`
 3. 移除 `@iconify/react`；
 4. `uuid` → `crypto.randomUUID()`；
 5. `video-react` 已是 npm 上的最新版（0.16.0，实质停更）—— 视频预览用原生 `<video>` 即可替掉这个遗留库。
+
+**实际处理**（2026-09-15）：**部分完成，并且纠正了本条审计里的两处错误判断**。
+
+已做：
+
+- ✅ 移除 `@iconify/react`（全仓库零导入，包括配置）；
+- ✅ `uuid` → 原生 `crypto.randomUUID()`（`keep-alive.ts` 运行在 MV3 service worker 的安全上下文中，该 API 可用），并移除依赖。
+- 两项移除后 lockfile 为**纯删除 21 行**，没有带动任何无关依赖升降级。
+
+**审计纠错 1：`docx-preview` / `jspdf` 不删。** README 明确写着「Word/WPS 导入已屏蔽，**相关代码与依赖保留，便于后续恢复**」—— 这是项目的既有意图，不是遗漏。而 `src/utils/docx.ts` 存在就意味着删掉依赖会让 `pnpm typecheck` 直接报找不到模块。因此改为**保留依赖**，并在本条记录：该功能恢复时可直接启用。
+
+**审计纠错 2：`html2canvas` 不是冗余，不能合并。** 读代码后发现 `utils/pptx.ts` 里它是**有意的回退路径**，注释写明「html-to-image 捕获失败，回退 html2canvas」：
+
+```ts
+try {
+  const dataUrl = await toImagePng(slideEl, { ... });
+} catch (error) {
+  console.warn("html-to-image 捕获失败，回退 html2canvas:", error);
+  const canvas = await html2canvas(slideEl, { ... });
+}
+```
+
+合并两者会去掉容错，属于**功能退化**，故不做。
+
+**仍未做**：`video-react` → 原生 `<video>`（需要实机确认预览/播放行为，且属 UI 行为变更）。
 
 ### P2-6 英文语言包缺 3 个 key
 
@@ -643,12 +735,12 @@ src/components/Sync/DynamicTab.tsx(1072,33): error TS2339: Property 'type' does 
 10. ~~语言包键覆盖检查接入 CI~~（已完成，并借它查出并修复 3 个缺陷）
 11. P1-1 继续补纯函数单测：话题转换与标题截断**已完成**；Markdown 往返、平台分组**待办**
 
-**第三批（体积与可观测性）**
+**第三批（体积与可观测性）—— 已完成 2026-09-15（除注明外）**
 
-12. P2-1 重库动态导入（注意本批已实证过一次「误引入重库导致分包 +70 KB」，见 P2-1）→ P2-2 popup 瘦身 → P2-3 图标压缩；
-13. P0-3 logger 落地（可与体积优化并行）；
-14. P2-5 依赖清理、P2-4 wasm 可选件（需实机验收）；
-15. P3 中的低风险小升级（`pdfjs-dist` / `marked` / `turndown`）。
+12. ~~P2-1 重库动态导入~~（已完成：options 首包 4191 → 1845 KB）；~~P2-2 popup 瘦身~~（369 → 139 KB）；~~P2-3 图标压缩~~（**PNG 部分**完成：872 → 684 KB；ICO 402 KB 待办）
+13. ~~P0-3 logger 落地~~（已完成：迁移 2311 处，src 内 console 归零）
+14. P2-5 依赖清理（已移除 `uuid` / `@iconify/react`）；P2-4 wasm 可选件 —— **待办**（已查证失败模式，需实机验证扫描版 PDF 后再启用，见该条）
+15. P3 中的低风险小升级：`pdfjs-dist` / `marked` / `turndown` —— 已有 Dependabot 自动开 PR（`pdfjs-dist` 6.3.289、`tailwindcss` 3.4.19、prod-patch 组均已过 CI）
 
 **第四批（大版本与生态）**
 
@@ -719,4 +811,25 @@ sh .husky/_/commit-msg <(printf 'bad message')   # 期望 exit=1
 sh .husky/_/pre-commit                            # 期望 exit=0
 ```
 
-**未验证项（需实机验收）**：P0-1 修复后在设置页用 `*.pupu.app` 验证同后缀域名被拒；P0-2 修复后从 URL 导入含内联 HTML 的文章并发布；P2-1 动态导入后的首屏体积与功能；P2-4 剔除 wasm 兜底件后的扫描版 PDF 渲染；P3 大版本升级后的界面与发布流程；P4-2 收窄权限后的平台适配。
+**未验证项（需实机验收）**：P0-1 修复后在设置页用 `*.pupu.app` 验证同后缀域名被拒；P0-2 修复后从 URL 导入含内联 HTML 的文章并发布；P2-1 动态导入后**首次导入 PDF / PPT 是否正常**（分包按需加载）；P2-4 剔除 wasm 兜底件后的扫描版 PDF 渲染；P3 大版本升级后的界面与发布流程；P4-2 收窄权限后的平台适配。
+
+---
+
+## 附录 B · 第三批新增的验证命令
+
+```bash
+# 三类静态验证
+pnpm typecheck                                            # 迁移 2311 处日志后仍为 0 错误
+pnpm test                                                 # 76 个用例（含 logger 分级门禁、图标一致性）
+grep -rl "process.env.NODE_ENV" build/chrome-mv3-prod/     # 应为空；否则 service worker 里会 process is not defined
+
+# 动态分包是否正确接线（无浏览器时可做的检查）
+O=$(find build/chrome-mv3-prod -maxdepth 1 -name 'options.*.js' | head -1)
+grep -c "pptx\." "$O" ; grep -c "pdf\." "$O"               # 首包应引用分包名
+unzip -l build/pupu-v0.2.8.zip | grep -E "pptx\.|pdf\."    # 分包应在包内
+grep -q PDFDocumentLoadingTask "$O" && echo "pdfjs 仍在首包" || echo "pdfjs 已移出首包"
+
+# 体积
+find build/chrome-mv3-prod -maxdepth 1 -name '*.js' -printf '%s\t%f\n' | sort -rn | head -5
+du -sk assets/platforms
+```
