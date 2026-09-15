@@ -43,9 +43,24 @@
 
 ## 📦 安装使用
 
-1. 到 [Releases](https://github.com/luskyle/pupu/releases/latest) 下载最新的 `pupu-v<version>.zip` 并解压（解压后目录中应能看到 `manifest.json`）
+pupu 同时提供 `.crx` 与 `.zip` 两种产物，Chrome / Edge 用哪个都可以：
+
+**方式一：`.crx` 直接安装（推荐，无需解压）**
+
+1. 到 [Releases](https://github.com/luskyle/pupu/releases/latest) 下载 `pupu-v<version>.crx`
+2. 打开 `chrome://extensions`（Edge 为 `edge://extensions`），开启右上角「开发者模式」
+3. 把 `.crx` 文件**拖进扩展管理页**，在弹窗中点「添加扩展程序」即可
+
+**方式二：`.zip` 加载已解压的扩展**
+
+1. 下载 `pupu-v<version>.zip` 并解压（解压后目录中应能看到 `manifest.json`）
 2. 打开 `chrome://extensions`，开启右上角「开发者模式」
 3. 点击「加载已解压的扩展程序」，选择解压出的目录
+
+> - 扩展 ID：**`nffpajdealkjpdmjjboneelajanbboig`**（由签名密钥决定，各版本固定不变）
+> - Edge 与 Chrome 同为 Chromium，使用同一份 `.crx` / `.zip`，无需分别下载
+> - 两种方式都需要开启「开发者模式」：这是不经过应用商店安装的浏览器限制，与扩展本身无关
+> - Safari 暂不支持：Safari 扩展必须由 Xcode 打包成 App 分发，且本扩展依赖的 `sidePanel` / `tabGroups` 在 Safari 上并不存在
 
 > 更详细的安装、使用与常见问题见 **在线文档**：<https://luskyle.github.io/pupu/guide.html>
 
@@ -61,12 +76,23 @@ pnpm dev        # 启动 Plasmo 开发模式（热更新）
 ### 构建
 
 ```bash
-pnpm build      # 版本号 +1 → 构建 → 复制 PDF worker / 平台图标 → 打包 zip
+pnpm build      # 版本号 +1 → 构建 → 复制 PDF worker / 平台图标 → 打包 zip + CRX
 pnpm build:ci   # 同上，但不修改版本号（CI 使用）
+pnpm crx        # 只打包 CRX（需要签名密钥）
+pnpm verify:crx # 校验 CRX3 签名与包内内容
 ```
 
 构建产物位于 `build/chrome-mv3-prod/`，可在浏览器扩展管理页「加载已解压的扩展程序」中导入；
-打包后的压缩包为 `build/pupu-v<version>.zip`。
+打包产物为 `build/pupu-v<version>.zip` 与 `build/pupu-v<version>.crx`。
+
+> 🔑 CRX 签名密钥决定扩展 ID，必须长期保持不变：本地放 `keys/pupu.pem`（已被 `.gitignore` 忽略），
+> CI 从仓库 Secret `CRX_PRIVATE_KEY` 读取。**没有密钥时 `pnpm crx` 会跳过而不是自动生成新密钥** ——
+> 新密钥意味着新扩展 ID，已安装的用户将无法收到更新。生成密钥并写入 Secret：
+>
+> ```bash
+> openssl genrsa -out keys/pupu.pem 2048
+> gh secret set CRX_PRIVATE_KEY < keys/pupu.pem
+> ```
 
 > ⚠️ 构建后会自动执行 `scripts/copy-pdf-worker.mjs`（复制 PDF worker、PDF 图像解码器 WASM 与离线平台图标到产物），
 > 若直接用 `npx plasmo build` 则需手动补跑，否则 PDF 转图片与平台图标会缺失。
@@ -85,8 +111,8 @@ pnpm format     # 格式化
 
 | 工作流 | 触发条件 | 作用 |
 | --- | --- | --- |
-| [`CI`](.github/workflows/ci.yml) | push 到 `main`、PR、手动 | `pnpm install` → `pnpm lint` → `pnpm build:ci`，校验产物（manifest 版本、PDF worker、WASM、平台图标）并上传 zip 与解压目录为构建产物 |
-| [`Release`](.github/workflows/release.yml) | 推送 `v*` 标签、手动 | 将 `package.json` 版本号同步为标签版本 → 构建 → 校验包内 `manifest.json` 版本 → 创建 GitHub Release 并附上 `pupu-v<version>.zip` |
+| [`CI`](.github/workflows/ci.yml) | push 到 `main`、PR、手动 | `pnpm install` → `pnpm lint` → `pnpm build:ci`，校验产物（manifest 版本、PDF worker、WASM、平台图标），并用临时密钥打包 CRX 做冒烟测试，最后上传 zip 与解压目录为构建产物 |
+| [`Release`](.github/workflows/release.yml) | 推送 `v*` 标签、手动 | 将 `package.json` 版本号同步为标签版本 → 构建 → 用 `CRX_PRIVATE_KEY` 签名出 CRX 并校验签名 → 创建 GitHub Release，附上 `pupu-v<version>.zip` 与 `pupu-v<version>.crx` |
 | [`Deploy Pages`](.github/workflows/pages.yml) | push 到 `main` 且改动 `docs/**`、手动 | 将 `docs/` 部署到 GitHub Pages（官网与文档站） |
 
 ### 发布一个新版本
@@ -96,7 +122,10 @@ git tag v0.2.5
 git push origin v0.2.5
 ```
 
-推送标签后会自动构建并发布 Release；也可以在 Actions 页面手动运行 `Release` 工作流并填写版本号（留空则使用 `package.json` 中的版本号），工作流会自动创建对应标签。
+推送标签后会自动构建并发布 Release（zip + crx）；也可以在 Actions 页面手动运行 `Release` 工作流并填写版本号（留空则使用 `package.json` 中的版本号），工作流会自动创建对应标签。
+
+> 🔐 Release 需要仓库 Secret `CRX_PRIVATE_KEY`（CRX 签名密钥）。缺失时工作流会直接失败并给出提示，
+> 不会用临时密钥签出一个扩展 ID 不同的产物。
 
 > ℹ️ 官网与文档站部署需要一次性在仓库 **Settings → Pages** 将 **Source** 设为 **GitHub Actions**。
 

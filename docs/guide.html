@@ -51,31 +51,49 @@
 
           <h2 id="install">安装</h2>
           <p>pupu 提供已经打包好的扩展压缩包，无需自己编译即可安装使用。</p>
+          <h3>方式一：安装 .crx（推荐，无需解压）</h3>
+          <ol class="steps">
+            <li>
+              <h3>下载 .crx</h3>
+              <p>
+                在
+                <a href="https://github.com/luskyle/pupu/releases/latest" target="_blank" rel="noreferrer">Releases</a>
+                页面下载 <code>pupu-v&lt;version&gt;.crx</code>。
+              </p>
+            </li>
+            <li>
+              <h3>打开扩展管理页并开启开发者模式</h3>
+              <p>
+                Chrome 输入 <code>chrome://extensions</code>，Edge 输入 <code>edge://extensions</code>，打开右上角「开发者模式」。
+              </p>
+            </li>
+            <li>
+              <h3>把 .crx 拖进页面</h3>
+              <p>把 <code>.crx</code> 文件拖入扩展管理页，在弹窗中点「添加扩展程序」即可。</p>
+            </li>
+          </ol>
+
+          <h3>方式二：加载已解压的 .zip</h3>
           <ol class="steps">
             <li>
               <h3>下载并解压</h3>
               <p>
-                在
-                <a href="https://github.com/luskyle/pupu/releases/latest" target="_blank" rel="noreferrer"
-                  >Releases</a
-                >
-                页面下载最新的 <code>pupu-v&lt;version&gt;.zip</code>，解压到任意目录。解压后目录中应当直接能看到
-                <code>manifest.json</code>。
+                下载 <code>pupu-v&lt;version&gt;.zip</code>，解压到任意目录。解压后目录中应当直接能看到 <code>manifest.json</code>。
               </p>
             </li>
             <li>
-              <h3>打开扩展管理页</h3>
-              <p>在 Chrome / Edge 地址栏输入 <code>chrome://extensions</code>。</p>
-            </li>
-            <li>
-              <h3>开启开发者模式</h3>
-              <p>打开页面右上角的「开发者模式」开关。</p>
+              <h3>打开扩展管理页并开启开发者模式</h3>
+              <p>同上，打开页面右上角的「开发者模式」开关。</p>
             </li>
             <li>
               <h3>加载已解压的扩展程序</h3>
               <p>点击左上角「加载已解压的扩展程序」，选中第 1 步解压出的目录。</p>
             </li>
           </ol>
+          <div class="note">
+            扩展 ID 为 <strong><code>nffpajdealkjpdmjjboneelajanbboig</code></strong
+            >（由签名密钥决定，各版本固定不变）。Edge 与 Chrome 同为 Chromium，共用同一份 <code>.crx</code> / <code>.zip</code>。
+          </div>
           <div class="note">
             安装后点击工具栏的 pupu 图标会自动打开扩展主界面（选项页），侧边栏用于平台选择与账号管理。
           </div>
@@ -147,16 +165,25 @@
           <p>需要 Node.js 与 <a href="https://pnpm.io/" target="_blank" rel="noreferrer">pnpm</a>。</p>
           <pre><code>pnpm install
 pnpm dev        # 启动 Plasmo 开发模式（热更新）</code></pre>
-          <p>构建产物的命令有两个：</p>
-          <pre><code>pnpm build      # 版本号 +1 → 构建 → 复制 PDF worker / 平台图标 → 打包 zip
-pnpm build:ci   # 同上，但不修改版本号（CI 使用）</code></pre>
+          <p>构建产物的命令：</p>
+          <pre><code>pnpm build      # 版本号 +1 → 构建 → 复制 PDF worker / 平台图标 → 打包 zip + CRX
+pnpm build:ci   # 同上，但不修改版本号（CI 使用）
+pnpm crx        # 只打包 CRX（需要签名密钥）
+pnpm verify:crx # 校验 CRX3 签名与包内内容</code></pre>
           <p>
-            构建产物位于 <code>build/chrome-mv3-prod/</code>，压缩包为 <code>build/pupu-v&lt;version&gt;.zip</code>。
+            构建产物位于 <code>build/chrome-mv3-prod/</code>，打包产物为 <code>build/pupu-v&lt;version&gt;.zip</code> 与
+            <code>build/pupu-v&lt;version&gt;.crx</code>。
           </p>
           <div class="note">
             <strong>注意：</strong>构建后会自动执行 <code>scripts/copy-pdf-worker.mjs</code>，把 PDF worker、PDF 图像解码器
             WASM 与离线平台图标复制进产物。若直接使用 <code>npx plasmo build</code>，需要手动补跑该脚本，否则 PDF
             转图片与平台图标会缺失。
+          </div>
+          <div class="note">
+            <strong>签名密钥：</strong>CRX 的扩展 ID 由签名密钥决定，必须长期保持不变。本地密钥放在
+            <code>keys/pupu.pem</code>（已被 <code>.gitignore</code> 忽略），CI 从仓库 Secret
+            <code>CRX_PRIVATE_KEY</code> 读取。没有密钥时 <code>pnpm crx</code> 会跳过而不会自动生成新密钥 —— 新密钥会产生新的
+            扩展 ID，已安装用户将收不到更新。
           </div>
           <h3>代码检查</h3>
           <pre><code>pnpm lint       # 代码检查（Biome）
@@ -177,12 +204,18 @@ pnpm format     # 格式化</code></pre>
               <tr>
                 <th><code>CI</code></th>
                 <td>push 到 main、PR、手动</td>
-                <td>安装依赖 → <code>pnpm lint</code> → <code>pnpm build:ci</code>，校验产物并上传 zip 与解压目录为构建产物</td>
+                <td>
+                  安装依赖 → <code>pnpm lint</code> → <code>pnpm build:ci</code>，校验产物；再用临时密钥打包 CRX 做冒烟测试，最后上传
+                  zip 与解压目录为构建产物
+                </td>
               </tr>
               <tr>
                 <th><code>Release</code></th>
                 <td>推送 <code>v*</code> 标签、手动</td>
-                <td>把 package.json 版本号同步为标签版本 → 构建 → 校验 manifest 版本 → 创建 Release 并附上 zip</td>
+                <td>
+                  把 package.json 版本号同步为标签版本 → 构建 → 用 <code>CRX_PRIVATE_KEY</code> 签名出 CRX 并校验签名 → 创建
+                  Release，附上 <code>pupu-v&lt;version&gt;.zip</code> 与 <code>pupu-v&lt;version&gt;.crx</code>
+                </td>
               </tr>
               <tr>
                 <th><code>Deploy Pages</code></th>
@@ -195,11 +228,27 @@ pnpm format     # 格式化</code></pre>
           <pre><code>git tag v0.2.5
 git push origin v0.2.5</code></pre>
           <p>
-            推送标签后，Release 工作流会自动构建 <code>pupu-v0.2.5.zip</code>、校验扩展 manifest 中的版本号与标签一致，并发布到
-            Releases 页面。也可以在 Actions 页面手动运行 <code>Release</code> 工作流并填写版本号，它会自动创建对应标签。
+            推送标签后，Release 工作流会自动构建出 <code>pupu-v0.2.5.zip</code> 与 <code>pupu-v0.2.5.crx</code>、校验扩展
+            manifest 中的版本号与标签一致以及 CRX 签名，然后发布到 Releases 页面。也可以在 Actions 页面手动运行
+            <code>Release</code> 工作流并填写版本号，它会自动创建对应标签。
           </p>
+          <div class="note">
+            <strong>缺少 Secret 会失败而不是降级：</strong>Release 需要仓库 Secret <code>CRX_PRIVATE_KEY</code>，缺失时工作流直接报错退出，
+            避免用临时密钥签出一个扩展 ID 不同的 CRX 发出去。
+          </div>
 
           <h2 id="faq">常见问题</h2>
+          <h3>.crx 拖进浏览器后提示无法安装 / 扩展被停用？</h3>
+          <p>
+            这是 Chrome / Edge 对「非应用商店扩展」的限制，不是扩展本身的问题：需要先在扩展管理页打开右上角的「开发者模式」，再把
+            <code>.crx</code> 拖进去；关闭开发者模式后，这类扩展可能被浏览器自动停用。若要保持长期稳定分发，建议上架 Chrome Web
+            Store / Microsoft Edge 加载项商店 —— 上架与后续更新都要沿用同一把签名密钥，以保持扩展 ID 不变。
+          </p>
+          <h3>有 Safari 版本吗？</h3>
+          <p>
+            暂时没有。Safari 扩展不能像 <code>.crx</code> 那样单独分发，必须由 Xcode 打包成宿主 App 并通过 App Store
+            分发；另外本扩展依赖的 <code>sidePanel</code>（侧边栏选平台）与 <code>tabGroups</code> 在 Safari 上并不存在，即使转换出来核心流程也无法工作。
+          </p>
           <h3>扩展里的 PDF / 平台图标显示不出来？</h3>
           <p>
             通常是没有执行复制脚本导致的。重新运行 <code>pnpm build:ci</code>（或 <code>pnpm dev</code>）即可，产物中应当存在
