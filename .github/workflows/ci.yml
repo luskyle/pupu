@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: 代码检查与打包
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.18.0
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 代码检查
+        run: pnpm lint
+
+      - name: 读取版本号
+        id: version
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: 构建扩展
+        run: pnpm build:ci
+
+      - name: 校验产物
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -eu
+          zip="build/pupu-v${VERSION}.zip"
+          test -f "$zip" || { echo "未找到构建产物 $zip"; ls -l build; exit 1; }
+          manifest_version=$(unzip -p "$zip" manifest.json | node -e "let s='';process.stdin.on('data',(d)=>s+=d).on('end',()=>console.log(JSON.parse(s).version))")
+          echo "package.json: $VERSION / manifest: $manifest_version"
+          test "$VERSION" = "$manifest_version"
+          for f in pdf.worker.min.mjs wasm assets/platforms/51cto.ico; do
+            unzip -l "$zip" | grep -q "$f" || { echo "缺少 $f"; exit 1; }
+          done
+          echo "SHA256: $(sha256sum "$zip" | cut -d' ' -f1)"
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: pupu-chrome-mv3-${{ steps.version.outputs.version }}
+          path: |
+            build/pupu-v${{ steps.version.outputs.version }}.zip
+            build/chrome-mv3-prod
+          if-no-files-found: error
+          retention-days: 14

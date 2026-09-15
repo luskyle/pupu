@@ -6,7 +6,7 @@ allowBuilds:
   '@heroui/shared-utils': true
   '@parcel/watcher': true
   '@swc/core': true
-  core-js: set this to true or false
+  core-js: false
   esbuild: true
   lmdb: true
   msgpackr-extract: true

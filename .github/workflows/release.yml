@@ -1,0 +1,105 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "版本号（不含 v 前缀，如 0.2.5）。留空则使用 package.json 中的版本号"
+        required: false
+        default: ""
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: 打包并发布 Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.18.0
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 解析版本号
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -eu
+          VERSION="$INPUT_VERSION"
+          if [ -z "$VERSION" ]; then
+            if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+              VERSION="${GITHUB_REF_NAME#v}"
+            else
+              VERSION="$(node -p "require('./package.json').version")"
+            fi
+          fi
+          echo "版本号: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: 同步 package.json 版本号
+        run: pnpm pkg set version="${{ steps.version.outputs.version }}"
+
+      - name: 代码检查
+        run: pnpm lint
+
+      - name: 构建扩展
+        run: pnpm build:ci
+
+      - name: 校验产物版本
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -eu
+          zip="build/pupu-v${VERSION}.zip"
+          test -f "$zip" || { echo "未找到构建产物 $zip"; ls -l build; exit 1; }
+          manifest_version=$(unzip -p "$zip" manifest.json | node -e "let s='';process.stdin.on('data',(d)=>s+=d).on('end',()=>console.log(JSON.parse(s).version))")
+          echo "tag/输入版本: $VERSION / manifest: $manifest_version"
+          test "$VERSION" = "$manifest_version"
+          for f in pdf.worker.min.mjs wasm assets/platforms/51cto.ico; do
+            unzip -l "$zip" | grep -q "$f" || { echo "缺少 $f"; exit 1; }
+          done
+          echo "SHA256: $(sha256sum "$zip" | cut -d' ' -f1)"
+
+      - name: 创建 GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -eu
+          TAG="v${VERSION}"
+          ZIP="build/pupu-v${VERSION}.zip"
+          test -f "$ZIP"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            gh release create "$TAG" "$ZIP" \
+              --title "pupu $TAG" \
+              --generate-notes
+          else
+            gh release create "$TAG" "$ZIP" \
+              --title "pupu $TAG" \
+              --target "$GITHUB_SHA" \
+              --generate-notes
+          fi
