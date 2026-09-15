@@ -16,46 +16,47 @@
 
 ## 修订记录
 
-| 日期 | 变更 |
-| --- | --- |
-| 2026-09-15 | 首次审计（基线 v0.2.5 / `abff568`） |
-| 2026-09-15 | 完成第一批修复：P0-1、P0-2、P1-2、P2-6；P1-1 部分完成（引入 vitest + jsdom，35 个单测，已接入 CI） |
-| 2026-09-15 | 审计修正：P0-1 实际存在 **2 处**（原文只记了 1 处）；P0-2 中「DynamicTab 同样需处理」为**误报**（该处已做转义）；新增发现 P1-7 |
-| 2026-09-15 | 完成第二批修复：P1-7、P1-4、P1-5（部分）、P1-6（部分）；P1-1 继续补测（共 66 个用例） |
-| 2026-09-15 | 新增发现：`engines` 字段会让 Parcel 构建失败（见 P1-5）；语言包校验自动化后又查出 3 个真实缺陷；`escapeHtml` 放错模块导致分包 +70 KB（见 P2-1） |
-| 2026-09-15 | 完成第三批：P0-3（日志全量收敛）、P2-1、P2-2、P2-3（PNG 部分）、P2-5（部分）；P2-4 经查证后**主动推迟**（理由见该条） |
-| 2026-09-15 | 第三批实测：`options` 首包 4191 → 1845 KB、`popup` 369 → 139 KB、平台图标 872 → 684 KB、zip 4.29 → 4.14 MB |
-| 2026-09-15 | 合并 4 个 Dependabot PR（HeroUI 2.8.10 / Tailwind 3.4.19 / pdfjs 6.3.289 / prod-patch）；实测 HeroUI 2.8 使首屏 +144 KB、zip +130 KB（对照实验确认） |
-| 2026-09-15 | CRX 路线证伪：自签名 CRX 无法安装（`CRX_REQUIRED_PROOF_MISSING`），Release 改为只附 zip，历史 crx 附件已移除（见 P4-1） |
-| 2026-09-15 | 版本号全自动化（关于页/站点/徽章）+ 标签一致性闸门 + 本地落后检查；见「第四批详评」 |
-| 2026-09-15 | **第四批复评**：实测出 3 处 unmet peer（`@types/node` / `esbuild` / `tailwindcss`），确认 React 19 → Tailwind 4 → HeroUI 3 的耦合顺序，并把「上架商店」提为价值最高的下一步 |
+| 日期       | 变更                                                                                                                                                                                              |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-15 | 首次审计（基线 v0.2.5 /`abff568`）                                                                                                                                                              |
+| 2026-09-15 | 完成第一批修复：P0-1、P0-2、P1-2、P2-6；P1-1 部分完成（引入 vitest + jsdom，35 个单测，已接入 CI）                                                                                                |
+| 2026-09-15 | 审计修正：P0-1 实际存在**2 处**（原文只记了 1 处）；P0-2 中「DynamicTab 同样需处理」为**误报**（该处已做转义）；新增发现 P1-7                                                         |
+| 2026-09-15 | 完成第二批修复：P1-7、P1-4、P1-5（部分）、P1-6（部分）；P1-1 继续补测（共 66 个用例）                                                                                                             |
+| 2026-09-15 | 新增发现：`engines` 字段会让 Parcel 构建失败（见 P1-5）；语言包校验自动化后又查出 3 个真实缺陷；`escapeHtml` 放错模块导致分包 +70 KB（见 P2-1）                                               |
+| 2026-09-15 | 完成第三批：P0-3（日志全量收敛）、P2-1、P2-2、P2-3（PNG 部分）、P2-5（部分）；P2-4 经查证后**主动推迟**（理由见该条）                                                                       |
+| 2026-09-15 | 第三批实测：`options` 首包 4191 → 1845 KB、`popup` 369 → 139 KB、平台图标 872 → 684 KB、zip 4.29 → 4.14 MB                                                                                |
+| 2026-09-15 | 合并 4 个 Dependabot PR（HeroUI 2.8.10 / Tailwind 3.4.19 / pdfjs 6.3.289 / prod-patch）；实测 HeroUI 2.8 使首屏 +144 KB、zip +130 KB（对照实验确认）                                              |
+| 2026-09-15 | CRX 路线证伪：自签名 CRX 无法安装（`CRX_REQUIRED_PROOF_MISSING`），Release 改为只附 zip，历史 crx 附件已移除（见 P4-1）                                                                         |
+| 2026-09-15 | 版本号全自动化（关于页/站点/徽章）+ 标签一致性闸门 + 本地落后检查；见「第四批详评」                                                                                                               |
+| 2026-09-15 | **第四批复评**：实测出 3 处 unmet peer（`@types/node` / `esbuild` / `tailwindcss`），确认 React 19 → Tailwind 4 → HeroUI 3 的耦合顺序，并把「上架商店」提为价值最高的下一步         |
 | 2026-09-15 | **功能向复评**：查出 1 个功能性缺陷 —— 「发布完成」是无条件成功的**假成功路径**（见 F0）；实测语言包 **172 / 383（44.9%）** key 零引用；新增「功能向建议（产品视角）」F0–F13 |
+| 2026-09-15 | **完成 F0 + F1**：后台失败必回执、按 `ok` 判定成败；填充结果由注入成败推导（不改适配器）写入任务记录；侧边栏按平台展示状态与原因、失败数进徽标、失败项可重试。顺带修掉「页面先加载完则永不注入」与重试竞态两个既有问题；+12 个单测（共 88）、产物 +4.3 KB、新增依赖 0 |
 
 ## 结论摘要
 
-| 级别 | 项目 | 实测证据 | 建议 | 工作量 | 状态 |
-| --- | --- | --- | --- | --- | --- |
-| P0 | 可信域名通配符匹配可被绕过（**2 处**） | `trust-domain.ts:52-54`、`contents/extension.ts:24-26` | 加子域点边界判断 | 小 | **已修复** |
-| P0 | Markdown 预览与发布载荷未消毒 | `ArticleTab.tsx:71,263` | 接入 DOMPurify | 小 | **已修复** |
-| P0 | 生产代码 1153 处 `console.log` | 70 个文件 | 落地分级 logger | 中 | **已修复**（迁移 2311 处，src 内 console 归零） |
-| P1 | 零测试（183 文件 / 3.8 万行） | 无 test 脚本、0 测试文件 | 引入 vitest，先测纯函数 | 中大 | **进行中**（66 个用例，已接入 CI） |
-| P1 | husky 钩子未生效 | `.husky/` 下只有 `_` | 补 `pre-commit` / `commit-msg` | 小 | **已修复** |
-| P1 | TS `strict: false` + 67 处 `any` | plasmo tsconfig.base | 分步开严格模式 | 大 | 待办 |
-| P1 | CI 不做类型检查 | `.github/workflows/ci.yml` | 加 `tsc --noEmit` | 小 | **已修复** |
-| P1 | 环境不固定（无 `engines` / `packageManager`） | package.json | 补版本声明 | 小 | **部分完成**（`packageManager` + `.nvmrc`；`engines` 因 Parcel 冲突不可用） |
-| P1 | 分支无保护、Dependabot 关闭 | `gh api` 查询结果 | 开启必需检查与依赖告警 | 小 | **部分完成**（Dependabot 已配置；分支保护见下方说明） |
-| P1 | 动态适配器把用户文本未转义拼进 `innerHTML` | `maimai.ts:59`、`weixinchannel.ts:253` | 先转义再拼 `<br>` | 小 | **已修复** |
-| P1 | 「发布完成」是**无条件成功**的（假成功路径） | `PublishConfirm.tsx:74-97`（`onDone(true)` 写在 `finally` 里）+ `sidepanel/index.tsx:154-159` + `background/index.ts:129-135`（失败不回执） | 按回执/超时判定，失败可见 | 小 | 待办（新增，详见 F0） |
-| P2 | 产物 18 MB，重库全静态引入 | options chunk 4.16 MB | 重库改动态 `import()` | 中 | **已修复**（options 首包 4191 → 1845 KB） |
-| P2 | popup 包 369 KB 只为跳转 | `popup/index.tsx` | 去掉无用 shadow CSS | 小 | **已修复**（369 → 139 KB，余量为 React 下限） |
-| P2 | 平台图标 872 KB，单图最大 144 KB | 按 16–24px 显示 | 统一压到 32px | 小 | **PNG 已完成**（872 → 684 KB）；ICO 402 KB 待办 |
-| P2 | `wasm/` 约 1 MB 为可选兜底件 | pdfjs fallback 与 quickjs | 评估剔除 | 小 | **已查证，主动推迟**（见该条） |
-| P2 | 死代码 / 死依赖 | `utils/docx.ts` 0 引用等 | 清理依赖声明 | 小 | **部分完成**（移除 `uuid`、`@iconify/react`；docx 依赖按项目意图保留） |
-| P2 | 英文语言包缺 3 个 key | en 缺 `optionsCoverImage` 等 | 补齐 | 小 | **已修复** |
-| P3 | 一批大版本升级积压 | React 18 / HeroUI 2 / Tailwind 3 | 一次一个 PR；顺序已被实测约束为 **React 19 → Tailwind 4 → HeroUI 3**（见「第四批详评」） | 大 | 待办 |
-| P3 | 依赖树已有 3 处 unmet peer | `pnpm peers check` | 先补 `@types/node`；`esbuild` 结构性冲突需留意；`tailwindcss >=4` 由 theme 2.4.26 带来 → Tailwind 4 应提上日程 | 小 | 待办（新增） |
-| P3 | `@types/chrome` 升级被类型门禁拦下 | CI 4 个错误，已定位到行与改法 | 改 1 处类型名（`OnUpdatedInfo`）+ 2 处 `storage.get` 泛型，即可解锁 dev 依赖组 PR | 小 | 待办（新增） |
-| P4 | 未上架商店、隐私说明缺失、权限过宽 | `host_permissions: https://*/*` | 上架 + 补文档 + 收窄权限 | 中 | 待办（**当前价值最高**：crx 路线证伪后，这是摆脱「开发者模式」的唯一途径） |
+| 级别 | 项目                                               | 实测证据                                                                                                                                              | 建议                                                                                                                 | 工作量 | 状态                                                                                    |
+| ---- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------- |
+| P0   | 可信域名通配符匹配可被绕过（**2 处**）       | `trust-domain.ts:52-54`、`contents/extension.ts:24-26`                                                                                            | 加子域点边界判断                                                                                                     | 小     | **已修复**                                                                        |
+| P0   | Markdown 预览与发布载荷未消毒                      | `ArticleTab.tsx:71,263`                                                                                                                             | 接入 DOMPurify                                                                                                       | 小     | **已修复**                                                                        |
+| P0   | 生产代码 1153 处`console.log`                    | 70 个文件                                                                                                                                             | 落地分级 logger                                                                                                      | 中     | **已修复**（迁移 2311 处，src 内 console 归零）                                   |
+| P1   | 零测试（183 文件 / 3.8 万行）                      | 无 test 脚本、0 测试文件                                                                                                                              | 引入 vitest，先测纯函数                                                                                              | 中大   | **进行中**（66 个用例，已接入 CI）                                                |
+| P1   | husky 钩子未生效                                   | `.husky/` 下只有 `_`                                                                                                                              | 补`pre-commit` / `commit-msg`                                                                                    | 小     | **已修复**                                                                        |
+| P1   | TS`strict: false` + 67 处 `any`                | plasmo tsconfig.base                                                                                                                                  | 分步开严格模式                                                                                                       | 大     | 待办                                                                                    |
+| P1   | CI 不做类型检查                                    | `.github/workflows/ci.yml`                                                                                                                          | 加`tsc --noEmit`                                                                                                   | 小     | **已修复**                                                                        |
+| P1   | 环境不固定（无`engines` / `packageManager`）   | package.json                                                                                                                                          | 补版本声明                                                                                                           | 小     | **部分完成**（`packageManager` + `.nvmrc`；`engines` 因 Parcel 冲突不可用） |
+| P1   | 分支无保护、Dependabot 关闭                        | `gh api` 查询结果                                                                                                                                   | 开启必需检查与依赖告警                                                                                               | 小     | **部分完成**（Dependabot 已配置；分支保护见下方说明）                             |
+| P1   | 动态适配器把用户文本未转义拼进`innerHTML`        | `maimai.ts:59`、`weixinchannel.ts:253`                                                                                                            | 先转义再拼`<br>`                                                                                                   | 小     | **已修复**                                                                        |
+| P1   | 「发布完成」是**无条件成功**的（假成功路径） | `PublishConfirm.tsx:74-97`（`onDone(true)` 写在 `finally` 里）+ `sidepanel/index.tsx:154-159` + `background/index.ts:129-135`（失败不回执） | 按回执/超时判定，失败可见                                                                                            | 小     | **已修复**（见 F0、F1）                                                                   |
+| P2   | 产物 18 MB，重库全静态引入                         | options chunk 4.16 MB                                                                                                                                 | 重库改动态`import()`                                                                                               | 中     | **已修复**（options 首包 4191 → 1845 KB）                                        |
+| P2   | popup 包 369 KB 只为跳转                           | `popup/index.tsx`                                                                                                                                   | 去掉无用 shadow CSS                                                                                                  | 小     | **已修复**（369 → 139 KB，余量为 React 下限）                                    |
+| P2   | 平台图标 872 KB，单图最大 144 KB                   | 按 16–24px 显示                                                                                                                                      | 统一压到 32px                                                                                                        | 小     | **PNG 已完成**（872 → 684 KB）；ICO 402 KB 待办                                  |
+| P2   | `wasm/` 约 1 MB 为可选兜底件                     | pdfjs fallback 与 quickjs                                                                                                                             | 评估剔除                                                                                                             | 小     | **已查证，主动推迟**（见该条）                                                    |
+| P2   | 死代码 / 死依赖                                    | `utils/docx.ts` 0 引用等                                                                                                                            | 清理依赖声明                                                                                                         | 小     | **部分完成**（移除 `uuid`、`@iconify/react`；docx 依赖按项目意图保留）        |
+| P2   | 英文语言包缺 3 个 key                              | en 缺`optionsCoverImage` 等                                                                                                                         | 补齐                                                                                                                 | 小     | **已修复**                                                                        |
+| P3   | 一批大版本升级积压                                 | React 18 / HeroUI 2 / Tailwind 3                                                                                                                      | 一次一个 PR；顺序已被实测约束为**React 19 → Tailwind 4 → HeroUI 3**（见「第四批详评」）                      | 大     | 待办                                                                                    |
+| P3   | 依赖树已有 3 处 unmet peer                         | `pnpm peers check`                                                                                                                                  | 先补`@types/node`；`esbuild` 结构性冲突需留意；`tailwindcss >=4` 由 theme 2.4.26 带来 → Tailwind 4 应提上日程 | 小     | 待办（新增）                                                                            |
+| P3   | `@types/chrome` 升级被类型门禁拦下               | CI 4 个错误，已定位到行与改法                                                                                                                         | 改 1 处类型名（`OnUpdatedInfo`）+ 2 处 `storage.get` 泛型，即可解锁 dev 依赖组 PR                                | 小     | 待办（新增）                                                                            |
+| P4   | 未上架商店、隐私说明缺失、权限过宽                 | `host_permissions: https://*/*`                                                                                                                     | 上架 + 补文档 + 收窄权限                                                                                             | 中     | 待办（**当前价值最高**：crx 路线证伪后，这是摆脱「开发者模式」的唯一途径）        |
 
 ---
 
@@ -67,10 +68,10 @@
 
 **位置**：
 
-| 文件 | 角色 |
-| --- | --- |
-| `src/background/services/trust-domain.ts:52-54` | 后台侧闸门 |
-| `src/contents/extension.ts:24-26` | 内容脚本（页面）侧闸门 —— 原文漏记 |
+| 文件                                              | 角色                                 |
+| ------------------------------------------------- | ------------------------------------ |
+| `src/background/services/trust-domain.ts:52-54` | 后台侧闸门                           |
+| `src/contents/extension.ts:24-26`               | 内容脚本（页面）侧闸门 —— 原文漏记 |
 
 两处都是同一写法：
 
@@ -141,12 +142,12 @@ const htmlContent = mdMode ? (marked.parse(mdSource) as string) : digest || ""; 
 
 **影响面比原先估计的更大**：`htmlContent` 不只是用于预览 —— 它通过 `innerHTML` 注入到平台编辑器页面，共 **4 处**：
 
-| 文件 | 用法 |
-| --- | --- |
-| `sync/article/dongchedi.ts:123` | `editorBody.innerHTML = articleData.htmlContent` |
-| `sync/article/kuaichuanhao.ts:92` | `editor.innerHTML = ...` |
-| `sync/article/sohu.ts:133` | `editor.innerHTML = ...` |
-| `sync/article/tonghuashun.ts:117` | `editorBody.innerHTML = ...` |
+| 文件                                | 用法                                               |
+| ----------------------------------- | -------------------------------------------------- |
+| `sync/article/dongchedi.ts:123`   | `editorBody.innerHTML = articleData.htmlContent` |
+| `sync/article/kuaichuanhao.ts:92` | `editor.innerHTML = ...`                         |
+| `sync/article/sohu.ts:133`        | `editor.innerHTML = ...`                         |
+| `sync/article/tonghuashun.ts:117` | `editorBody.innerHTML = ...`                     |
 
 另有若干处通过剪贴板 `text/html` 或 `pasteHtml` / `writeHtml` 写入编辑器（dingduanhao、douban、eastmoney、autohome、dayuhao、wordpress）。**在源头消毒即可覆盖以上全部消费方**，这也是选择在 `ArticleTab` 入口处理的原因。`markdownContent` 走的是表单提交与 turndown 转换，不作为 HTML 注入，无需处理。
 
@@ -232,13 +233,13 @@ console.log("domainId", domainId);
 - `pnpm test` / `pnpm test:watch` 脚本，并已接入 CI（在 `pnpm typecheck` 之后、构建之前执行）；
 - 共 **66 个用例**，5 个测试文件：
 
-| 测试文件 | 用例数 | 覆盖内容 |
-| --- | --- | --- |
-| `src/utils/domain-match.test.ts` | 15 | 可信域名匹配（P0-1 的修复） |
-| `src/utils/sanitize.test.ts` | 20 | HTML 消毒（P0-2 的修复） |
-| `src/utils/escape-html.test.ts` | 7 | 文本转义 + 模块无依赖守护（P1-7） |
-| `src/utils/rednote-text.test.ts` | 20 | 小红书话题格式与标题长度规则 |
-| `src/locales.test.ts` | 4 | 语言包一致性（P2-6） |
+| 测试文件                           | 用例数 | 覆盖内容                          |
+| ---------------------------------- | ------ | --------------------------------- |
+| `src/utils/domain-match.test.ts` | 15     | 可信域名匹配（P0-1 的修复）       |
+| `src/utils/sanitize.test.ts`     | 20     | HTML 消毒（P0-2 的修复）          |
+| `src/utils/escape-html.test.ts`  | 7      | 文本转义 + 模块无依赖守护（P1-7） |
+| `src/utils/rednote-text.test.ts` | 20     | 小红书话题格式与标题长度规则      |
+| `src/locales.test.ts`            | 4      | 语言包一致性（P2-6）              |
 
 - 已验证测试文件不会被 Plasmo 打进产物（产物中检索不到 test / vitest 字样）。
 
@@ -415,7 +416,7 @@ editorElement.innerHTML = finalContent;
 
 ```ts
 const escapeHtml = (text: string) =>
-  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  text.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">");
 const htmlContent = `${escapeHtml(content || "").replace(/\n/g, "<br>")}${tagSuffix}`;
 ```
 
@@ -438,29 +439,29 @@ const htmlContent = `${escapeHtml(content || "").replace(/\n/g, "<br>")}${tagSuf
 
 **入口包实测**：
 
-| chunk | 体积 |
-| --- | --- |
-| `options.<hash>.js` | **4163 KB** |
-| `sidepanel.<hash>.js` | **2444 KB** |
-| `tabs/refresh-accounts.js` | 2184 KB |
-| `tabs/trust-domain.js` | 1573 KB |
-| `tabs/link-extension.js` | 1570 KB |
-| `popup.<hash>.js` | 369 KB |
-| `dist.<hash>.js`（共享） | 329 KB |
-| `link-extension.<hash>.css` | 223 KB |
-| `options.<hash>.css` | 44 KB |
+| chunk                         | 体积              |
+| ----------------------------- | ----------------- |
+| `options.<hash>.js`         | **4163 KB** |
+| `sidepanel.<hash>.js`       | **2444 KB** |
+| `tabs/refresh-accounts.js`  | 2184 KB           |
+| `tabs/trust-domain.js`      | 1573 KB           |
+| `tabs/link-extension.js`    | 1570 KB           |
+| `popup.<hash>.js`           | 369 KB            |
+| `dist.<hash>.js`（共享）    | 329 KB            |
+| `link-extension.<hash>.css` | 223 KB            |
+| `options.<hash>.css`        | 44 KB             |
 
 ### P2-1 重库全部静态引入（收益最大）
 
 以下依赖都是**顶层 `import`**，却只在特定操作时才需要：
 
-| 依赖 | 引入位置 | 何时才需要 |
-| --- | --- | --- |
-| `pdfjs-dist` | `src/utils/pdf.ts:1` | 导入 PDF 时 |
-| `pptx-preview` | `src/utils/pptx.ts:3` | 导入 PPT 时 |
-| `html2canvas` | `src/utils/pptx.ts:2`、`src/utils/docx.ts:3` | 截图时 |
-| `html-to-image` | `src/utils/pptx.ts:1`、`src/utils/docx.ts:2` | 截图时 |
-| `video-react` | `VideoTab.tsx:5`、`DynamicTab.tsx:17` | 视频预览时 |
+| 依赖              | 引入位置                                         | 何时才需要  |
+| ----------------- | ------------------------------------------------ | ----------- |
+| `pdfjs-dist`    | `src/utils/pdf.ts:1`                           | 导入 PDF 时 |
+| `pptx-preview`  | `src/utils/pptx.ts:3`                          | 导入 PPT 时 |
+| `html2canvas`   | `src/utils/pptx.ts:2`、`src/utils/docx.ts:3` | 截图时      |
+| `html-to-image` | `src/utils/pptx.ts:1`、`src/utils/docx.ts:2` | 截图时      |
+| `video-react`   | `VideoTab.tsx:5`、`DynamicTab.tsx:17`        | 视频预览时  |
 
 而这些模块又被 `DynamicTab` / `ArticleTab` 静态引入，`DynamicTab` 又是 options 主界面的一部分 —— 所以**首屏就把 PDF/PPT/截图的整套工具链一起加载了**。
 
@@ -517,13 +518,13 @@ popup 包:  369 KB → 139 KB
 
 单文件最大：
 
-| 文件 | 体积 |
-| --- | --- |
+| 文件             | 体积             |
+| ---------------- | ---------------- |
 | `qingting.png` | **144 KB** |
-| `dedao.ico` | 66 KB |
-| `iqiyi.ico` | 31 KB |
-| `spotify.png` | 27 KB |
-| `sspai.ico` | 17 KB |
+| `dedao.ico`    | 66 KB            |
+| `iqiyi.ico`    | 31 KB            |
+| `spotify.png`  | 27 KB            |
+| `sspai.ico`    | 17 KB            |
 
 **建议**：统一重采样到 32×32（或转 webp/ico），预计可省约 **800 KB** —— 对 4.3 MB 的包来说是接近 20% 的削减。
 
@@ -538,11 +539,11 @@ popup 包:  369 KB → 139 KB
 
 ### P2-4 `wasm/` 约 1 MB 属可选兜底件
 
-| 文件 | 体积 | 说明 |
-| --- | --- | --- |
-| `quickjs-eval.wasm` | 458 KB | 仅 PDF 内嵌 JS 场景需要 |
+| 文件                            | 体积   | 说明                                  |
+| ------------------------------- | ------ | ------------------------------------- |
+| `quickjs-eval.wasm`           | 458 KB | 仅 PDF 内嵌 JS 场景需要               |
 | `openjpeg_nowasm_fallback.js` | 441 KB | 仅**无 WebAssembly** 环境的兜底 |
-| `jbig2_nowasm_fallback.js` | 142 KB | 同上 |
+| `jbig2_nowasm_fallback.js`    | 142 KB | 同上                                  |
 
 Chrome MV3 环境**一定**有 WebAssembly，因此两个 `*_nowasm_fallback.js`（583 KB）在扩展里是永远不会走到的路径；`quickjs` 取决于是否需要 PDF 内嵌 JS。
 
@@ -635,11 +636,11 @@ try {
 
 启用后立刻查出并修复了 3 个此前无人发现的问题：
 
-| 问题 | 影响 |
-| --- | --- |
+| 问题                                                              | 影响                                           |
+| ----------------------------------------------------------------- | ---------------------------------------------- |
 | `refreshAccountsNotLoggedIn` 不存在，且调用处**没有兜底** | 刷新账号取不到信息时，错误提示是**空白** |
-| `devEnvironmentTitle` / `devEnvironmentContent` 不存在 | 开发模式种子文案取不到翻译，只有硬编码中文兜底 |
-| `en` 的 `syncPublicPageTitle` 是**空串** | 英文用户看到中文兜底「发布中心」 |
+| `devEnvironmentTitle` / `devEnvironmentContent` 不存在        | 开发模式种子文案取不到翻译，只有硬编码中文兜底 |
+| `en` 的 `syncPublicPageTitle` 是**空串**                | 英文用户看到中文兜底「发布中心」               |
 
 > 扫描器的两处必要处理也记录在案：需**剥离注释**（有一处 key 只出现在注释掉的 `// alert(getMessage(...))` 里），以及按 lowerCamelCase 形状过滤实参里混入的类型枚举（如 `type === "DYNAMIC"` 中的 `DYNAMIC`）。
 
@@ -651,19 +652,19 @@ try {
 
 **当前 vs npm 最新（2026-09-15 实查）**：
 
-| 依赖 | 当前 | 最新 | 建议 |
-| --- | --- | --- | --- |
-| `pdfjs-dist` | 6.2.108 | 6.3.289 | 低风险，可随手升 |
-| `marked` | 18.0.9 | 18.0.13 | 低风险，可随手升 |
-| `turndown` | 7.2.0 | 7.2.4 | 低风险，可随手升 |
-| `react-viewer` | 3.2.2 | 3.2.5 | 已随 v0.2.5 升级 |
-| `uuid` | 10.0.0 | 14.0.2 | 建议改为 `crypto.randomUUID()` 并移除依赖 |
-| `html2canvas` / `html-to-image` / `jspdf` / `docx-preview` / `pptx-preview` / `video-react` / `@mozilla/readability` | 同最新 | 同最新 | 无升级项（`video-react` 属停更） |
-| `react` / `react-dom` | 18.2.0 | 19.3.0 | **大版本**，需先确认 HeroUI 3.x 对 React 19 的支持 |
-| `@heroui/react` | 2.7.8 | 3.2.5 | **大版本**，组件 API 有变 |
-| `tailwindcss` | 3.3.5 | 4.3.3 | **大版本**，配置由 JS 改为 CSS-first，破坏性最大 |
-| `typescript` | 5.2.2 | 7.0.2 | **跳跃很大**，建议先完成 P1-3 再升 |
-| `@biomejs/biome` | 1.9.4 | 2.5.13 | **大版本**，`biome.json` schema 需迁移 |
+| 依赖                                                                                                                               | 当前    | 最新    | 建议                                                     |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- | -------------------------------------------------------- |
+| `pdfjs-dist`                                                                                                                     | 6.2.108 | 6.3.289 | 低风险，可随手升                                         |
+| `marked`                                                                                                                         | 18.0.9  | 18.0.13 | 低风险，可随手升                                         |
+| `turndown`                                                                                                                       | 7.2.0   | 7.2.4   | 低风险，可随手升                                         |
+| `react-viewer`                                                                                                                   | 3.2.2   | 3.2.5   | 已随 v0.2.5 升级                                         |
+| `uuid`                                                                                                                           | 10.0.0  | 14.0.2  | 建议改为`crypto.randomUUID()` 并移除依赖               |
+| `html2canvas` / `html-to-image` / `jspdf` / `docx-preview` / `pptx-preview` / `video-react` / `@mozilla/readability` | 同最新  | 同最新  | 无升级项（`video-react` 属停更）                       |
+| `react` / `react-dom`                                                                                                          | 18.2.0  | 19.3.0  | **大版本**，需先确认 HeroUI 3.x 对 React 19 的支持 |
+| `@heroui/react`                                                                                                                  | 2.7.8   | 3.2.5   | **大版本**，组件 API 有变                          |
+| `tailwindcss`                                                                                                                    | 3.3.5   | 4.3.3   | **大版本**，配置由 JS 改为 CSS-first，破坏性最大   |
+| `typescript`                                                                                                                     | 5.2.2   | 7.0.2   | **跳跃很大**，建议先完成 P1-3 再升                 |
+| `@biomejs/biome`                                                                                                                 | 1.9.4   | 2.5.13  | **大版本**，`biome.json` schema 需迁移           |
 
 **做法**：大版本**一个 PR 一个依赖**，每个都跑 `pnpm lint` + `pnpm typecheck` + `pnpm build:ci` 并实机验收相关功能，不要合并成一个巨型升级。
 
@@ -726,13 +727,13 @@ src/components/Sync/DynamicTab.tsx(1072,33): error TS2339: Property 'type' does 
 
 ### P4-3 缺失的仓库配套
 
-| 文件 | 用途 |
-| --- | --- |
-| `PRIVACY.md` | 商店必填：扩展读取 cookies / 浏览数据，需明确说明用途 |
-| `SECURITY.md` | 漏洞上报渠道（对公开仓库尤其重要） |
-| `CONTRIBUTING.md` | 提交规范（你已有 commitlint 约定，正好写进去） |
-| `.github/ISSUE_TEMPLATE/*` | 平台适配类 issue 需要固定字段（平台名、页面 URL、失败现象） |
-| `.github/pull_request_template.md` | 提醒跑 lint / typecheck / 实机验证 |
+| 文件                                 | 用途                                                        |
+| ------------------------------------ | ----------------------------------------------------------- |
+| `PRIVACY.md`                       | 商店必填：扩展读取 cookies / 浏览数据，需明确说明用途       |
+| `SECURITY.md`                      | 漏洞上报渠道（对公开仓库尤其重要）                          |
+| `CONTRIBUTING.md`                  | 提交规范（你已有 commitlint 约定，正好写进去）              |
+| `.github/ISSUE_TEMPLATE/*`         | 平台适配类 issue 需要固定字段（平台名、页面 URL、失败现象） |
+| `.github/pull_request_template.md` | 提醒跑 lint / typecheck / 实机验证                          |
 
 ### P4-4 工作流与配置清理
 
@@ -766,23 +767,23 @@ src/components/Sync/DynamicTab.tsx(1072,33): error TS2339: Property 'type' does 
 
 实测 peer 关系（关键结论）：
 
-| 组合 | 要求 |
-| --- | --- |
-| `@heroui/react@2.8.10`（当前） | `react >=18 \|\| >=19.0.0-rc.0`、`react-dom` 同、`framer-motion >=11.5.6 \|\| >=12` |
-| `@heroui/react@3.x` | **`react >=19`、`react-dom >=19`、`tailwindcss >=4`** —— 三者同时满足才能用 |
-| `@heroui/theme@2.4.26`（当前） | `tailwindcss >=4.0.0` |
+| 组合                             | 要求                                                                                      |
+| -------------------------------- | ----------------------------------------------------------------------------------------- |
+| `@heroui/react@2.8.10`（当前） | `react >=18 \|\| >=19.0.0-rc.0`、`react-dom` 同、`framer-motion >=11.5.6 \|\| >=12`     |
+| `@heroui/react@3.x`            | **`react >=19`、`react-dom >=19`、`tailwindcss >=4`** —— 三者同时满足才能用 |
+| `@heroui/theme@2.4.26`（当前） | `tailwindcss >=4.0.0`                                                                   |
 
 **所以顺序只能是：React 19 → Tailwind 4 → HeroUI 3**（前两步可以各自独立做，因为 HeroUI 2.8 两个都允许；第三步必须等前两步都完成）。
 
 实测迁移面（本地 grep）：
 
-| 升级 | 迁移面 | 风险点 | 验收方式 |
-| --- | --- | --- | --- |
-| **React 19** | `forwardRef` **0 处**、`React.FC` 5 处、`useFormState/useActionState` 0 处 → 面很小 | HeroUI 2.8 内部依赖 React 行为，属最大不确定项 | `typecheck` + 构建 + **逐页实机点一遍** |
-| **Tailwind 4** | ① `postcss.config.js` 需换成 `@tailwindcss/postcss`；② `src/style.css` 的 `@tailwind base/components/utilities` 改为 `@import "tailwindcss"`；③ `tailwind.config.js`（`heroui()` 插件来自 `@heroui/react`，且 `content` 里显式扫 `node_modules/@heroui/theme/dist`）需用 `@config` 保留或改写成 CSS-first | 工具类在 v4 有**重命名/删除**，会静默改变样式 → 只能靠肉眼看 | 构建产物体积 + **逐页实机对照截图** |
-| **HeroUI 3** | 内部改为 `@heroui/styles` + `@radix-ui/*`（实测其依赖含 `@heroui/styles@3.2.5`、`tailwind-merge@3.4.0`、`tailwind-variants@3.3.1`、`@radix-ui/react-avatar`），组件 API 与样式接入方式都变 | 🔴 **最高**：涉及全部界面 | 需要一份「页面清单」逐个验收（主界面 / 侧边栏 / 三个发布 Tab / popup / 三个 tabs 页） |
-| **Biome 2**（1.9.4 → 2.5.13） | `biome.json` schema 迁移（`organizeImports` 等规则位置变化） | 低（纯工具） | `pnpm lint` + 确认 CI 仍绿 |
-| **TypeScript 7**（5.2.2 → 7.0.2） | 原生版编译器，跳跃很大 | 中（插件/工具链兼容未知） | 建议**先到 5.9.x**，跑通 typecheck / lint / 构建，再评估 7 |
+| 升级                                     | 迁移面                                                                                                                                                                                                                                                                                                                            | 风险点                                                              | 验收方式                                                                              |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| **React 19**                       | `forwardRef` **0 处**、`React.FC` 5 处、`useFormState/useActionState` 0 处 → 面很小                                                                                                                                                                                                                                  | HeroUI 2.8 内部依赖 React 行为，属最大不确定项                      | `typecheck` + 构建 + **逐页实机点一遍**                                       |
+| **Tailwind 4**                     | ①`postcss.config.js` 需换成 `@tailwindcss/postcss`；② `src/style.css` 的 `@tailwind base/components/utilities` 改为 `@import "tailwindcss"`；③ `tailwind.config.js`（`heroui()` 插件来自 `@heroui/react`，且 `content` 里显式扫 `node_modules/@heroui/theme/dist`）需用 `@config` 保留或改写成 CSS-first | 工具类在 v4 有**重命名/删除**，会静默改变样式 → 只能靠肉眼看 | 构建产物体积 +**逐页实机对照截图**                                              |
+| **HeroUI 3**                       | 内部改为`@heroui/styles` + `@radix-ui/*`（实测其依赖含 `@heroui/styles@3.2.5`、`tailwind-merge@3.4.0`、`tailwind-variants@3.3.1`、`@radix-ui/react-avatar`），组件 API 与样式接入方式都变                                                                                                                             | 🔴**最高**：涉及全部界面                                      | 需要一份「页面清单」逐个验收（主界面 / 侧边栏 / 三个发布 Tab / popup / 三个 tabs 页） |
+| **Biome 2**（1.9.4 → 2.5.13）     | `biome.json` schema 迁移（`organizeImports` 等规则位置变化）                                                                                                                                                                                                                                                                  | 低（纯工具）                                                        | `pnpm lint` + 确认 CI 仍绿                                                          |
+| **TypeScript 7**（5.2.2 → 7.0.2） | 原生版编译器，跳跃很大                                                                                                                                                                                                                                                                                                            | 中（插件/工具链兼容未知）                                           | 建议**先到 5.9.x**，跑通 typecheck / lint / 构建，再评估 7                      |
 
 > 建议做法：React 19 与 Tailwind 4 各自单独一个 PR（都要实机验收），HeroUI 3 最后单独做。
 
@@ -792,11 +793,11 @@ src/components/Sync/DynamicTab.tsx(1072,33): error TS2339: Property 'type' does 
 
 已把 4 个错误逐个定位到根因与改法（对照 0.2.9 的实际 `.d.ts` 核实）：
 
-| 位置 | 报错 | 根因 | 改法 |
-| --- | --- | --- | --- |
-| `src/background/services/tabs.ts:14` | `TS2694: Namespace 'chrome.tabs' has no exported member 'TabChangeInfo'` | 新版把该接口**改名为 `OnUpdatedInfo`**（`.d.ts` 中 `interface OnUpdatedInfo` + `onUpdated` 监听签名 `(tabId, changeInfo: OnUpdatedInfo, tab) => void`） | 类型名 `chrome.tabs.TabChangeInfo` → `chrome.tabs.OnUpdatedInfo`（一处改名） |
-| `src/components/Sidepanel/PublishConfirm.tsx:88` | `TS2339: Property 'type' does not exist on type 'unknown'` | 新版 `StorageArea.get<T = { [key: string]: unknown }>` 的默认泛型从 `any` 值改成了 `unknown` 值，取出的对象属性成了 `unknown` | 显式给泛型：`chrome.storage.local.get<{ pendingPublishData?: PendingPublish }>("pendingPublishData")` |
-| `src/components/Sync/DynamicTab.tsx:1072` | 同上 | 同上 | 同上 |
+| 位置                                               | 报错                                                                       | 根因                                                                                                                                                                    | 改法                                                                                                    |
+| -------------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `src/background/services/tabs.ts:14`             | `TS2694: Namespace 'chrome.tabs' has no exported member 'TabChangeInfo'` | 新版把该接口**改名为 `OnUpdatedInfo`**（`.d.ts` 中 `interface OnUpdatedInfo` + `onUpdated` 监听签名 `(tabId, changeInfo: OnUpdatedInfo, tab) => void`） | 类型名`chrome.tabs.TabChangeInfo` → `chrome.tabs.OnUpdatedInfo`（一处改名）                        |
+| `src/components/Sidepanel/PublishConfirm.tsx:88` | `TS2339: Property 'type' does not exist on type 'unknown'`               | 新版`StorageArea.get<T = { [key: string]: unknown }>` 的默认泛型从 `any` 值改成了 `unknown` 值，取出的对象属性成了 `unknown`                                    | 显式给泛型：`chrome.storage.local.get<{ pendingPublishData?: PendingPublish }>("pendingPublishData")` |
+| `src/components/Sync/DynamicTab.tsx:1072`        | 同上                                                                       | 同上                                                                                                                                                                    | 同上                                                                                                    |
 
 影响面很小：`chrome.storage.local.get` 全仓仅 **6 处调用（4 个文件）**，其中目前只有 2 处报错。
 
@@ -812,12 +813,12 @@ src/components/Sync/DynamicTab.tsx(1072,33): error TS2339: Property 'type' does 
 
 ### 体积方面还剩什么（前三批之后）
 
-| 项 | 收益 | 阻塞 |
-| --- | --- | --- |
-| 剔除 pdfjs 无 WASM 兜底件（P2-4） | 583 KB（zip 约 13%） | 需先实机验证扫描版 PDF |
-| ICO 图标压缩（P2-3 剩余） | 402 KB | 需 DIB 解码器或图形工具 + 改 75 处引用 |
-| `video-react` → 原生 `<video>`（P2-5） | ~180 KB + 去掉停更依赖 | UI 行为变更，需实机确认播放/预览 |
-| `strictNullChecks`（P1-3） | 收益在缺陷预防而非体积 | 错误量尚未评估（当前 strict 关闭、typecheck 0 错误） |
+| 项                                          | 收益                   | 阻塞                                                 |
+| ------------------------------------------- | ---------------------- | ---------------------------------------------------- |
+| 剔除 pdfjs 无 WASM 兜底件（P2-4）           | 583 KB（zip 约 13%）   | 需先实机验证扫描版 PDF                               |
+| ICO 图标压缩（P2-3 剩余）                   | 402 KB                 | 需 DIB 解码器或图形工具 + 改 75 处引用               |
+| `video-react` → 原生 `<video>`（P2-5） | ~180 KB + 去掉停更依赖 | UI 行为变更，需实机确认播放/预览                     |
+| `strictNullChecks`（P1-3）                | 收益在缺陷预防而非体积 | 错误量尚未评估（当前 strict 关闭、typecheck 0 错误） |
 
 ---
 
@@ -829,13 +830,15 @@ src/components/Sync/DynamicTab.tsx(1072,33): error TS2339: Property 'type' does 
 
 ### F0 · 先修一个缺陷：现在的「发布完成」是无条件成功的
 
+**状态：已修复**（2026-09-15）· 详见下方「F0、F1 的落地情况」。
+
 这不是功能缺失，是**假成功**。三处代码配合才成立，所以之前几轮审计都没发现：
 
-| # | 位置 | 实测到的行为 |
-| --- | --- | --- |
+| # | 位置                                                  | 实测到的行为                                                                                                                                                                                                         |
+| - | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | `src/components/Sidepanel/PublishConfirm.tsx:74-97` | `try { … await sendMessage(…) } finally { setPublishing(false); onDone(true) }` —— `sendMessage` 的**返回值被丢弃**、没有 `catch`，而「成功」写在 `finally` 里，**任何异常都会走到成功分支** |
-| 2 | `src/sidepanel/index.tsx:154-159` | `handlePublishDone(true)` → `suppressAutoCloseRef.current = true` + `setPending(null)`：确认界面直接消失（配合下方的自动关闭逻辑，侧边栏可能整个关掉） |
-| 3 | `src/background/index.ts:129-135` | 失败时刻意**不回执**，只 `logger.error`。注释原文：*“the publish popup's handlePublishComplete treats ANY callback response as ‘publish complete’, so an error payload would be mis-read as success”* |
+| 2 | `src/sidepanel/index.tsx:154-159`                   | `handlePublishDone(true)` → `suppressAutoCloseRef.current = true` + `setPending(null)`：确认界面直接消失（配合下方的自动关闭逻辑，侧边栏可能整个关掉）                                                        |
+| 3 | `src/background/index.ts:129-135`                   | 失败时刻意**不回执**，只 `logger.error`。注释原文：*“the publish popup's handlePublishComplete treats ANY callback response as ‘publish complete’, so an error payload would be mis-read as success”*  |
 
 失败时的实际表现：**界面正常消失、看起来发布完成，但一个平台标签页都没打开**。而第三批把生产日志静默之后，用户连「去控制台看一眼」的退路也没有了 —— 全仓搜索 `chrome.notifications` / `setBadgeText`：**0 处命中**。
 
@@ -847,40 +850,62 @@ src/components/Sync/DynamicTab.tsx(1072,33): error TS2339: Property 'type' does 
 
 把 `locales/zh_CN/messages.json` 的 383 个 key 逐个在 `src/` 与 `package.json` 里做字面量搜索：**172 个零命中**。这基本就是「规划过、没落地」的功能清单 —— 实现时连文案都不必再写。
 
-| 分组 | 零引用 | 代表 key（均已逐一验证 0 引用） | 性质 |
-| --- | --- | --- | --- |
-| `options*` | 62 | `optionsRunningLogs`、`optionsFilterLevel`、`optionsDataSync`、`optionsAccountManagement`、`optionsDashboard`、`optionsClearLogs` | 设置页规划区块 |
-| `sidepanel*` | 23 | `sidepanelContentManager`、`contentManagerTitle`，以及收藏夹一整套（`sidepanelCollectionAddNew` / `…NameLabel` / `…Empty` / `…Delete` / `…Default` / `…Work`） | 内容管理 / 收藏夹 |
-| `error*` | 15 | `errorSelectPlatform`、`errorEnterUrl`、`errorProcessingImages`、`errorReloadTab`、`contactUsIfProblem` | **为「用户可见的错误提示」写好了文案，但那个 UI 从未存在** —— 与 F0 互为印证 |
-| `docx*` | 8 | `docxUnsupported`、`docxToImageProgress`… | 已屏蔽的 Word/WPS 导入 |
-| `popup*` | 7 | `popupSettingsTooltip`、`popupSyncPublicTooltip`、`popupBubbleboxTooltip`、`popupGiftTooltip` | 弹窗按钮，已废弃 |
-| `dynamic*` | 7 | `dynamicAddLink`、`dynamicInsertSticker`… | 已屏蔽的动态功能 |
-| `g*` | 6 | `gAbout`（「关于」标题目前是**硬编码**的）、`gDynamic`、`gArticle`、`gTitle`、`gContent`、`gSend` | 通用文案未接管 |
-| 其余零散 | 44 | `settingsTrustedDomainsWarning`、`processingImages`、`aboutGithubRepo`、`webAppModalTitle`、`refreshAccountsNoAccounts`、`publishAutoCloseCountdown`、`extensionName`… | 混合 |
-| **合计** | **172 / 383（44.9%）** | | |
+| 分组           | 零引用                       | 代表 key（均已逐一验证 0 引用）                                                                                                                                                       | 性质                                                                                 |
+| -------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `options*`   | 62                           | `optionsRunningLogs`、`optionsFilterLevel`、`optionsDataSync`、`optionsAccountManagement`、`optionsDashboard`、`optionsClearLogs`                                         | 设置页规划区块                                                                       |
+| `sidepanel*` | 23                           | `sidepanelContentManager`、`contentManagerTitle`，以及收藏夹一整套（`sidepanelCollectionAddNew` / `…NameLabel` / `…Empty` / `…Delete` / `…Default` / `…Work`）   | 内容管理 / 收藏夹                                                                    |
+| `error*`     | 15                           | `errorSelectPlatform`、`errorEnterUrl`、`errorProcessingImages`、`errorReloadTab`、`contactUsIfProblem`                                                                     | **为「用户可见的错误提示」写好了文案，但那个 UI 从未存在** —— 与 F0 互为印证 |
+| `docx*`      | 8                            | `docxUnsupported`、`docxToImageProgress`…                                                                                                                                        | 已屏蔽的 Word/WPS 导入                                                               |
+| `popup*`     | 7                            | `popupSettingsTooltip`、`popupSyncPublicTooltip`、`popupBubbleboxTooltip`、`popupGiftTooltip`                                                                                 | 弹窗按钮，已废弃                                                                     |
+| `dynamic*`   | 7                            | `dynamicAddLink`、`dynamicInsertSticker`…                                                                                                                                        | 已屏蔽的动态功能                                                                     |
+| `g*`         | 6                            | `gAbout`（「关于」标题目前是**硬编码**的）、`gDynamic`、`gArticle`、`gTitle`、`gContent`、`gSend`                                                                   | 通用文案未接管                                                                       |
+| 其余零散       | 44                           | `settingsTrustedDomainsWarning`、`processingImages`、`aboutGithubRepo`、`webAppModalTitle`、`refreshAccountsNoAccounts`、`publishAutoCloseCountdown`、`extensionName`… | 混合                                                                                 |
+| **合计** | **172 / 383（44.9%）** |                                                                                                                                                                                       |                                                                                      |
 
 三类，处理方式完全不同：**① 规划未做完**（`options*` / `sidepanel*`）→ 现成的功能待办；**② 主动屏蔽**（`docx*` / `dynamic*`）→ README 已声明「代码与依赖保留」，属恢复项；**③ 已废弃**（`popup*`、`extensionName`）→ 要么补 UI 要么删 key。
 
 ### 功能向建议摘要
 
-| # | 建议 | 实测证据 | 价值 | 工作量 | 需实机验收 |
-| --- | --- | --- | --- | --- | --- |
-| F0 | 修掉「发布完成无条件成功」 | `PublishConfirm.tsx:74-97` + `sidepanel/index.tsx:154-159` + `background/index.ts:129-135` | 高（属缺陷） | 小 | 是 |
-| F1 | 发布结果汇总 + 失败可见（badge / 通知）+ 一键重试 | 全仓无 `chrome.notifications` / `setBadgeText`；失败仅 `logger.error`（生产已静默） | 高 | 中 | 是 |
-| F2 | 草稿自动保存与恢复 | 三个发布 Tab 只在点发布时写一次 `pendingPublishData`，编辑过程零落盘 | 高 | 中 | 否 |
-| F3 | 实现「运行日志」页签 | 语言包已备好 12 个 key（`optionsRunningLogs` / `FilterLevel` / `AllLevels` / `Info` / `Warning` / `Error` / `FilterSource` / `AllSources` / `NoLogs` / `ClearLogs`…）全部 0 引用；第三批刚把生产日志静默 | 中高 | 小 | 否 |
-| F4 | 配置导出 / 导入 | 账号缓存、可信域名、收藏全部只在 `chrome.storage.local`，换机即丢 | 中高 | 小 | 否 |
-| F5 | 发布前校验（平台约束） | 仅 `rednote-text.ts` 做了小红书 20 字标题一条软处理，无统一必填/上限校验 | 中高 | 中 | 是 |
-| F6 | 恢复被屏蔽的 4 项功能 | `docx*` + `dynamic*` 共 15 个 key 零引用，README 明确「代码与依赖保留，便于恢复」 | 中 | 中 | 是 |
-| F7 | URL 导入扩展站点 + 自动注明出处 | `src/contents/scraper/` 只有 csdn / jianshu / juejin / wechat / zhihu + default | 中 | 中 | 是 |
-| F8 | 图片自动压缩 / 尺寸统一 / 封面裁切 | 图片按原样 base64 进载荷，直接放大失败率与存储占用 | 中 | 中 | 是 |
-| F9 | 快捷键 / 右键菜单 | `package.json` 无 `commands`，全仓无 `contextMenus` | 中 | 小 | 否 |
-| F10 | 草稿箱 / 模板库 / 收藏夹 | `sidepanelCollection*` 23 个 key 已备好（含增删/默认/工作/空态全套） | 中 | 中 | 否 |
-| F11 | 平台级内容微调 | 所有平台共用一份内容，只有小红书做了话题格式转换 | 中 | 中 | 是 |
-| F12 | 清理 172 个死 key | 见上表 | 低（维护者体验） | 小 | 否 |
-| F13 | 多账号 / 定时发布 / Firefox 版 | 无 `chrome.alarms`；`sidePanel` / `tabGroups` 在 Firefox 不存在 | 低-中 | 大 | 是 |
+| #   | 建议                                              | 实测证据                                                                                                                                                                                                                      | 价值             | 工作量 | 需实机验收 |
+| --- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ------ | ---------- |
+| F0  | ~~修掉「发布完成无条件成功」~~ **已完成**       | `PublishConfirm.tsx:74-97` + `sidepanel/index.tsx:154-159` + `background/index.ts:129-135`                                                                                                                              | 高（属缺陷）     | 小     | 是         |
+| F1  | ~~发布结果汇总 + 失败可见（badge）+ 失败项重试~~ **已完成** | 全仓无`chrome.notifications` / `setBadgeText`；失败仅 `logger.error`（生产已静默）                                                                                                                                      | 高               | 中     | 是         |
+| F2  | 草稿自动保存与恢复                                | 三个发布 Tab 只在点发布时写一次`pendingPublishData`，编辑过程零落盘                                                                                                                                                         | 高               | 中     | 否         |
+| F3  | 实现「运行日志」页签                              | 语言包已备好 12 个 key（`optionsRunningLogs` / `FilterLevel` / `AllLevels` / `Info` / `Warning` / `Error` / `FilterSource` / `AllSources` / `NoLogs` / `ClearLogs`…）全部 0 引用；第三批刚把生产日志静默 | 中高             | 小     | 否         |
+| F4  | 配置导出 / 导入                                   | 账号缓存、可信域名、收藏全部只在`chrome.storage.local`，换机即丢                                                                                                                                                            | 中高             | 小     | 否         |
+| F5  | 发布前校验（平台约束）                            | 仅`rednote-text.ts` 做了小红书 20 字标题一条软处理，无统一必填/上限校验                                                                                                                                                     | 中高             | 中     | 是         |
+| F6  | 恢复被屏蔽的 4 项功能                             | `docx*` + `dynamic*` 共 15 个 key 零引用，README 明确「代码与依赖保留，便于恢复」                                                                                                                                         | 中               | 中     | 是         |
+| F7  | URL 导入扩展站点 + 自动注明出处                   | `src/contents/scraper/` 只有 csdn / jianshu / juejin / wechat / zhihu + default                                                                                                                                             | 中               | 中     | 是         |
+| F8  | 图片自动压缩 / 尺寸统一 / 封面裁切                | 图片按原样 base64 进载荷，直接放大失败率与存储占用                                                                                                                                                                            | 中               | 中     | 是         |
+| F9  | 快捷键 / 右键菜单                                 | `package.json` 无 `commands`，全仓无 `contextMenus`                                                                                                                                                                     | 中               | 小     | 否         |
+| F10 | 草稿箱 / 模板库 / 收藏夹                          | `sidepanelCollection*` 23 个 key 已备好（含增删/默认/工作/空态全套）                                                                                                                                                        | 中               | 中     | 否         |
+| F11 | 平台级内容微调                                    | 所有平台共用一份内容，只有小红书做了话题格式转换                                                                                                                                                                              | 中               | 中     | 是         |
+| F12 | 清理 172 个死 key                                 | 见上表                                                                                                                                                                                                                        | 低（维护者体验） | 小     | 否         |
+| F13 | 多账号 / 定时发布 / Firefox 版                    | 无`chrome.alarms`；`sidePanel` / `tabGroups` 在 Firefox 不存在                                                                                                                                                          | 低-中            | 大     | 是         |
+
+### F0、F1 的落地情况（2026-09-15）
+
+**改了什么**
+
+| 环节 | 改动 |
+| --- | --- |
+| 后台回执 | `background/index.ts` 的 `PUPU_EXTENSION_PUBLISH_NOW` **失败必回执** `{ ok: false, error }`（含「未选择平台」「一个标签页都没创建」两种前置失败）；成功回 `{ ok: true, tabs }`。原来靠「不回执」避免误判成功的注释已删除 |
+| 判定方式 | `PublishConfirm.tsx` 按 `response.ok` 判定成败：失败时**保留**确认界面并就地展示原因 + 可重试，`pendingPublishData` 不删除（草稿不丢）；`onDone` 由 `boolean` 改为 `{ status: "published" \| "failed" \| "cancelled" }` |
+| 填充回执 | 新建 `src/sync/common.ts` 的 `InjectOutcome`：注入函数 resolve → **已填充**、reject → **失败**（带原因）、超时（60 秒）→ **待确认**。**没有改任何平台适配器** —— 结果直接取自 `chrome.scripting.executeScript` 的成败 |
+| 结果记录 | `background/services/tabs.ts` 把结果写进发布任务记录（`TabManagerMessage.tabs[].result`），侧边栏轮询即可见；失败数写到扩展图标徽标（`chrome.action.setBadgeText`，后台重启时清空） |
+| 界面 | `TabsManager` 每个平台显示状态 + 失败原因，任务标题下显示「已填充 N 个，失败 M 个」；失败/待确认的行内刷新按钮变红并作为**重试**（重载页面 → 重新注入 → 回填结果，同一条消息通路，不新增协议） |
+| 语言包 | `zh_CN` / `en` 各新增 8 个 key（状态 4 + 重试 + 汇总 + 失败标题 + 失败提示） |
+| 测试 | 新增 `publish-result.test.ts`（7 个）与 `timeout.test.ts`（5 个），共 **88 个**用例；`lint` / `typecheck` / `test` / `build:ci` 全绿 |
+
+**顺带修掉的两个既有问题**：① 注入原来挂在 `tabs.onUpdated` 上且只在触发后注入，若页面在监听器注册前就 `complete`，该平台**永远不会被填充**（静默漏发）—— 现在会先查询状态、已 complete 就直接注入；② 重试路径存在「读到旧页面 complete 状态 → 把内容填进即将被丢弃的页面」的竞态，已用 `expectReload` 开关消除。
+
+**体积**：zip 4,481,403 → 4,485,849 字节（**+4.3 KB**）；新增依赖 **0**。
+
+**仍需实机验收**（我无浏览器，只能静态验证）：① 各平台填充成功/失败的真实判定（尤其「注入成功但其实没发出去」这类平台侧差异 —— 这类只有第 2 种取法能覆盖，**本次未做**）；② `injectFunction` 报错时 `executeScript` 是否如预期 reject（这是回执的**唯一**依据，若 Chrome 在某些情况下 resolve，会把失败显示成已填充）；③ 徽标与状态列表的视觉效果；④ 重试是否真的能把失败平台救回来。
 
 ### F1 · 发布结果汇总（F0 之后紧接着做）
+
+**状态：已实现第 1 与第 3 种取法**（2026-09-15）· 第 2 种「平台成功信号探测」**未做**（需逐平台适配，属下一步）。
 
 **为什么难在判定而不是 UI**：现在「发布」的真实含义是「打开了平台标签页并把内容填进去」，真正的发布动作发生在各平台的页面上（点它自己的发布按钮）。所以「成功了没」只有三种取法，需要按平台适配器逐个实现：
 

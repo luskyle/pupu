@@ -12,6 +12,8 @@ import QuantumEntanglementKeepAlive from "../utils/keep-alive";
 import { linkExtensionMessageHandler, starter } from "./services/api";
 import {
   addTabsManagerMessages,
+  collectInjectionResults,
+  refreshPublishBadge,
   tabsManagerHandleTabRemoved,
   tabsManagerHandleTabUpdated,
   tabsManagerMessageHandler,
@@ -101,48 +103,45 @@ const defaultMessageHandler = (request, _sender, sendResponse) => {
   }
   if (request.action === "PUPU_EXTENSION_PUBLISH_NOW") {
     const data = request.data as SyncData;
-    if (Array.isArray(data.platforms) && data.platforms.length > 0) {
-      (async () => {
-        try {
-          const tabs = await createTabsForPlatforms(data);
-          // await injectScriptsToTabs(tabs, data);
-
-          addTabsManagerMessages({
-            syncData: data,
-            tabs: tabs.map((t: { tab: chrome.tabs.Tab; platformInfo: SyncDataPlatform }) => ({
-              tab: t.tab,
-              platformInfo: t.platformInfo,
-            })),
-          });
-
-          // for (const t of tabs) {
-          //   if (t.tab.id) {
-          //     await chrome.tabs.update(t.tab.id, { active: true });
-          //     await new Promise((resolve) => setTimeout(resolve, 2000));
-          //   }
-          // }
-
-          sendResponse({
-            tabs: tabs.map((t: { tab: chrome.tabs.Tab; platformInfo: SyncDataPlatform }) => ({
-              tab: t.tab,
-              platformInfo: t.platformInfo,
-            })),
-          });
-        } catch (error) {
-          // Do not sendResponse here: the publish popup's handlePublishComplete treats ANY
-          // callback response as "publish complete", so an error payload would be mis-read as success.
-          // Preserve original behavior (log only); success path above sends the tabs response.
-          logger.error("创建标签页或分组时出错:", error);
-        }
-      })();
+    if (!Array.isArray(data.platforms) || data.platforms.length === 0) {
+      sendResponse({ ok: false, error: "未选择发布平台" });
+      return true;
     }
-    // Claim this action regardless of platform count, mirroring the original blanket return-true:
-    // the success path responds asynchronously; error/empty paths intentionally send no response.
+    (async () => {
+      try {
+        const { tabs, injections } = await createTabsForPlatforms(data);
+        if (tabs.length === 0) {
+          // 只创建了标签页分组却没有任何可注入的平台，等同于什么都没做，必须如实报错
+          sendResponse({ ok: false, error: "没有创建任何平台标签页（可能缺少注入地址）" });
+          return;
+        }
+
+        const payload = tabs.map((t: { tab: chrome.tabs.Tab; platformInfo: SyncDataPlatform }) => ({
+          tab: t.tab,
+          platformInfo: t.platformInfo,
+        }));
+        addTabsManagerMessages({
+          syncData: data,
+          tabs: payload.map((t) => ({ ...t, result: { status: "pending" as const, at: Date.now() } })),
+        });
+        // 各平台的填充结果异步写入任务记录，侧边栏据此展示成功/失败并支持重试
+        collectInjectionResults(injections);
+
+        sendResponse({ ok: true, tabs: payload });
+      } catch (error) {
+        // 必须回执失败：调用方按 ok 字段判定成败，而不是像以前那样把「没有回执」当成成功
+        const message = error instanceof Error ? error.message : String(error);
+        logger.error("创建标签页或分组时出错:", error);
+        sendResponse({ ok: false, error: message });
+      }
+    })();
     return true;
   }
   return false;
 };
 starter(1000 * 30);
+// 后台重启后发布任务记录已清空，徽标要跟着清掉，否则会留下上一次会话的失败计数
+void refreshPublishBadge();
 // Message Handler || 消息处理器 || END
 
 // Keep Alive || 保活机制 || START

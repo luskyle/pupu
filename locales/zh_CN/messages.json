@@ -347,6 +347,38 @@
     "message": "重新加载标签页",
     "description": "重新加载标签按钮的 aria 标签"
   },
+  "sidepanelPublishStatusPending": {
+    "message": "填充中…",
+    "description": "平台标签页填充状态：内容正在写入"
+  },
+  "sidepanelPublishStatusFilled": {
+    "message": "已填充，待确认",
+    "description": "平台标签页填充状态：内容已写入平台页面，是否发布由用户或平台页面决定"
+  },
+  "sidepanelPublishStatusFailed": {
+    "message": "填充失败",
+    "description": "平台标签页填充状态：注入或填充报错"
+  },
+  "sidepanelPublishStatusUnconfirmed": {
+    "message": "待确认（填充超时）",
+    "description": "平台标签页填充状态：超过时限仍未返回结果"
+  },
+  "sidepanelPublishRetry": {
+    "message": "重试",
+    "description": "重新加载页面并再次填充失败平台的按钮 aria 标签"
+  },
+  "sidepanelPublishSummary": {
+    "message": "已填充 $1 个，失败 $2 个",
+    "description": "发布任务汇总：$1 为已填充数量，$2 为失败数量"
+  },
+  "sidepanelPublishFailedTitle": {
+    "message": "发布失败",
+    "description": "发布确认界面上的失败提示标题"
+  },
+  "sidepanelPublishFailedHint": {
+    "message": "没有内容被发出，可直接重试；反复失败请确认已登录对应平台。",
+    "description": "发布失败后的补充说明"
+  },
   "sidepanelCloseTab": {
     "message": "关闭标签页",
     "description": "关闭标签按钮的 aria 标签"

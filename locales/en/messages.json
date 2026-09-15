@@ -340,6 +340,38 @@
     "message": "Reload tab",
     "description": "Aria label for the reload tab button"
   },
+  "sidepanelPublishStatusPending": {
+    "message": "Filling…",
+    "description": "Platform tab fill status: content is being written"
+  },
+  "sidepanelPublishStatusFilled": {
+    "message": "Filled, please confirm",
+    "description": "Platform tab fill status: content written into the page; publishing is up to the user or the page"
+  },
+  "sidepanelPublishStatusFailed": {
+    "message": "Fill failed",
+    "description": "Platform tab fill status: injection or fill errored"
+  },
+  "sidepanelPublishStatusUnconfirmed": {
+    "message": "Unconfirmed (fill timed out)",
+    "description": "Platform tab fill status: no result within the time limit"
+  },
+  "sidepanelPublishRetry": {
+    "message": "Retry",
+    "description": "Aria label for the button that reloads the page and fills the failed platform again"
+  },
+  "sidepanelPublishSummary": {
+    "message": "$1 filled, $2 failed",
+    "description": "Publish task summary: $1 is the filled count, $2 the failed count"
+  },
+  "sidepanelPublishFailedTitle": {
+    "message": "Publish failed",
+    "description": "Failure title on the publish confirm view"
+  },
+  "sidepanelPublishFailedHint": {
+    "message": "Nothing was published. You can retry right away; if it keeps failing, make sure you are signed in to the platform.",
+    "description": "Hint shown after a failed publish"
+  },
   "sidepanelCloseTab": {
     "message": "Close tab",
     "description": "Aria label for the close tab button"

@@ -3,7 +3,7 @@ import cssText from "data-text:~style.css";
 import { HeroUIProvider } from "@heroui/react";
 import { useEffect, useRef, useState } from "react";
 import type { TabManagerMessage } from "~background/services/tabs";
-import PublishConfirm, { type PublishType } from "~components/Sidepanel/PublishConfirm";
+import PublishConfirm, { type PublishOutcome, type PublishType } from "~components/Sidepanel/PublishConfirm";
 import PublishTypePlatforms from "~components/Sidepanel/PublishTypePlatforms";
 import TabsManager from "~components/Sidepanel/Tabs/TabsManager";
 import type { SyncData } from "~sync/common";
@@ -150,9 +150,11 @@ function SidePanel() {
     }
   }, [pendingLoaded, pending, hasTabs, refreshView]);
 
-  // 确认/取消发布后切换视图
-  const handlePublishDone = (published: boolean) => {
-    if (published) {
+  // 确认/取消/失败后的视图切换：失败时保留发布确认界面（由它就地展示失败原因并支持重试），
+  // 否则清空待发布内容，交给发布标签列表接管
+  const handlePublishDone = (outcome: PublishOutcome) => {
+    if (outcome.status === "failed") return;
+    if (outcome.status === "published") {
       suppressAutoCloseRef.current = true;
     }
     setPending(null);

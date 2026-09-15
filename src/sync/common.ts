@@ -1,3 +1,5 @@
+import type { PublishOutcomeStatus } from "~utils/publish-result";
+import { TimeoutError, withTimeout } from "~utils/timeout";
 import { getAccountInfoFromPlatformInfo, getAccountInfoFromPlatformInfos } from "./account";
 import { ArticleInfoMap } from "./article";
 import { DynamicInfoMap } from "./dynamic";
@@ -238,8 +240,99 @@ export async function getPlatformInfos(type?: "DYNAMIC" | "VIDEO" | "ARTICLE" | 
 }
 
 // Inject || 注入 || START
+
+/** 单个平台的填充结果：由注入本身的成败推导，不需要各平台适配器配合改造。 */
+export interface InjectOutcome {
+  name: string;
+  tabId?: number;
+  status: PublishOutcomeStatus;
+  /** 失败原因，直接展示给用户 */
+  error?: string;
+}
+
+/** 等待标签页加载完成的超时；超时后仍继续注入，让适配器自己报出真实错误。 */
+const TAB_LOAD_TIMEOUT_MS = 15_000;
+/** 单个平台填充的超时上限，超过即视为「待确认」。 */
+const INJECT_TIMEOUT_MS = 60_000;
+
+/**
+ * 等待标签页进入 complete。
+ *
+ * expectReload 为 true 时跳过「已经是 complete 就直接返回」的捷径：重试是先把页面重新加载再注入，
+ * 若照常查询，可能读到的还是旧页面的 complete 状态，于是把内容填进一个即将被丢弃的页面。
+ */
+const waitForTabComplete = async (tabId: number, timeoutMs: number, expectReload = false) => {
+  if (!expectReload) {
+    const tab = await chrome.tabs.get(tabId).catch(() => null);
+    if (!tab || tab.status === "complete") return;
+  }
+
+  await new Promise<void>((resolve) => {
+    function finish() {
+      clearTimeout(timer);
+      chrome.tabs.onUpdated.removeListener(listener);
+      resolve();
+    }
+    const listener = (updatedTabId: number, changeInfo: chrome.tabs.TabChangeInfo) => {
+      if (updatedTabId === tabId && changeInfo.status === "complete") finish();
+    };
+    chrome.tabs.onUpdated.addListener(listener);
+    const timer = setTimeout(finish, timeoutMs);
+  });
+};
+
+/**
+ * 注入单个平台并给出填充结果。
+ *
+ * 结果来自 executeScript 本身：注入函数 resolve 记为「已填充」（内容写入了平台页面，
+ * 是否真的发布由用户或平台页面决定，所以不叫成功），reject 记为「失败」并带回原因，
+ * 超时记为「待确认」。
+ */
+const injectToTab = async (
+  tab: chrome.tabs.Tab,
+  platform: SyncDataPlatform,
+  data: SyncData,
+  expectReload = false,
+): Promise<InjectOutcome> => {
+  const tabId = tab.id;
+  if (tabId === undefined) {
+    return { name: platform.name, status: "failed", error: "标签页缺少 id" };
+  }
+
+  try {
+    await waitForTabComplete(tabId, TAB_LOAD_TIMEOUT_MS, expectReload);
+    const info = await getPlatformInfo(platform.name);
+    if (!info) {
+      return { name: platform.name, tabId, status: "failed", error: `未找到平台适配器：${platform.name}` };
+    }
+    await withTimeout(
+      chrome.scripting.executeScript({
+        target: { tabId },
+        func: info.injectFunction,
+        args: [data],
+      }),
+      INJECT_TIMEOUT_MS,
+      `填充超过 ${INJECT_TIMEOUT_MS / 1000} 秒仍未返回`,
+    );
+    return { name: platform.name, tabId, status: "filled" };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      name: platform.name,
+      tabId,
+      status: error instanceof TimeoutError ? "unconfirmed" : "failed",
+      error: message,
+    };
+  }
+};
+
 export async function createTabsForPlatforms(data: SyncData) {
   const tabs: { tab: chrome.tabs.Tab; platformInfo: SyncDataPlatform }[] = [];
+  /**
+   * 各平台的填充结果。这里只收集不等待 —— 保持既有的「创建标签页 → 等加载 → 等 3 秒」节奏不变，
+   * 结果由调用方在任务登记之后自行结算，避免早到的结果落到还没有记录的标签页上。
+   */
+  const injections: Promise<InjectOutcome[]>[] = [];
   let groupId: number | undefined;
 
   for (const info of data.platforms) {
@@ -271,7 +364,7 @@ export async function createTabsForPlatforms(data: SyncData) {
         }
         // 等待标签页加载完成
         if (tab) {
-          await injectScriptsToTabs([{ tab, platformInfo: info }], data);
+          injections.push(injectScriptsToTabs([{ tab, platformInfo: info }], data));
           await chrome.tabs.update(tab.id!, { active: true });
           tabs.push({
             tab,
@@ -304,32 +397,14 @@ export async function createTabsForPlatforms(data: SyncData) {
     }
   }
 
-  return tabs;
+  return { tabs, injections };
 }
 
 export async function injectScriptsToTabs(
   tabs: { tab: chrome.tabs.Tab; platformInfo: SyncDataPlatform }[],
   data: SyncData,
-) {
-  for (const t of tabs) {
-    const tab = t.tab;
-    const platform = t.platformInfo;
-    if (tab.id) {
-      chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
-        if (tabId === tab.id && info.status === "complete") {
-          chrome.tabs.onUpdated.removeListener(listener);
-          getPlatformInfo(platform.name).then((info) => {
-            if (info) {
-              chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                func: info.injectFunction,
-                args: [data],
-              });
-            }
-          });
-        }
-      });
-    }
-  }
+  expectReload = false,
+): Promise<InjectOutcome[]> {
+  return await Promise.all(tabs.map((t) => injectToTab(t.tab, t.platformInfo, data, expectReload)));
 }
 // Inject || 注入 || END

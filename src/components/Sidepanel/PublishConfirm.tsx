@@ -1,4 +1,5 @@
 import { Accordion, AccordionItem, Button, Card, CardBody, CardFooter, CardHeader, Spinner } from "@heroui/react";
+import { AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
 import PlatformCheckbox from "~components/Sync/PlatformCheckbox";
 import { type PlatformInfo, type SyncData, getPlatformInfos, getTypePriorityPlatformKeys } from "~sync/common";
@@ -7,11 +8,17 @@ import { logger } from "~utils/logger";
 
 export type PublishType = "DYNAMIC" | "VIDEO" | "ARTICLE";
 
+/** 发布动作的最终结果：published 表示后台已创建平台标签页并开始填充 */
+export interface PublishOutcome {
+  status: "published" | "failed" | "cancelled";
+  /** 失败原因（status 为 failed 时给出） */
+  error?: string;
+}
+
 interface PublishConfirmProps {
   type: PublishType;
   data: SyncData;
-  /** 完成回调：published 为 true 表示已确认发布，false 表示取消 */
-  onDone: (published: boolean) => void;
+  onDone: (outcome: PublishOutcome) => void;
 }
 
 /** 各发布类型对应的平台选择保存 key（与发布中心的旧逻辑保持一致） */
@@ -37,6 +44,8 @@ export default function PublishConfirm({ type, data, onDone }: PublishConfirmPro
   const [platforms, setPlatforms] = useState<PlatformInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
+  // 发布失败原因：就地展示并允许重试，而不是关掉界面让用户以为发完了
+  const [error, setError] = useState<string | null>(null);
 
   // 加载平台列表 + 上次保存的平台选择
   useEffect(() => {
@@ -68,11 +77,12 @@ export default function PublishConfirm({ type, data, onDone }: PublishConfirmPro
 
   const handleCancel = async () => {
     await chrome.storage.local.remove("pendingPublishData");
-    onDone(false);
+    onDone({ status: "cancelled" });
   };
 
   const handleConfirm = async () => {
     setPublishing(true);
+    setError(null);
     try {
       localStorage.setItem(PLATFORM_STORAGE_KEY[type], JSON.stringify(selected));
       const platformList = selected.map((name) => {
@@ -89,11 +99,30 @@ export default function PublishConfirm({ type, data, onDone }: PublishConfirmPro
         pendingPublishData && pendingPublishData.type === type ? (pendingPublishData.data as SyncData) : data;
       // 内容处理（原发布进度弹窗做的事），随后直接让 background 创建平台标签发布，不再打开发布进度弹窗
       const publishData = await processContentForPublish({ ...latest, platforms: platformList });
-      await chrome.runtime.sendMessage({ action: "PUPU_EXTENSION_PUBLISH_NOW", data: publishData });
+      const response = (await chrome.runtime.sendMessage({
+        action: "PUPU_EXTENSION_PUBLISH_NOW",
+        data: publishData,
+      })) as { ok?: boolean; error?: string } | undefined;
+
+      // 必须按后台回执判定成败：以前无论成败都走 onDone(true)，界面照常消失，
+      // 于是「一个平台都没发出去」被显示成发布完成。
+      if (!response?.ok) {
+        const message = response?.error || "扩展后台没有返回发布结果";
+        logger.error("发布失败:", message);
+        setError(message);
+        onDone({ status: "failed", error: message });
+        return;
+      }
+
       await chrome.storage.local.remove("pendingPublishData");
+      onDone({ status: "published" });
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : String(caught);
+      logger.error("发布失败:", caught);
+      setError(message);
+      onDone({ status: "failed", error: message });
     } finally {
       setPublishing(false);
-      onDone(true);
     }
   };
 
@@ -154,6 +183,22 @@ export default function PublishConfirm({ type, data, onDone }: PublishConfirmPro
                 {renderGroup(otherPlatforms)}
               </AccordionItem>
             </Accordion>
+          )}
+          {error && (
+            <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-100 dark:bg-red-950/40 dark:border-red-900">
+              <div className="flex gap-2">
+                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-red-500" />
+                <div className="space-y-1 min-w-0">
+                  <div className="text-sm font-medium text-red-800 dark:text-red-200">
+                    {chrome.i18n.getMessage("sidepanelPublishFailedTitle")}
+                  </div>
+                  <div className="text-xs break-all text-red-700 dark:text-red-300">{error}</div>
+                  <div className="text-xs text-red-700 dark:text-red-300">
+                    {chrome.i18n.getMessage("sidepanelPublishFailedHint")}
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
         </CardBody>
         <CardFooter className="flex justify-end gap-2">
