@@ -1,0 +1,21 @@
+packages:
+  - .
+
+allowBuilds:
+  '@biomejs/biome': true
+  '@heroui/shared-utils': true
+  '@parcel/watcher': true
+  '@swc/core': true
+  core-js: set this to true or false
+  esbuild: true
+  lmdb: true
+  msgpackr-extract: true
+  sharp: true
+onlyBuiltDependencies:
+  - '@heroui/shared-utils'
+  - '@parcel/watcher'
+  - '@swc/core'
+  - esbuild
+  - lmdb
+  - msgpackr-extract
+  - sharp

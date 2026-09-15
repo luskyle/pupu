@@ -1,0 +1,39 @@
+.plasmo
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# testing
+/coverage
+
+# production
+/build
+
+# pdf.js worker（由 scripts/copy-pdf-worker.mjs 复制到产物）
+/build/**/pdf.worker.min.mjs
+/.plasmo/**/pdf.worker.min.mjs
+
+# script
+/script/*.sh
+/script/script-cat/*.script.js
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+.idea/
