@@ -1,3 +1,4 @@
+import { buildXhsContent, pickXhsTitle } from "~utils/rednote-text";
 import type { DynamicData, SyncData } from "../common";
 
 // 注意：injectFunction 会被 chrome.scripting.executeScript 序列化注入到目标页面，
@@ -234,13 +235,9 @@ export async function DynamicRednote(data: SyncData) {
       el.dispatchEvent(new InputEvent("change", { bubbles: true }));
     };
 
-    // 小红书话题格式：#话题名称[话题]#（需要 [] 里写"话题"二字，最后以 # 结尾）
-    // 编辑时保持 #文字#，发布时转为小红书认可格式
-    const toXhsTopic = (text: string): string => text.replace(/#([^#\s]+)#/g, "#$1[话题]#");
-    // 小红书标题限 20 字：标题源（显式标题或正文首行）超过 20 字则不填充标题（不截断）
-    const rawTitle = title || content?.split("\n")[0] || "";
-    const titleText = rawTitle.length > 20 ? "" : toXhsTopic(rawTitle);
-    const contentText = toXhsTopic(`${content || ""}${tags?.length ? ` ${tags.map((t) => `#${t}#`).join(" ")}` : ""}`);
+    // 小红书话题格式 / 标题长度规则见 ~utils/rednote-text（纯函数，已有单测覆盖）
+    const titleText = pickXhsTitle(title, content);
+    const contentText = buildXhsContent(content, tags);
 
     // 标题/正文很可能在 closed shadow DOM 内（isolated world 的 querySelector 访问不到），
     // 优先请求 MAIN world 捕获脚本（xhs-shadow-capture）填充；超时再回退 light DOM。

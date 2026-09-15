@@ -654,7 +654,7 @@
     "message": "Settings"
   },
   "syncPublicPageTitle": {
-    "message": ""
+    "message": "Sync Public"
   },
   "settingsTrustedDomains": {
     "message": "Trusted Domains"
@@ -1141,6 +1141,10 @@
     "message": "Auto Close",
     "description": "Auto close switch text"
   },
+  "refreshAccountsNotLoggedIn": {
+    "message": "Not signed in, or the session has expired",
+    "description": "Shown when refreshing accounts returns no account info for a platform"
+  },
   "refreshAccountsBack": {
     "message": "Back",
     "description": "Refresh accounts sidepanel view back button"
@@ -1449,5 +1453,13 @@
   "sidepanelPublishToTitle": {
     "message": "Publish $1 to Platforms",
     "description": "Sidepanel publish confirm title, $1 is the content type (Dynamic/Video/Post)"
+  },
+  "devEnvironmentTitle": {
+    "message": "Dev Environment Title",
+    "description": "Prefilled title in development mode only"
+  },
+  "devEnvironmentContent": {
+    "message": "Dev Environment Content",
+    "description": "Prefilled content in development mode only"
   }
 }

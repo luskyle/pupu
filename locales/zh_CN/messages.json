@@ -1103,6 +1103,10 @@
     "message": "下次自动关闭",
     "description": "自动关闭设置的开关文本"
   },
+  "refreshAccountsNotLoggedIn": {
+    "message": "未登录或登录已过期",
+    "description": "刷新账号时该平台取不到账号信息的提示"
+  },
   "refreshAccountsBack": {
     "message": "返回",
     "description": "刷新账号侧边栏视图返回按钮"
@@ -1411,5 +1415,13 @@
   "sidepanelPublishToTitle": {
     "message": "发布 $1 到平台",
     "description": "侧边栏发布确认标题，$1 为发布类型（动态/视频/文章）"
+  },
+  "devEnvironmentTitle": {
+    "message": "开发环境标题",
+    "description": "开发模式下预填的标题（仅开发环境使用）"
+  },
+  "devEnvironmentContent": {
+    "message": "开发环境内容",
+    "description": "开发模式下预填的正文（仅开发环境使用）"
   }
 }
