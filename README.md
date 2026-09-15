@@ -124,7 +124,7 @@ pnpm test:watch # 单元测试（watch 模式）
 | 工作流 | 触发条件 | 作用 |
 | --- | --- | --- |
 | [`CI`](.github/workflows/ci.yml) | push 到 `main`、PR、手动 | `pnpm install` → `pnpm lint` → `pnpm typecheck` → `pnpm test` → `pnpm build:ci`，校验产物（manifest 版本、PDF worker、WASM、平台图标），并用临时密钥打包 CRX 做冒烟测试，最后上传 zip 与解压目录为构建产物 |
-| [`Release`](.github/workflows/release.yml) | 推送 `v*` 标签、手动 | 将 `package.json` 版本号同步为标签版本 → 构建 → 用 `CRX_PRIVATE_KEY` 签名出 CRX 并校验签名 → 创建 GitHub Release，附上 `pupu-v<version>.zip` 与 `pupu-v<version>.crx` |
+| [`Release`](.github/workflows/release.yml) | 推送 `v*` 标签、手动 | 将 `package.json` 版本号同步为标签版本 → `lint` + `typecheck` + `test`（发布前自证）→ 构建 → 用 `CRX_PRIVATE_KEY` 签名出 CRX 并校验签名 → 创建 GitHub Release，附上 `pupu-v<version>.zip` 与 `pupu-v<version>.crx` |
 | [`Deploy Pages`](.github/workflows/pages.yml) | push 到 `main` 且改动 `docs/**`、手动 | 将 `docs/` 部署到 GitHub Pages（官网与文档站） |
 
 ### 发布一个新版本

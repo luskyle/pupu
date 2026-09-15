@@ -78,6 +78,12 @@ jobs:
       - name: 代码检查
         run: pnpm lint
 
+      - name: 类型检查
+        run: pnpm typecheck
+
+      - name: 单元测试
+        run: pnpm test
+
       - name: 构建扩展
         run: pnpm build:ci
 
