@@ -33,7 +33,7 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.447.0",
-    "marked": "^18.0.12",
+    "marked": "^18.0.13",
     "pdfjs-dist": "^6.3.289",
     "plasmo": "0.90.5",
     "pptx-preview": "^1.0.7",
