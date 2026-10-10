@@ -43,7 +43,7 @@
     "pdfjs-dist": "^6.3.289",
     "plasmo": "0.90.5",
     "pptx-preview": "^1.0.7",
-    "react": "18.2.0",
+    "react": "18.3.1",
     "react-dom": "18.2.0",
     "react-viewer": "^3.2.2",
     "tailwindcss": "3.4.19",
