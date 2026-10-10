@@ -18,8 +18,8 @@ importers:
         specifier: ^0.6.0
         version: 0.6.0
       '@plasmohq/storage':
-        specifier: ^1.11.0
-        version: 1.11.0(react@18.2.0)
+        specifier: ^1.15.0
+        version: 1.15.0(react@18.2.0)
       docx-preview:
         specifier: ^0.4.0
         version: 0.4.0
@@ -2430,10 +2430,10 @@ packages:
     resolution: {integrity: sha512-/3oVbajt+DRqtbM0RkKFtfyZR8DVjcsYpj1jHqPParGVBiXwgP0D/8Bj5p5/5Iqihs08gzasTcjKcwQKKdj0og==}
     engines: {parcel: '>= 2.7.0'}
 
-  '@plasmohq/storage@1.11.0':
-    resolution: {integrity: sha512-JLu8cCjn+yzbaIK2Gw+NDuDJgiTle3nj1HbMC/irnnUTc7lnJSiCEN/EsUcWcwNtv9BJM2r8DAk1stsQ8dCKug==}
+  '@plasmohq/storage@1.15.0':
+    resolution: {integrity: sha512-zBZ2NyVyvZlql2XHsjkZDL0+bqF6lir9RygeTnkYGF253M8DZttuSvjpsmpK6OWYmRXjhEqJeubd3+Zq9kuZ0w==}
     peerDependencies:
-      react: ^16.8.6 || ^17 || ^18
+      react: ^16.8.6 || ^17 || ^18 || ^19.0.0
     peerDependenciesMeta:
       react:
         optional: true
@@ -9531,7 +9531,7 @@ snapshots:
       - walrus
       - whiskers
 
-  '@plasmohq/storage@1.11.0(react@18.2.0)':
+  '@plasmohq/storage@1.15.0(react@18.2.0)':
     dependencies:
       pify: 6.1.0
     optionalDependencies:
