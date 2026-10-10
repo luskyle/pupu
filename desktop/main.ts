@@ -1,7 +1,7 @@
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { BrowserWindow, type WebContents, app, dialog, ipcMain, session } from "electron";
+import { BrowserWindow, type WebContents, app, dialog, ipcMain, protocol, session } from "electron";
 import { parseSettings, selectTitle } from "../src/agent/decision";
 import { browserTool } from "./browser-tool";
 import { parseFillRequest } from "./input";
@@ -9,11 +9,28 @@ import { isEditorPreparationNavigation } from "./navigation";
 import type { PageAction, PageObservation, PublishState } from "./page-tool";
 import { runPublisher } from "./publish";
 import { LocalRuntime } from "./runtime";
+import { WorkspaceHost } from "./workspace-host";
+import { verifyWorkspace } from "./workspace-smoke";
 
 const verifyMode = process.argv.includes("--verify");
 const smokeMode = process.argv.includes("--smoke");
+const workspaceSmoke = process.argv.includes("--workspace-smoke");
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "pupu-media",
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: true,
+      bypassCSP: true,
+      stream: true,
+    },
+  },
+]);
 app.setName("pupu-desktop");
-if (verifyMode || smokeMode) app.setPath("userData", path.join(app.getPath("temp"), `pupu-verify-${process.pid}`));
+if (verifyMode || smokeMode || workspaceSmoke)
+  app.setPath("userData", path.join(app.getPath("temp"), `pupu-verify-${process.pid}`));
 else app.setPath("userData", path.join(app.getPath("appData"), "pupu-desktop"));
 const configPath = path.join(app.getPath("appData"), "pupu-desktop", "runtime.json");
 let workbench: BrowserWindow;
@@ -29,6 +46,8 @@ let submitAttempted = false;
 let confirming = false;
 let publishing = false;
 let preparingEditor = false;
+let activeWorkspace: WorkspaceHost | undefined;
+let quittingWorkspace = false;
 const runtime = new LocalRuntime(configPath, (message) => {
   console.log(`[ollama] ${message}`);
 });
@@ -680,15 +699,48 @@ async function verify() {
   console.log("DESKTOP_VERIFIED", JSON.stringify(report));
 }
 
-app.on("before-quit", () => {
+app.on("before-quit", (event) => {
   operation?.abort(new Error("应用退出"));
   downloadController?.abort(new Error("应用退出"));
   runtime.stop();
+  if (activeWorkspace && !quittingWorkspace) {
+    event.preventDefault();
+    quittingWorkspace = true;
+    void activeWorkspace.shutdown().then(
+      () => app.quit(),
+      (error) => {
+        console.error("退出时清理素材失败", error);
+        app.quit();
+      },
+    );
+  }
 });
 app.on("window-all-closed", () => app.quit());
 app
   .whenReady()
   .then(async () => {
+    if (
+      !verifyMode &&
+      !smokeMode &&
+      !process.argv.includes("--agent") &&
+      !process.argv.includes("--check-navigation")
+    ) {
+      const workspace = new WorkspaceHost(__dirname, workspaceSmoke);
+      activeWorkspace = workspace;
+      await workspace.start();
+      if (workspaceSmoke) {
+        try {
+          await verifyWorkspace(workspace);
+          await workspace.cleanup();
+          app.exit(0);
+        } catch (error) {
+          console.error("WORKSPACE_SMOKE_FAILED", error);
+          await workspace.cleanup();
+          app.exit(1);
+        }
+      }
+      return;
+    }
     session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
     workbench = new BrowserWindow({
       width: 1120,

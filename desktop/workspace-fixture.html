@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8" /><title>pupu 多平台验证页</title></head>
+<body>
+  <textarea placeholder="有什么新鲜事想分享给大家？"></textarea>
+  <input placeholder="填写标题（0～30个字）" />
+  <textarea placeholder="请输入标题"></textarea>
+  <div class="ProseMirror" contenteditable="true"></div>
+  <input type="file" accept="image/gif, image/jpeg, image/png" />
+  <input type="file" accept="video/mp4" />
+  <button><span class="woo-button-content">发送</span></button>
+  <button>发布</button>
+  <div id="uploads"></div>
+  <script>
+    window.fixtureState = { submissions: 0, files: [] };
+    for (const button of document.querySelectorAll("button")) {
+      button.onclick = () => { window.fixtureState.submissions++; };
+    }
+    document.querySelector(".ProseMirror").addEventListener("paste", (event) => {
+      event.preventDefault();
+      event.currentTarget.innerHTML = event.clipboardData.getData("text/html");
+    });
+    for (const input of document.querySelectorAll('input[type="file"]')) {
+      input.addEventListener("change", () => {
+        for (const file of input.files) {
+          window.fixtureState.files.push({ name: file.name, size: file.size, type: file.type });
+          const icon = document.createElement("i");
+          icon.title = "删除";
+          document.querySelector("#uploads").append(icon);
+        }
+        const status = document.createElement("p");
+        status.textContent = "上传完成";
+        document.querySelector("#uploads").append(status);
+      });
+    }
+  </script>
+</body>
+</html>

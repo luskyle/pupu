@@ -7,10 +7,12 @@
   "packageManager": "pnpm@11.18.0",
   "scripts": {
     "desktop:build": "node scripts/build-desktop.mjs",
-    "desktop:typecheck": "tsc -p desktop/tsconfig.json",
+    "desktop:typecheck": "tsc -p desktop/tsconfig.json && tsc -p desktop/tsconfig.workspace.json",
     "desktop:dev": "pnpm desktop:build && electron build/desktop/main.cjs",
+    "desktop:agent": "pnpm desktop:build && electron build/desktop/main.cjs --agent",
     "desktop:verify": "pnpm desktop:build && electron build/desktop/main.cjs --verify",
     "desktop:smoke": "pnpm desktop:build && electron build/desktop/main.cjs --smoke",
+    "desktop:workspace-smoke": "pnpm desktop:build && electron build/desktop/main.cjs --workspace-smoke",
     "desktop:package": "pnpm desktop:build && node scripts/package-desktop.mjs",
     "dev": "plasmo dev && node scripts/copy-pdf-worker.mjs",
     "build": "plasmo build && node scripts/copy-pdf-worker.mjs && node scripts/check-local-version.mjs",

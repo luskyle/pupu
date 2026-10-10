@@ -80,6 +80,16 @@ export default function PublishTypePlatforms() {
         />
       ) : null}
       <span className="truncate text-sm">{p.platformName}</span>
+      {process.env.PUPU_DESKTOP === "true" && (
+        <button
+          type="button"
+          className="ml-auto text-xs text-primary"
+          onClick={() => {
+            void chrome.tabs.create({ url: p.homeUrl }).catch((error) => logger.error("打开平台登录页失败:", error));
+          }}>
+          登录 / 查看
+        </button>
+      )}
     </li>
   );
 

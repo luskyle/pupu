@@ -89,6 +89,14 @@
           </div>
 
           <h2 id="desktop">Linux 桌面 Agent 实验版</h2>
+          <div class="note">
+            <strong>main 开发版新增单窗口多平台工作台，尚未发布安装包：</strong>
+            源码运行 <code>pnpm desktop:dev</code>，可使用插件的动态、视频、Markdown 文章编辑器及图片/PPTX/PDF 导入。
+            平台收纳为窗口内标签，批量执行不弹窗或抢焦点；需要登录时点击「登录 / 查看」或顶部平台标签。
+            普通适配器自动模式显示「待确认」，不是发布成功；可能已提交或仍执行的任务禁止重载重发。
+            此路径不需要模型，原 Agent 入口为 <code>pnpm desktop:agent</code>。
+            下列下载和操作步骤针对已发布的 v0.3.0 小红书试点；开发版未逐一验收所有真实平台。
+          </div>
           <ol class="steps">
             <li>从 Releases 下载 <code>pupu-desktop-v{{VERSION}}-linux-x64.tar.gz</code>，解压并保留完整目录，运行 <code>pupu-linux-x64/pupu</code>。不需要 Node.js 或加载扩展。仅提供 Linux x64 归档。</li>
             <li>单独安装 <a href="https://ollama.com/download" target="_blank" rel="noreferrer">Ollama</a>。连接本机服务，或在高级设置选择 Ollama 可执行文件，再点击「下载 Qwen3 4B」。模型约 2.5 GB，不包含在应用归档中。</li>

@@ -6,11 +6,11 @@ import AgentSettings from "./AgentSettings";
 const AboutTab: React.FC = () => {
   return (
     <div className="flex flex-col gap-4">
-      <AgentSettings />
+      {process.env.PUPU_DESKTOP !== "true" && <AgentSettings />}
       <Card className="shadow-none bg-default-50">
         <CardBody className="gap-6">
           <div className="flex justify-center items-center">
-            <img src="/assets/icon.png" alt="logo" className="w-24 h-24 rounded-xl shadow-lg" />
+            <img src={chrome.runtime.getURL("assets/icon.png")} alt="logo" className="w-24 h-24 rounded-xl shadow-lg" />
           </div>
           <div className="space-y-2 text-center">
             <h2 className="text-2xl font-bold">{chrome.i18n.getMessage("extensionDisplayName")}</h2>

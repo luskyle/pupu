@@ -4,11 +4,12 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["node"],
+    "types": ["node", "chrome"],
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
     "esModuleInterop": true
   },
-  "include": ["./**/*.ts", "../src/agent/decision.ts"]
+  "include": ["./**/*.ts", "../src/agent/decision.ts"],
+  "exclude": ["./workspace-adapters.ts", "./workspace-background.ts", "./workspace-test-tools.ts"]
 }

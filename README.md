@@ -67,6 +67,19 @@
 
 ### 桌面 Agent 实验版
 
+**main 分支新增多平台桌面工作台，尚未发布新的安装包；下面的 v0.3.0 下载包仍是小红书 Agent 试点。**
+
+源码运行 `pnpm desktop:dev` 默认打开统一工作台，复用插件的动态、视频、Markdown 文章编辑器、
+图片/PPTX/PDF 导入、话题与表情、平台选择、自动/手动模式和任务结果列表。
+平台适配器按完整模块打包，复用现有图文、视频和文章平台列表，不再复制一套平台逻辑。
+
+- **单窗口**：平台页面位于顶部标签中，批量发布后台执行，不创建独立弹窗、不抢焦点。点击平台标签或「登录 / 查看」时才展示对应页面。
+- **登录隔离**：保留桌面平台登录状态，不继承系统浏览器 Cookie。小红书继续使用原桌面登录分区；其他平台使用桌面专用分区。
+- **结果与重试**：「已填充」不是平台发布成功。普通适配器自动模式显示「待确认」；有提交可能或任务仍执行时拒绝重载重发。先查看平台实际结果。
+- **素材**：页面间的 `blob:` URL 转为受限本地素材协议，分块传输，支持图片、视频和封面。单素材上限 512 MB、当前会话总量上限 2 GB；正常退出清理临时素材。图片/视频和编辑内容不跨重启恢复，平台选择及账号缓存会保存。
+- **边界**：原插件适配器仍可能因平台页面变化失效。当前验证覆盖实际 Electron 中的界面发布链路、微博/雪球/小红书模拟页面、视频素材、Markdown 导入和 PPTX/PDF 真实转图，**没有对所有真实平台逐一验收或执行真实内容发布**。
+- **模型**：多平台迁移不要求安装模型，也不会调用模型。原小红书 Agent 仍可通过 `pnpm desktop:agent` 或可执行入口 `--agent` 使用。
+
 Linux x64 用户可直接从 [Releases](https://github.com/luskyle/pupu/releases/latest) 下载
 `pupu-desktop-v<version>-linux-x64.tar.gz`，解压完整目录后运行 `pupu-linux-x64/pupu`。
 Ollama 和模型需要单独安装，不包含在归档内。Windows/macOS 尚未提供发行包。
@@ -85,9 +98,11 @@ Ollama 标题候选决策、自动上传、受控填写、回读核验、自动�
 
 ```bash
 pnpm install
-pnpm desktop:dev       # 构建并打开工作台
+pnpm desktop:dev       # 默认打开单窗口多平台工作台（main 开发版）
+pnpm desktop:agent     # 原小红书 Agent 试点
 pnpm desktop:typecheck
 pnpm desktop:smoke     # 无模型 Chromium / preload / IPC 冒烟，CI 使用
+pnpm desktop:workspace-smoke # 真实 Electron 多平台界面、素材与导入验证，不连接真实平台
 pnpm desktop:verify    # 真 Electron + 真模型 + 本地夹具，成功后自动退出
 pnpm desktop:package   # 为当前 OS/CPU 生成独立可执行目录
 ```
@@ -143,7 +158,8 @@ node scripts/configure-desktop-runtime.mjs /absolute/path/to/ollama /absolute/pa
 
 发行流程同时生成扩展 ZIP、Linux 桌面 tar.gz 和 `SHA256SUMS`；
 桌面产物冒烟通过后才创建 Release，发布完成后触发 Pages 部署。
-CI 不下载模型，真实 Qwen3 验收仍用 `desktop:verify`；Pages 的静态版本取自已发布 Release。
+CI 不下载模型，额外运行单窗口多平台工作台冒烟；真实 Qwen3 验收仍用 `desktop:verify`。
+Pages 的静态版本取自已发布 Release。
 
 ### 开发
 

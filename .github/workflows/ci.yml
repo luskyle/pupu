@@ -51,6 +51,7 @@ jobs:
             sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
           fi
           xvfb-run --auto-servernum pnpm desktop:smoke
+          xvfb-run --auto-servernum node_modules/.bin/electron build/desktop/main.cjs --workspace-smoke
 
       - name: 校验 Pages 静态内容
         run: node scripts/inject-site-version.mjs docs build/pages-check

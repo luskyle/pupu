@@ -357,32 +357,21 @@ export async function createTabsForPlatforms(data: SyncData) {
   let groupId: number | undefined;
 
   for (const info of data.platforms) {
-    let tab: chrome.tabs.Tab | null = null;
     if (info) {
       const extraConfig = info.extraConfig as { customInjectUrls?: string[] };
-      if (extraConfig?.customInjectUrls && extraConfig.customInjectUrls.length > 0) {
-        for (const url of extraConfig.customInjectUrls) {
-          tab = await chrome.tabs.create({ url });
-          info.injectUrl = url;
-          // 等待标签页加载完成
-          await waitForTabComplete(tab.id!, TAB_LOAD_TIMEOUT_MS);
-        }
-      } else {
-        if (info.injectUrl) {
-          tab = await chrome.tabs.create({ url: info.injectUrl });
-        } else {
-          const platformInfo = infoMap[info.name];
-          if (platformInfo) {
-            tab = await chrome.tabs.create({ url: platformInfo.injectUrl });
-          }
-        }
+      const urls = extraConfig?.customInjectUrls?.length
+        ? extraConfig.customInjectUrls
+        : [info.injectUrl || infoMap[info.name]?.injectUrl].filter(Boolean);
+      for (const url of urls) {
+        const tab = await chrome.tabs.create({ url });
+        const platformInfo = { ...info, injectUrl: url };
         // 等待标签页加载完成
         if (tab) {
-          injections.push(injectScriptsToTabs([{ tab, platformInfo: info }], data));
+          injections.push(injectScriptsToTabs([{ tab, platformInfo }], data));
           await chrome.tabs.update(tab.id!, { active: true });
           tabs.push({
             tab,
-            platformInfo: info,
+            platformInfo,
           });
 
           // 如果是第一个标签页，创建一个新组
@@ -398,7 +387,7 @@ export async function createTabsForPlatforms(data: SyncData) {
           }
           // 等待3秒再继续
           await waitForTabComplete(tab.id!, TAB_LOAD_TIMEOUT_MS);
-          await new Promise((resolve) => setTimeout(resolve, 3000));
+          if (process.env.PUPU_DESKTOP !== "true") await new Promise((resolve) => setTimeout(resolve, 3000));
         }
       }
     }

@@ -131,7 +131,7 @@ const Options = () => {
             {/* 各 tab 内容保持挂载，仅通过 hidden 切换显示，以保留已填写的内容 */}
             <div className="px-0 pt-6">
               {LOCAL_TABS.map((key) => (
-                <div key={key} className={selectedTab === key ? "" : "hidden"}>
+                <div key={key} data-publish-type={key} className={selectedTab === key ? "" : "hidden"}>
                   {renderTabContent(key)}
                 </div>
               ))}

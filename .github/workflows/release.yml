@@ -40,6 +40,7 @@ jobs:
             sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
           fi
           xvfb-run --auto-servernum build/desktop-release/pupu-linux-x64/pupu --smoke
+          xvfb-run --auto-servernum build/desktop-release/pupu-linux-x64/pupu --workspace-smoke
       - name: 归档完整应用目录
         run: |
           VERSION="$(node -p "require('./package.json').version")"
