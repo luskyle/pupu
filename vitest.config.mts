@@ -14,6 +14,6 @@ export default defineConfig({
   },
   test: {
     alias: { "~": srcDir },
-    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    include: ["src/**/*.{test,spec}.{ts,tsx}", "desktop/**/*.test.ts"],
   },
 });

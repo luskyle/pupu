@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>pupu 本地验证页面</title></head>
+<body style="font-family:system-ui;padding:40px;max-width:700px">
+  <h1>本地 Agent 验证页</h1>
+  <p>这里故意不用「标题」占位符，检验本地模型的语义选择。不是实际平台，不会发布任何内容。</p>
+  <button role="tab" aria-selected="true"><span class="title">上传图文</span></button>
+  <label>搜索内容<input type="text" aria-label="搜索内容" style="display:block;width:500px;padding:10px"></label>
+  <label>作品名称<input type="text" aria-label="作品名称（给读者看到的图文名称）" style="display:block;width:500px;padding:10px"></label>
+  <label>正文内容<textarea aria-label="正文内容" data-placeholder="输入正文" oninput="setTimeout(() => { const next = this.cloneNode(true); next.value = this.value; next.removeAttribute('data-placeholder'); this.replaceWith(next); }, 100)" style="display:block;width:500px;height:140px"></textarea></label>
+  <label>图片<input type="file" accept="image/*" multiple onchange="this.getRootNode().getElementById('imageStatus').textContent = this.files.length + ' 张图片已准备'"></label>
+  <p id="imageStatus" role="status">尚未选择图片</p>
+  <button onclick="document.body.dataset.submitted='true'; document.body.dataset.submitCount=Number(document.body.dataset.submitCount || 0)+1; this.disabled=true; setTimeout(() => this.getRootNode().getElementById('result').textContent='发布成功', 700)">发布</button>
+  <p id="result" role="status"></p>
+  <script>
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = host.attachShadow({ mode: "closed" });
+    for (const element of document.querySelectorAll("label, #imageStatus, button, #result")) root.append(element);
+  </script>
+</body>
+</html>

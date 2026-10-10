@@ -9,6 +9,7 @@ import {
 } from "~sync/common";
 import { logger } from "~utils/logger";
 import QuantumEntanglementKeepAlive from "../utils/keep-alive";
+import { agentMessageHandler } from "./services/agent";
 import { linkExtensionMessageHandler, starter } from "./services/api";
 import {
   addTabsManagerMessages,
@@ -47,6 +48,7 @@ chrome.runtime.onInstalled.addListener((object) => {
 // Listen Message || 监听消息 || START
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   const handled =
+    agentMessageHandler(request, sender, sendResponse) ||
     defaultMessageHandler(request, sender, sendResponse) ||
     tabsManagerMessageHandler(request, sender, sendResponse) ||
     trustDomainMessageHandler(request, sender, sendResponse) ||

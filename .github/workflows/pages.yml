@@ -31,12 +31,16 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v7
         with:
-          # 需要读取标签来取「最新已发布版本」，浅克隆拿不到标签
           fetch-depth: 0
           fetch-tags: true
 
       - name: 注入站点版本号
-        run: node scripts/inject-site-version.mjs docs dist-pages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SITE_VERSION="$(gh api repos/${GITHUB_REPOSITORY}/releases/latest --jq '.tag_name | ltrimstr("v")')"
+          export SITE_VERSION
+          node scripts/inject-site-version.mjs docs dist-pages
 
       - name: 配置 Pages
         uses: actions/configure-pages@v6

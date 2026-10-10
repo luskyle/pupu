@@ -32,6 +32,7 @@
         <aside class="doc-toc">
           <ol>
             <li><a href="#install">安装</a></li>
+            <li><a href="#desktop">Linux 桌面 Agent</a></li>
             <li><a href="#usage">使用</a></li>
             <li><a href="#platforms">平台与分组</a></li>
             <li><a href="#account">账号与侧边栏</a></li>
@@ -86,6 +87,22 @@
           <div class="note">
             安装后点击工具栏的 pupu 图标会自动打开扩展主界面（选项页），侧边栏用于平台选择与账号管理。
           </div>
+
+          <h2 id="desktop">Linux 桌面 Agent 实验版</h2>
+          <ol class="steps">
+            <li>从 Releases 下载 <code>pupu-desktop-v{{VERSION}}-linux-x64.tar.gz</code>，解压并保留完整目录，运行 <code>pupu-linux-x64/pupu</code>。不需要 Node.js 或加载扩展。仅提供 Linux x64 归档。</li>
+            <li>单独安装 <a href="https://ollama.com/download" target="_blank" rel="noreferrer">Ollama</a>。连接本机服务，或在高级设置选择 Ollama 可执行文件，再点击「下载 Qwen3 4B」。模型约 2.5 GB，不包含在应用归档中。</li>
+            <li>输入标题、正文并添加图片，打开平台窗口登录并确认当前账号。点击「让 Agent 自动发布」，确认本次任务后自动执行。</li>
+          </ol>
+          <p>先想了解流程，可在高级设置运行本地模拟发布，不会向互联网发布。正式任务中的正文和图片会上传到小红书；本地模型只读取字段标签。</p>
+          <div class="note">目前仅试点小红书图文。已实测真实平台上传、填写、回读、图文导航，未实测真实提交及成功回执。登录、验证码或歧义会暂停，提交不确定时不要直接重发，请在内容管理核对。停止不能撤销已提交内容。</div>
+          <p>草稿文字和登录状态可保留，图片选择重启后需要重新添加。缺少内容/图片或模型时点击发布按钮会显示原因；不需要自己操作「观察字段」。Windows/macOS 和手机应用尚未发布。</p>
+          <pre><code>pnpm desktop:dev
+pnpm desktop:smoke     # 不需要模型的 Chromium/IPC 冒烟
+pnpm desktop:verify    # 真实本地 Qwen3 + 模拟发布
+pnpm desktop:package</code></pre>
+          <h3>发布流程</h3>
+          <p>CI 同时检查扩展和桌面类型、测试、扩展归档及无模型桌面冒烟。Release 在 Linux runner 打包并验证完整桌面目录，所有产物成功后发布扩展 ZIP、桌面 tar.gz 和 SHA256SUMS，再部署 Pages。Pages 静态版本读取已发布 Release，而非尚未发布的标签。</p>
 
           <h2 id="usage">使用</h2>
           <h3>发布类型</h3>
@@ -198,7 +215,7 @@ pnpm test       # 单元测试（vitest）</code></pre>
                 <td>push 到 main、PR、手动</td>
                 <td>
                   安装依赖 → <code>pnpm lint</code> → <code>pnpm typecheck</code> → <code>pnpm test</code> →
-                  <code>pnpm build:ci</code>，校验产物；再用临时密钥打包 CRX 做冒烟测试（仅验证打包路径可用），最后上传 zip 与解压目录为构建产物
+                  桌面类型检查与无模型 Chromium 冒烟 → <code>pnpm build:ci</code>，校验产物；再用临时密钥打包 CRX 做冒烟测试（仅验证打包路径可用），最后上传 zip 与解压目录为构建产物
                 </td>
               </tr>
               <tr>
@@ -206,7 +223,7 @@ pnpm test       # 单元测试（vitest）</code></pre>
                 <td>推送 <code>v*</code> 标签、手动</td>
                 <td>
                   校验标签与 <code>package.json</code> 版本一致 → <code>lint</code> + <code>typecheck</code> + <code>test</code>
-                  → 构建 → 创建 Release，附上 <code>pupu-v&lt;version&gt;.zip</code>（不再附 CRX）
+                  → 扩展构建 + Linux 桌面打包/冒烟 → 创建 Release，附上扩展 ZIP、桌面 tar.gz 与 SHA256SUMS（不附 CRX）
                 </td>
               </tr>
               <tr>
@@ -218,15 +235,16 @@ pnpm test       # 单元测试（vitest）</code></pre>
           </table>
           <h3>发布一个版本</h3>
           <p>先改版本号并提交，再打标签（顺序不能反，否则发布流程会因一致性校验失败而中止）：</p>
-          <pre><code>pnpm pkg set version=0.2.11
-git commit -am "chore(release): 0.2.11"
+          <pre><code>pnpm pkg set version=0.3.0
+# 同步更新 docs/releases/v0.3.0.md 并提交相关变更
+git commit -am "chore(release): 0.3.0"
 git push origin main
-git tag v0.2.11 &amp;&amp; git push origin v0.2.11</code></pre>
+git tag v0.3.0 &amp;&amp; git push origin v0.3.0</code></pre>
           <p>
             推送标签后，Release 工作流会校验标签与 <code>package.json</code> 版本一致、跑完 lint / 类型检查 / 单元测试、
-            构建出 <code>pupu-v&lt;version&gt;.zip</code>（校验 manifest 版本与标签一致），然后发布到 Releases 页面，
+            构建扩展 ZIP 与 Linux 桌面归档（校验 manifest 版本与标签一致），然后发布到 Releases 页面，
             并触发一次站点重部署以同步站点上的版本号。也可以在 Actions 页面手动运行 <code>Release</code> 工作流并填写版本号，
-            它会自动创建对应标签。
+            输入必须与源码版本一致，且必须提供对应更新说明；它会自动创建对应标签。
           </p>
           <div class="note">
             <strong>为什么必须先改版本号：</strong>扩展内「关于」页显示的是构建时 manifest 的版本，而 manifest 版本来自
@@ -234,8 +252,8 @@ git tag v0.2.11 &amp;&amp; git push origin v0.2.11</code></pre>
             避免仓库版本与已发布版本悄悄漂移。
           </div>
           <div class="note">
-            <strong>站点版本号是自动的：</strong>部署时由 <code>scripts/inject-site-version.mjs</code> 从最新 <code>v*</code>
-            标签注入，页面再用 GitHub API 覆盖为最新 release；发布流程结束时会自动触发一次站点重部署。README 徽章同样由
+            <strong>站点版本号是自动的：</strong>部署时查询已发布 Release，并由 <code>scripts/inject-site-version.mjs</code>
+            注入静态页面，页面再用 GitHub API 获取最新 release；发布流程结束时会自动触发一次站点重部署。README 徽章同样由
             shields 动态读取，都无需手工维护。
           </div>
 

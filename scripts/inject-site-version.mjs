@@ -30,6 +30,10 @@ if (srcDir === outDir) {
 
 /** 最新已发布版本：优先最新 v* 标签，退回 package.json。 */
 const resolveVersion = () => {
+  if (process.env.SITE_VERSION) {
+    if (!/^\d+\.\d+\.\d+$/.test(process.env.SITE_VERSION)) throw new Error("SITE_VERSION 必须是正式版本号");
+    return { version: process.env.SITE_VERSION, source: "published GitHub Release" };
+  }
   try {
     const tags = execFileSync("git", ["tag", "--list", "v*", "--sort=-v:refname"], { encoding: "utf8" });
     const latest = tags.split("\n").map((t) => t.trim()).filter(Boolean)[0];

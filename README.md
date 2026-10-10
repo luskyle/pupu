@@ -3,7 +3,7 @@
 
   # pupu 🐙
 
-  > 一款多平台内容发布浏览器扩展，一次编辑，轻松将内容同步发布到多个社交平台。
+  > 多平台内容发布扩展 + 本地 Agent 桌面工作台，一次编辑，减少重复操作。
 
   [![CI](https://github.com/luskyle/pupu/actions/workflows/ci.yml/badge.svg)](https://github.com/luskyle/pupu/actions/workflows/ci.yml)
   [![Release](https://github.com/luskyle/pupu/actions/workflows/release.yml/badge.svg)](https://github.com/luskyle/pupu/actions/workflows/release.yml)
@@ -64,6 +64,86 @@
 > 更详细的安装、使用与常见问题见 **在线文档**：<https://luskyle.github.io/pupu/guide.html>
 
 ## 🚀 快速开始
+
+### 桌面 Agent 实验版
+
+Linux x64 用户可直接从 [Releases](https://github.com/luskyle/pupu/releases/latest) 下载
+`pupu-desktop-v<version>-linux-x64.tar.gz`，解压完整目录后运行 `pupu-linux-x64/pupu`。
+Ollama 和模型需要单独安装，不包含在归档内。Windows/macOS 尚未提供发行包。
+本次版本详情见 [v0.3.0 更新说明](docs/releases/v0.3.0.md)。
+
+除原扩展外，现有独立 Electron 工作台：本地草稿、图片选择、隔离的小红书登录窗口、
+Ollama 标题候选决策、自动上传、受控填写、回读核验、自动提交与成功回执检查。
+不需要加载浏览器扩展。**仅试点小红书图文，不代表原扩展全部平台已迁移。**
+
+日常使用只需：**写标题和正文 → 添加图片 → 在平台窗口登录并确认账号 →
+点击「让 Agent 自动发布」→ 确认本次任务**。观察字段和本地模型设置已收进内部流程/高级设置。
+确认后 Agent 自动执行，不需要再到网页点击发布。遇到登录、验证码、编辑器或发布入口不明确时暂停，
+停止无法撤销已经提交的内容；提交后结果不明时不会自动重发，需在平台内容管理核对。
+自动发布按钮只在执行任务时禁用；缺少标题、正文、图片或本地模型时，点击会显示具体原因，
+按钮下方也显示准备提示。图片选择目前不持久化，重启应用后需重新添加，草稿文字仍会恢复。
+
+```bash
+pnpm install
+pnpm desktop:dev       # 构建并打开工作台
+pnpm desktop:typecheck
+pnpm desktop:smoke     # 无模型 Chromium / preload / IPC 冒烟，CI 使用
+pnpm desktop:verify    # 真 Electron + 真模型 + 本地夹具，成功后自动退出
+pnpm desktop:package   # 为当前 OS/CPU 生成独立可执行目录
+```
+
+本机已配置的运行时位于 `.local/ollama/bin/ollama`，模型存储在 `.local/models/`，
+不进入 Git 或桌面安装包。桌面会自动启动已配置的 Ollama；退出时只关闭自己启动的服务，
+不会关闭用户原先运行的 Ollama。运行时配置保存到系统应用数据目录的 `pupu-desktop/runtime.json`。
+移动仓库或更换电脑后，请重新指定绝对路径：
+
+```bash
+node scripts/configure-desktop-runtime.mjs /absolute/path/to/ollama /absolute/path/to/models
+```
+
+其他电脑需先安装 [Ollama](https://ollama.com/download)，在工作台「选择 Ollama」后点击
+「下载 Qwen3 4B」，或连接已运行于 `127.0.0.1:11434` 的服务并安装 `qwen3:4b`。
+权重约 2.5 GB，模型首次启动可能较慢；应用不会向云端发送字段、正文或图片。
+模型下载本身需要联网，小红书网页也需要联网。
+
+验证方式：
+
+1. 打开工作台，顶部显示「本地 Agent 已就绪」。
+2. 输入 1–20 字标题和正文，打开「高级设置与本地演示」。
+3. 点击「用当前内容演示自动发布」，确认本地模拟任务（不会联网发布）。
+4. Agent 自动选择作品名称、填写文字、点击一次模拟发布，并等到成功回执。
+   `desktop:verify` 还验证 closed shadow DOM、图片上传、覆盖保护、重复提交保护与界面发布链路，
+   并输出 `build/desktop/verification.json` 与两张截图。
+5. 打包后的 Linux 入口为 `build/desktop-release/pupu-linux-x64/pupu`；
+   该入口也支持 `--verify`，报告写入系统应用数据目录的 `pupu-desktop/verification/`。
+   分发时须保留整个可执行目录，而非只复制入口文件。
+
+真实小红书需要在独立平台窗口**重新登录**，不读取 Chrome 的登录 Cookie；
+账号登录后重启应用仍可保留。Agent 尝试自动选择「上传图文」并向唯一图片文件入口上传，
+同一入口的外层按钮/tab 与内部文字会去重；已选中图文或已进入可识别的图文编辑器时不重复切换。
+入口可见性包含父容器与 shadow host 的隐藏状态；真正存在歧义时错误会列出候选标签、class 和位置，
+不包含正文或账号信息，方便根据实际页面排查。
+已在真实小红书页面确认存在屏幕外与近透明的重复入口；筛选会排除视口外和父容器透明度低于 0.01 的副本。
+真实平台已实测选择图文、上传测试图片、标题/正文填写及异步回读、发布按钮可用状态；
+未点击真实发布按钮，最终提交及成功回执仍未实测。
+准备阶段同一创作编辑路径的图文/视频查询参数切换会等待页面加载并重新观察，不再误报需要登录。
+进入填写阶段后，导航仍会停止任务并丢弃旧目标。可用桌面入口的 `--check-navigation` 实测已登录平台
+从视频切到图文时任务不中止（不上传、不填写、不提交）。
+等待编辑器就绪、填写并回读，待唯一发布按钮可用后核对文字并提交一次。
+平台显示明确的成功提示才算发布成功；不通过页面跳转或按钮被点击来猜测成功。
+支持普通 DOM 及通过 Chromium 调试协议读取的 open/closed shadow DOM；
+工具填写后，富文本编辑器隐藏空段落占位提示不会误判为目标失效；仍要求同一节点、字段身份未改、
+文字与本次写入完全一致。重渲染替换节点时仅重新绑定同一文档/shadow root 内唯一、同身份且全文一致的字段，
+不重新填写。无法唯一核对、标签变化或文字不一致仍会停止，不跳过提交前核验。
+调试协议使用后端节点 ID；解析 shadow root 时遇到节点失效，只在执行页面动作前最多重新观察两次。
+填写、上传和提交命令不会因通信错误自动重放，防止重复副作用。
+不支持 iframe、验证码自动化；页面结构不支持时会停止，不能据夹具结果
+宣称真实平台已验收。Windows/macOS 使用相同代码，但尚需对应系统构建、签名与实际验证；
+这不是手机 App，移动端协作仍属于后续方案。
+
+发行流程同时生成扩展 ZIP、Linux 桌面 tar.gz 和 `SHA256SUMS`；
+桌面产物冒烟通过后才创建 Release，发布完成后触发 Pages 部署。
+CI 不下载模型，真实 Qwen3 验收仍用 `desktop:verify`；Pages 的静态版本取自已发布 Release。
 
 ### 开发
 
@@ -173,6 +253,36 @@ git tag v0.2.10 && git push origin v0.2.10
 - [html-to-image](https://github.com/bubkoo/html-to-image) / [html2canvas](https://html2canvas.hertzen.com/) — 页面截图
 - [lucide-react](https://lucide.dev/) — 界面图标
 - [react-viewer](https://github.com/infeng/react-viewer) — 图片大图预览
+
+## 🧭 演进方案
+
+- [本地决策 Agent 设计方案](docs/agent-design.md)：借鉴 Jev 的有限选项决策思路，以小红书标题定位为试点，说明本地模型接入、受控执行、跨平台演进与验收标准。已实现首个实验原型，完整验收尚未完成。
+
+### 本地 Agent 实验原型
+
+默认关闭。在「关于」页的「本地 Agent」中启用，填写 Ollama 模型名称，点击「保存并测试连接」。
+需要自行安装支持该模型和结构化输出的 Ollama，并下载模型，例如：
+
+```bash
+ollama pull qwen3:4b
+ollama serve # 已有服务运行时无需再启动
+```
+
+扩展只访问 `http://127.0.0.1:11434`，不自动下载模型、不调用云端。如果服务拒绝扩展来源，
+将当前扩展的 `chrome-extension://<扩展 ID>` 加入 Ollama 的 `OLLAMA_ORIGINS` 并重启服务；
+不要配置通配来源或把服务监听地址改成公网地址。
+
+- 仅小红书图文参与试点，启用后该平台**只填充、不自动提交**，其他平台保持原模式。
+- 唯一明确的标题字段直接填写；否则本地模型只能选择当前候选 ID 或 `none`。
+- 模型只接收字段类型、标签和占位文字，不接收正文、图片、字段当前值或账号凭据。
+- 写入前拒绝覆盖不同的已有内容，并检查字段是否失效；写入后回读核验。
+- 页面右下角显示阶段与停止按钮；停止不会自动撤销已有填写。失败时显示原因，由用户手动处理。
+- 当前智能定位只支持普通 DOM 与 open shadow DOM 中的原生 input/textarea；
+  closed shadow DOM、iframe 和富文本标题不支持智能填写，遇到时明确停止。
+- 上传和正文仍沿用平台适配；其完成状态不是整个作品发布成功的证据，最后必须检查账号、素材和正文。
+
+连接测试只验证服务与有限选择格式，不证明真实平台适配成功。当前未完成真实账号、
+真实本地模型及设计方案中 100 场景的验收，不应作为稳定版全自动 Agent 宣传。
 
 ## 🙏 致谢
 

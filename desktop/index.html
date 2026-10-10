@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; frame-src 'none'">
+  <title>pupu · Agent 发布工作台</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header><img src="icon.png" alt=""><div><h1>pupu <small>本地 Agent · 桌面实验版</small></h1><p>写好内容，确认一次任务，剩下的交给 Agent。</p></div><span id="models" role="status">正在启动本地 Agent…</span></header>
+  <main>
+    <section class="card editor">
+      <h2>1. 写好要发布的内容</h2>
+      <label>标题 <span id="titleCount">0 / 20</span><input id="title" maxlength="20" placeholder="给这篇笔记起个标题"></label>
+      <label>正文<textarea id="content" rows="9" placeholder="在这里写正文，Agent 不会擅自改写"></textarea></label>
+      <div class="row"><button id="assets">添加图片</button><span id="assetNames">小红书图文至少需要 1 张图片</span><button id="saveDraft">保存草稿</button></div>
+      <p class="hint">支持 PNG / JPG / WEBP，最多 9 张，每张不超过 20 MB。草稿保存在本机。</p>
+    </section>
+    <aside class="card">
+      <h2>2. 选择发布平台</h2>
+      <div class="platform"><strong>小红书 · 图文</strong><span>当前桌面试点</span></div>
+      <button id="rednote">打开平台 / 登录账号</button>
+      <p class="hint">首次使用需要登录。请在弹出的平台窗口确认账号；后续登录状态会保留。</p>
+      <h2>3. 交给 Agent</h2>
+      <p>Agent 会自动上传图片、识别编辑框、填写、检查并点击发布。你不需要再手动“观察字段”。</p>
+      <button id="publish" class="primary">让 Agent 自动发布</button>
+      <p id="publishHelp" class="hint" aria-live="polite">点击后检查发布条件；缺少内容或图片会明确提示。</p>
+      <button id="cancel" class="danger" disabled>停止任务</button>
+      <p class="notice">开始时会确认本次任务。登录、验证码或无法识别页面时暂停；提交后不能撤销。只有收到平台成功提示才显示成功。</p>
+      <output id="progress" aria-live="polite">先写内容并添加图片，然后点击自动发布。</output>
+      <ol id="history" aria-label="Agent 执行记录"></ol>
+      <button id="showPlatform">查看平台窗口 / 核对结果</button>
+    </aside>
+    <details id="settings" class="card settings">
+      <summary>高级设置与本地演示（平时无需操作）</summary>
+      <div class="row"><label>本地模型<input id="model" value="qwen3:4b" spellcheck="false"></label><button id="status">检查模型</button><button id="configure">选择 Ollama</button><button id="download">下载 Qwen3 4B</button></div>
+      <p class="hint">字段判断只访问本机 Ollama；不把正文、图片或登录凭据发送给模型。网页和素材上传仍需要互联网。</p>
+      <button id="fixture">用当前内容演示自动发布（不联网发布）</button>
+      <p class="hint">本地演示不是小红书验收。支持普通与 shadow DOM 编辑器；iframe、验证码或不明确的发布入口会暂停，不会猜测点击。</p>
+      <pre id="candidates" hidden></pre>
+    </details>
+  </main>
+  <script src="renderer.js"></script>
+</body>
+</html>

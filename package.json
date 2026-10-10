@@ -1,11 +1,17 @@
 {
   "name": "pupu",
   "displayName": "__MSG_extensionDisplayName__",
-  "version": "0.2.11",
+  "version": "0.3.0",
   "description": "__MSG_extensionDescription__",
   "author": "pupu",
   "packageManager": "pnpm@11.18.0",
   "scripts": {
+    "desktop:build": "node scripts/build-desktop.mjs",
+    "desktop:typecheck": "tsc -p desktop/tsconfig.json",
+    "desktop:dev": "pnpm desktop:build && electron build/desktop/main.cjs",
+    "desktop:verify": "pnpm desktop:build && electron build/desktop/main.cjs --verify",
+    "desktop:smoke": "pnpm desktop:build && electron build/desktop/main.cjs --smoke",
+    "desktop:package": "pnpm desktop:build && node scripts/package-desktop.mjs",
     "dev": "plasmo dev && node scripts/copy-pdf-worker.mjs",
     "build": "plasmo build && node scripts/copy-pdf-worker.mjs && node scripts/check-local-version.mjs",
     "build:ci": "plasmo build && node scripts/copy-pdf-worker.mjs && plasmo package && node scripts/rename-package.mjs",
@@ -45,6 +51,9 @@
     "video-react": "^0.16.0"
   },
   "devDependencies": {
+    "electron": "^44.7.0",
+    "@electron/packager": "^20.3.0",
+    "esbuild": "^0.25.0",
     "@biomejs/biome": "^1.9.4",
     "@commitlint/cli": "^19.5.0",
     "@commitlint/config-conventional": "^19.5.0",

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>pupu 🐙 — 多平台内容发布浏览器扩展</title>
+    <title>pupu 🐙 — 多平台发布扩展与本地 Agent 桌面工作台</title>
     <meta name="description" content="pupu 是一款多平台内容发布浏览器扩展：一次编辑，轻松将内容同步发布到微博、小红书、知乎、抖音、B站、微信公众号等数十个平台。" />
     <meta name="theme-color" content="#7c5cff" />
     <link rel="icon" href="assets/icon.png" />
@@ -24,6 +24,7 @@
           <a href="#features">特性</a>
           <a href="#platforms">支持平台</a>
           <a href="#install">安装</a>
+          <a href="#desktop">桌面 Agent</a>
           <a href="guide.html">使用文档</a>
           <a href="https://github.com/luskyle/pupu" target="_blank" rel="noreferrer">GitHub</a>
         </div>
@@ -34,10 +35,10 @@
       <div class="wrap">
         <img class="hero-logo" src="assets/icon.png" alt="pupu Logo" />
         <h1>pupu 🐙</h1>
-        <p class="tagline">一款多平台内容发布浏览器扩展，一次编辑，轻松将内容同步发布到多个社交平台。</p>
+        <p class="tagline">多平台内容发布扩展 + 本地 Agent 桌面工作台。一次编辑，减少重复操作。</p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="https://github.com/luskyle/pupu/releases/latest" target="_blank" rel="noreferrer">
-            ⬇️ 下载最新版 <span id="release-version">v{{VERSION}}</span>
+            ⬇️ 下载扩展 / Linux 桌面版 <span id="release-version">v{{VERSION}}</span>
           </a>
           <a class="btn btn-ghost" href="guide.html">📖 使用文档</a>
           <a class="btn btn-ghost" href="https://github.com/luskyle/pupu" target="_blank" rel="noreferrer">⭐ GitHub 仓库</a>
@@ -50,6 +51,22 @@
         </div>
       </div>
     </header>
+
+    <section id="desktop">
+      <div class="wrap">
+        <h2>桌面 Agent · 小红书图文实验版</h2>
+        <p class="section-lead">独立桌面工作台，不需要加载浏览器扩展。写内容、加图片、登录并确认账号，确认一次任务后由 Agent 自动上传、填写、检查和提交。</p>
+        <div class="card">
+          <h3>不用理解“候选字段”，直接发布任务</h3>
+          <p>主界面提供内容编辑、平台登录和「让 Agent 自动发布」。模型配置和不联网发布的本地演示位于高级设置。</p>
+          <p>本机 Ollama / Qwen3 4B 负责标题字段判断，受控工具执行操作；收到平台明确成功提示后才显示发布成功。登录、验证码、定位歧义或结果未知时暂停，提交不会自动重试。</p>
+          <p>Linux 已实测真实小红书图文入口、图片上传、标题正文回读及正常导航；未执行真实发布，最终提交与回执仍未验收。不是全平台桌面迁移版，也不是手机 App。</p>
+          <p>从 Release 下载 <code>pupu-desktop-v{{VERSION}}-linux-x64.tar.gz</code>，解压完整目录后运行 <code>pupu-linux-x64/pupu</code>。首次需单独安装 Ollama 并下载约 2.5 GB 的 Qwen3 4B；归档不包含模型。</p>
+          <p><a href="guide.html#desktop">桌面安装与使用指南</a> · <a href="releases/v0.3.0.md">v0.3.0 更新说明</a></p>
+          <p>源码启动：<code>pnpm desktop:dev</code>；本地模型验收：<code>pnpm desktop:verify</code>；打包：<code>pnpm desktop:package</code>。</p>
+        </div>
+      </div>
+    </section>
 
     <section id="features">
       <div class="wrap">

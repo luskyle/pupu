@@ -11,6 +11,7 @@
 
 # production
 /build
+/.local/
 
 # 站点部署产物（scripts/inject-site-version.mjs 生成，版本号已注入）
 /dist-pages

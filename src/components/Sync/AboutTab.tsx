@@ -1,10 +1,12 @@
 import { Button, Card, CardBody } from "@heroui/react";
 import { Github } from "lucide-react";
 import type React from "react";
+import AgentSettings from "./AgentSettings";
 
 const AboutTab: React.FC = () => {
   return (
     <div className="flex flex-col gap-4">
+      <AgentSettings />
       <Card className="shadow-none bg-default-50">
         <CardBody className="gap-6">
           <div className="flex justify-center items-center">

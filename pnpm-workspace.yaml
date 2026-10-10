@@ -2,6 +2,7 @@ packages:
   - .
 
 allowBuilds:
+  electron: true
   '@biomejs/biome': true
   '@heroui/shared-utils': true
   '@parcel/watcher': true
@@ -12,6 +13,7 @@ allowBuilds:
   msgpackr-extract: true
   sharp: true
 onlyBuiltDependencies:
+  - electron
   - '@heroui/shared-utils'
   - '@parcel/watcher'
   - '@swc/core'

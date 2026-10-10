@@ -21,7 +21,36 @@ permissions:
   actions: write
 
 jobs:
+  desktop:
+    name: Linux x64 桌面应用
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm desktop:typecheck
+      - run: pnpm desktop:package
+      - name: 打包应用冒烟测试（无模型）
+        run: |
+          if [ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+          xvfb-run --auto-servernum build/desktop-release/pupu-linux-x64/pupu --smoke
+      - name: 归档完整应用目录
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          tar -C build/desktop-release -czf "build/pupu-desktop-v${VERSION}-linux-x64.tar.gz" pupu-linux-x64
+      - uses: actions/upload-artifact@v7
+        with:
+          name: desktop-linux-x64
+          path: build/pupu-desktop-*.tar.gz
+          if-no-files-found: error
   release:
+    needs: desktop
     name: 打包并发布 Release
     runs-on: ubuntu-latest
     steps:
@@ -64,7 +93,6 @@ jobs:
       # 因此标签必须与 package.json 一致，否则本地/CI 构建出来的「关于」页会显示错的版本。
       # 这里刻意「校验并报错」而不是静默改版本号，避免仓库版本与已发布版本悄悄漂移。
       - name: 校验标签与 package.json 版本一致
-        if: github.ref_type == 'tag'
         env:
           TAG_VERSION: ${{ steps.version.outputs.version }}
         run: |
@@ -78,9 +106,6 @@ jobs:
           fi
           echo "✅ 标签与 package.json 版本一致：${PKG_VERSION}"
 
-      - name: 同步 package.json 版本号
-        run: pnpm pkg set version="${{ steps.version.outputs.version }}"
-
       # 说明：这里不再生成/附带 CRX。自签名 CRX 无法通过拖拽或普通安装流程安装
       # （Chromium 要求 proof 由 Chrome 应用商店私钥签名，否则报 CRX_REQUIRED_PROOF_MISSING），
       # 附带它只会误导用户。CRX 的打包能力仍保留（pnpm crx / pnpm verify:crx），
@@ -89,7 +114,7 @@ jobs:
         run: pnpm lint
 
       - name: 类型检查
-        run: pnpm typecheck
+        run: pnpm typecheck && pnpm desktop:typecheck
 
       - name: 单元测试
         run: pnpm test
@@ -112,6 +137,12 @@ jobs:
           done
           echo "SHA256(zip): $(sha256sum "$zip" | cut -d' ' -f1)"
 
+      - name: 下载桌面产物
+        uses: actions/download-artifact@v8
+        with:
+          name: desktop-linux-x64
+          path: build
+
       - name: 创建 GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -121,26 +152,27 @@ jobs:
           TAG="v${VERSION}"
           ZIP="build/pupu-v${VERSION}.zip"
           test -f "$ZIP"
+          DESKTOP="build/pupu-desktop-v${VERSION}-linux-x64.tar.gz"
+          test -f "$DESKTOP"
+          (cd build && sha256sum "pupu-v${VERSION}.zip" "pupu-desktop-v${VERSION}-linux-x64.tar.gz" > SHA256SUMS)
+          NOTES="docs/releases/v${VERSION}.md"
+          test -f "$NOTES"
           if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-            gh release create "$TAG" "$ZIP" \
+            gh release create "$TAG" "$ZIP" "$DESKTOP" build/SHA256SUMS \
               --title "pupu $TAG" \
-              --generate-notes
+              --notes-file "$NOTES"
           else
-            gh release create "$TAG" "$ZIP" \
+            gh release create "$TAG" "$ZIP" "$DESKTOP" build/SHA256SUMS \
               --title "pupu $TAG" \
               --target "$GITHUB_SHA" \
-              --generate-notes
+              --notes-file "$NOTES"
           fi
 
-      # 站点上的版本号取自「最新 v* 标签」，因此发版后需要重新部署一次站点才能刷新
+      # 站点版本号取自已发布 Release，因此发版后需要重新部署。
       # （Deploy Pages 只监听 docs/** 的推送，不会因打标签而自动触发）。
-      # 这一步失败不影响已完成的发布，只是站点静态版本号会滞后到下次部署。
+      # 触发失败明确标记工作流失败，不掩盖部署未完成。
       - name: 触发站点重新部署（同步站点版本号）
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh workflow run pages.yml --ref main; then
-            echo "✅ 已触发 Deploy Pages，站点版本号将与本次发布同步"
-          else
-            echo "⚠️ 触发 Deploy Pages 失败（不影响本次发布）；可在 Actions 页面手动运行 Deploy Pages"
-          fi
+          gh workflow run pages.yml --ref main

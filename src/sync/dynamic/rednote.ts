@@ -1,14 +1,20 @@
+import { fillTitleWithAgent } from "~agent/title";
 import { logger } from "~utils/logger";
 import { buildXhsContent, pickXhsTitle } from "~utils/rednote-text";
 import type { DynamicData, SyncData } from "../common";
 
-// 注意：injectFunction 会被 chrome.scripting.executeScript 序列化注入到目标页面，
-// 闭包外的 import 不会随之带过去，所以发布按钮的查找逻辑必须就地声明，
-// 不能依赖 ../dom-utils 等外部模块。
+// 由 rednote-publisher content script 调用，模块依赖随脚本打包，不再序列化函数闭包。
 
 // 优先发布图文
-export async function DynamicRednote(data: SyncData) {
+export async function DynamicRednote(
+  data: SyncData,
+  agentEnabled = false,
+  signal?: AbortSignal,
+  onStage?: (stage: string) => void,
+) {
   const { title, content, images, tags } = data.data as DynamicData;
+  const checkStopped = () => signal?.throwIfAborted();
+  checkStopped();
   // 辅助函数：等待元素出现
   function waitForElement(selector: string, timeout = 10000): Promise<Element> {
     return new Promise((resolve, reject) => {
@@ -19,9 +25,16 @@ export async function DynamicRednote(data: SyncData) {
       }
 
       const observer = new MutationObserver(() => {
+        if (signal?.aborted) {
+          clearTimeout(timer);
+          observer.disconnect();
+          reject(signal.reason);
+          return;
+        }
         const element = document.querySelector(selector);
         if (element) {
           resolve(element);
+          clearTimeout(timer);
           observer.disconnect();
         }
       });
@@ -31,7 +44,7 @@ export async function DynamicRednote(data: SyncData) {
         subtree: true,
       });
 
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         observer.disconnect();
         reject(new Error(`Element with selector "${selector}" not found within ${timeout}ms`));
       }, timeout);
@@ -49,8 +62,9 @@ export async function DynamicRednote(data: SyncData) {
     const dataTransfer = new DataTransfer();
 
     for (const fileInfo of images) {
+      checkStopped();
       try {
-        const response = await fetch(fileInfo.url);
+        const response = await fetch(fileInfo.url, { signal });
         if (!response.ok) {
           throw new Error(`HTTP 错误! 状态: ${response.status}`);
         }
@@ -58,17 +72,19 @@ export async function DynamicRednote(data: SyncData) {
         const file = new File([blob], fileInfo.name, { type: fileInfo.type });
         dataTransfer.items.add(file);
       } catch (error) {
+        if (agentEnabled || signal?.aborted) throw error;
         logger.error(`上传图片 ${fileInfo.url} 失败:`, error);
       }
     }
 
     if (dataTransfer.files.length > 0) {
+      checkStopped();
       fileInput.files = dataTransfer.files;
       fileInput.dispatchEvent(new Event("change", { bubbles: true }));
       await new Promise((resolve) => setTimeout(resolve, 2000)); // 等待文件处理
       logger.debug("文件上传操作完成");
     } else {
-      logger.error("没有成功添加任何文件");
+      throw new Error("没有成功添加任何文件");
     }
   }
 
@@ -98,16 +114,19 @@ export async function DynamicRednote(data: SyncData) {
 
     const startTime = Date.now();
     while (Date.now() - startTime < timeout) {
+      checkStopped();
       if (await requestUploadDone()) {
         logger.debug("所有图片上传已完成");
         return;
       }
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
+    if (agentEnabled) throw new Error("图片上传完成状态未确认，请在平台检查素材后手动继续");
     logger.warn("等待小红书图片上传完成超时，继续执行");
   }
 
   if (images && images.length > 0) {
+    onStage?.("正在等待图文上传入口");
     // 等待页面加载
     await waitForElement('span[class="title"]');
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -119,17 +138,19 @@ export async function DynamicRednote(data: SyncData) {
     ) as HTMLElement;
 
     if (!uploadButton) {
-      logger.error("未找到上传图文按钮");
-      return;
+      throw new Error("未找到上传图文按钮，请在平台手动处理");
     }
 
+    checkStopped();
     uploadButton.click();
     uploadButton.dispatchEvent(new Event("click", { bubbles: true }));
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // 上传文件
+    onStage?.("正在上传素材");
     await uploadImages();
     await waitForImagesUploaded();
+    checkStopped();
 
     // 填写标题：优先 placeholder/aria 含"标题"的输入框，其次编辑区顶部的文本输入框，
     // 再尝试 contenteditable（小红书新版可能用 contenteditable 做标题）。
@@ -239,6 +260,7 @@ export async function DynamicRednote(data: SyncData) {
     // 小红书话题格式 / 标题长度规则见 ~utils/rednote-text（纯函数，已有单测覆盖）
     const titleText = pickXhsTitle(title, content);
     const contentText = buildXhsContent(content, tags);
+    onStage?.("正在填写正文");
 
     // 标题/正文很可能在 closed shadow DOM 内（isolated world 的 querySelector 访问不到），
     // 优先请求 MAIN world 捕获脚本（xhs-shadow-capture）填充；超时再回退 light DOM。
@@ -262,14 +284,27 @@ export async function DynamicRednote(data: SyncData) {
           resolve({ titleFilled: Boolean(d.titleFilled), contentFilled: Boolean(d.contentFilled) });
         }
         window.addEventListener("message", handler);
-        window.postMessage({ type: "XHS_FILL_EDITOR", requestId, title: titleText, content: contentText }, "*");
+        checkStopped();
+        window.postMessage(
+          {
+            type: "XHS_FILL_EDITOR",
+            requestId,
+            title: agentEnabled ? "" : titleText,
+            content: contentText,
+          },
+          "*",
+        );
       });
 
     const fillResult = await requestFillEditor();
+    checkStopped();
     logger.debug("小红书填充结果:", fillResult);
 
     // fallback：MAIN world 未响应/未命中时，用 light DOM 兜底
-    if (!fillResult.titleFilled) {
+    if (agentEnabled && titleText) {
+      onStage?.("正在定位标题并回读核验（必要时调用本地模型）");
+      await fillTitleWithAgent(titleText, signal || new AbortController().signal);
+    } else if (!agentEnabled && !fillResult.titleFilled) {
       const titleEl = await waitForTitle();
       if (titleEl) {
         setEditableText(titleEl, titleText);
@@ -279,6 +314,7 @@ export async function DynamicRednote(data: SyncData) {
       }
     }
     if (!fillResult.contentFilled) {
+      checkStopped();
       const contentCandidates = Array.from(
         document.querySelectorAll<HTMLElement>('[contenteditable="true"], [contenteditable="plaintext-only"]'),
       ).filter((e) => e.getBoundingClientRect().width > 100);
@@ -288,13 +324,15 @@ export async function DynamicRednote(data: SyncData) {
         setEditableText(contentEditor, contentText);
         logger.debug("设置内容(light):", content);
       } else {
+        if (agentEnabled) throw new Error("未找到正文编辑器，请手动检查");
         logger.warn("未找到内容编辑器，跳过填写内容");
       }
     }
 
     // 自动发布
-    if (data.isAutoPublish) {
+    if (data.isAutoPublish && !agentEnabled) {
       await new Promise((resolve) => setTimeout(resolve, 2000));
+      checkStopped();
 
       // ---- 就地声明：发布按钮点击逻辑 ----
       // 小红书把「发布」按钮放在 <xhs-publish-btn> 的 closed shadow DOM 内，
@@ -342,6 +380,7 @@ export async function DynamicRednote(data: SyncData) {
       const start = Date.now();
       let published = false;
       while (Date.now() - start < 45000) {
+        checkStopped();
         if (tryDirectClick()) {
           published = true;
           break;
@@ -361,5 +400,7 @@ export async function DynamicRednote(data: SyncData) {
         logger.error("[小红书图文] 未找到可用的发布按钮，跳过自动发布");
       }
     }
+  } else {
+    throw new Error("小红书图文需要图片，请添加素材后重试");
   }
 }

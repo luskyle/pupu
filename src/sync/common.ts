@@ -1,3 +1,4 @@
+import { AGENT_SETTINGS_KEY, parseSettings } from "~agent/decision";
 import type { PublishOutcomeStatus } from "~utils/publish-result";
 import { TimeoutError, withTimeout } from "~utils/timeout";
 import { getAccountInfoFromPlatformInfo, getAccountInfoFromPlatformInfos } from "./account";
@@ -278,6 +279,11 @@ const waitForTabComplete = async (tabId: number, timeoutMs: number, expectReload
     };
     chrome.tabs.onUpdated.addListener(listener);
     const timer = setTimeout(finish, timeoutMs);
+    if (!expectReload) {
+      void chrome.tabs.get(tabId).then((tab) => {
+        if (tab.status === "complete") finish();
+      }, finish);
+    }
   });
 };
 
@@ -305,15 +311,30 @@ const injectToTab = async (
     if (!info) {
       return { name: platform.name, tabId, status: "failed", error: `未找到平台适配器：${platform.name}` };
     }
-    await withTimeout(
-      chrome.scripting.executeScript({
-        target: { tabId },
-        func: info.injectFunction,
-        args: [data],
-      }),
-      INJECT_TIMEOUT_MS,
-      `填充超过 ${INJECT_TIMEOUT_MS / 1000} 秒仍未返回`,
-    );
+    if (platform.name === "DYNAMIC_REDNOTE") {
+      const stored = await chrome.storage.local.get(AGENT_SETTINGS_KEY);
+      const settings = parseSettings(stored[AGENT_SETTINGS_KEY]);
+      const response = await withTimeout(
+        chrome.tabs.sendMessage(tabId, {
+          type: "PUPU_REDNOTE_FILL",
+          agentEnabled: settings.enabled,
+          data: settings.enabled ? { ...data, isAutoPublish: false } : data,
+        }),
+        settings.enabled ? 180_000 : 300_000,
+        "小红书填写超时，请先核对页面，不要直接重复填写",
+      );
+      if (!response?.ok) throw new Error(response?.error || "小红书填写没有返回结果");
+    } else {
+      await withTimeout(
+        chrome.scripting.executeScript({
+          target: { tabId },
+          func: info.injectFunction,
+          args: [data],
+        }),
+        INJECT_TIMEOUT_MS,
+        `填充超过 ${INJECT_TIMEOUT_MS / 1000} 秒仍未返回`,
+      );
+    }
     return { name: platform.name, tabId, status: "filled" };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -344,14 +365,7 @@ export async function createTabsForPlatforms(data: SyncData) {
           tab = await chrome.tabs.create({ url });
           info.injectUrl = url;
           // 等待标签页加载完成
-          await new Promise<void>((resolve) => {
-            chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
-              if (tabId === tab!.id && info.status === "complete") {
-                chrome.tabs.onUpdated.removeListener(listener);
-                resolve();
-              }
-            });
-          });
+          await waitForTabComplete(tab.id!, TAB_LOAD_TIMEOUT_MS);
         }
       } else {
         if (info.injectUrl) {
@@ -383,14 +397,7 @@ export async function createTabsForPlatforms(data: SyncData) {
             await chrome.tabs.group({ tabIds: [tab.id!], groupId });
           }
           // 等待3秒再继续
-          await new Promise<void>((resolve) => {
-            chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
-              if (tabId === tab!.id && info.status === "complete") {
-                chrome.tabs.onUpdated.removeListener(listener);
-                resolve();
-              }
-            });
-          });
+          await waitForTabComplete(tab.id!, TAB_LOAD_TIMEOUT_MS);
           await new Promise((resolve) => setTimeout(resolve, 3000));
         }
       }
