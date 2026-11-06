@@ -1,12 +1,10 @@
-import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 import type { FileData } from "~sync/common";
+import { isFirefox } from "./browser";
 // ⚠️ pdf.js worker 不能通过 `import "pdfjs-dist/build/pdf.worker.min.mjs"` 打进主
 // bundle（esbuild 会把其 Node API 调用注入顶层，浏览器执行抛错导致扩展加载失败），
 // 也不能用 `new URL(..., import.meta.url)`（Plasmo CJS 产物下被解析成无效 file://）。
 // 正确做法：worker 作为独立文件由 scripts/copy-pdf-worker.mjs 复制到产物根目录，
 // 这里用 chrome.runtime.getURL 引用（CSP 'self' 允许加载扩展自身资源）。
-GlobalWorkerOptions.workerSrc = chrome.runtime.getURL("pdf.worker.min.mjs");
-
 export interface PdfConvertResult {
   /** 每一页转换成的图片 */
   images: FileData[];
@@ -33,6 +31,10 @@ export async function convertPdfToImages(
   arrayBuffer: ArrayBuffer,
   onProgress?: (current: number, total: number) => void,
 ): Promise<PdfConvertResult> {
+  const { GlobalWorkerOptions, getDocument } = isFirefox()
+    ? await import("pdfjs-dist/legacy/build/pdf.mjs")
+    : await import("pdfjs-dist");
+  GlobalWorkerOptions.workerSrc = chrome.runtime.getURL("pdf.worker.min.mjs");
   const loadingTask = getDocument({
     data: new Uint8Array(arrayBuffer),
     // 黑白扫描书（stencil/CCITT）依赖 JBIG2/OpenJPEG WASM 解码器；不提供 wasmUrl 时

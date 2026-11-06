@@ -8,18 +8,31 @@
 // chrome.runtime.getURL 访问扩展自身资源无需 web_accessible 声明）。
 import { copyFileSync, mkdirSync, existsSync, readdirSync, cpSync } from "node:fs";
 import { createRequire } from "node:module";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 
 const require = createRequire(import.meta.url);
-const workerPath = require.resolve("pdfjs-dist/build/pdf.worker.min.mjs");
+const workers = {
+  chrome: require.resolve("pdfjs-dist/build/pdf.worker.min.mjs"),
+  firefox: require.resolve("pdfjs-dist/legacy/build/pdf.worker.min.mjs"),
+};
 // pdf.js 的 JBIG2 / OpenJPEG 图像解码器（WASM）目录，黑白扫描书（stencil/CCITT）必须依赖它，
 // 否则渲染空白页。需随产物一并复制，供 pdf.ts 的 wasmUrl 引用。
 const wasmSrc = join(dirname(require.resolve("pdfjs-dist/package.json")), "wasm");
 const targets = new Set();
+const browser = process.argv[2];
 
-// 生产构建产物
-if (existsSync("build/chrome-mv3-prod")) {
-  targets.add("build/chrome-mv3-prod");
+if (browser && browser !== "chrome" && browser !== "firefox") {
+  throw new Error(`不支持的浏览器构建目标: ${browser}`);
+}
+
+if (browser) {
+  const target = join("build", `${browser}-mv3-prod`);
+  if (!existsSync(target)) throw new Error(`未找到构建产物目录: ${target}`);
+  targets.add(target);
+} else {
+  for (const target of ["build/chrome-mv3-prod", "build/firefox-mv3-prod"]) {
+    if (existsSync(target)) targets.add(target);
+  }
 }
 
 // 开发模式产物（.plasmo 下可能有多 target 目录）
@@ -28,7 +41,7 @@ const scan = (dir) => {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (entry.name.startsWith("chrome-mv3")) {
+      if (entry.name.startsWith("chrome-mv3") || entry.name.startsWith("firefox-mv3")) {
         targets.add(full);
       } else {
         scan(full);
@@ -36,11 +49,12 @@ const scan = (dir) => {
     }
   }
 };
-scan(".plasmo");
+if (!browser) scan(".plasmo");
 
 for (const target of targets) {
   mkdirSync(target, { recursive: true });
-  copyFileSync(workerPath, join(target, "pdf.worker.min.mjs"));
+  const targetBrowser = basename(target).startsWith("firefox-mv3") ? "firefox" : "chrome";
+  copyFileSync(workers[targetBrowser], join(target, "pdf.worker.min.mjs"));
   console.log(`✅ PDF worker 已复制到 ${target}/pdf.worker.min.mjs`);
 
   // 复制 pdf.js 图像解码器 WASM（JBIG2/OpenJPEG，黑白扫描书必需）
@@ -50,7 +64,7 @@ for (const target of targets) {
     cpSync(wasmSrc, wasmDest, { recursive: true, force: true });
     console.log(`✅ PDF wasm 已复制到 ${wasmDest}`);
   } else {
-    console.warn("⚠️ 未找到 pdfjs-dist wasm 目录");
+    throw new Error("未找到 pdfjs-dist wasm 目录");
   }
 
   // 复制离线平台图标
@@ -59,9 +73,11 @@ for (const target of targets) {
     mkdirSync(iconDest, { recursive: true });
     cpSync("assets/platforms", iconDest, { recursive: true, force: true });
     console.log(`✅ 平台图标已复制到 ${iconDest}`);
+  } else {
+    throw new Error("未找到平台图标目录 assets/platforms");
   }
 }
 
 if (targets.size === 0) {
-  console.warn("⚠️ 未找到 Plasmo 产物目录，请先执行 plasmo build/dev");
+  throw new Error("未找到 Plasmo 产物目录，请先执行 plasmo build/dev");
 }

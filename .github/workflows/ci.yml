@@ -68,15 +68,8 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -eu
-          zip="build/pupu-v${VERSION}.zip"
-          test -f "$zip" || { echo "未找到构建产物 $zip"; ls -l build; exit 1; }
-          manifest_version=$(unzip -p "$zip" manifest.json | node -e "let s='';process.stdin.on('data',(d)=>s+=d).on('end',()=>console.log(JSON.parse(s).version))")
-          echo "package.json: $VERSION / manifest: $manifest_version"
-          test "$VERSION" = "$manifest_version"
-          for f in pdf.worker.min.mjs wasm assets/platforms/51cto.ico; do
-            unzip -l "$zip" | grep -q "$f" || { echo "缺少 $f"; exit 1; }
-          done
-          echo "SHA256: $(sha256sum "$zip" | cut -d' ' -f1)"
+          node scripts/verify-extension-packages.mjs "$VERSION"
+          sha256sum "build/pupu-v${VERSION}.zip" "build/pupu-firefox-v${VERSION}.zip"
 
       - name: 打包并校验 CRX（用临时密钥冒烟测试）
         run: |
@@ -86,12 +79,22 @@ jobs:
           pnpm crx
           pnpm verify:crx
 
-      - name: 上传构建产物
+      - name: 上传 Chromium 构建产物
         uses: actions/upload-artifact@v7
         with:
           name: pupu-chrome-mv3-${{ steps.version.outputs.version }}
           path: |
             build/pupu-v${{ steps.version.outputs.version }}.zip
             build/chrome-mv3-prod
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: 上传 Firefox 构建产物
+        uses: actions/upload-artifact@v7
+        with:
+          name: pupu-firefox-mv3-${{ steps.version.outputs.version }}
+          path: |
+            build/pupu-firefox-v${{ steps.version.outputs.version }}.zip
+            build/firefox-mv3-prod
           if-no-files-found: error
           retention-days: 14

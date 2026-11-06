@@ -2,6 +2,7 @@ import { Card, CardBody, CardHeader, Spinner } from "@heroui/react";
 import { useEffect, useRef, useState } from "react";
 import { type PlatformInfo, getPlatformInfos, getTypePriorityPlatformKeys } from "~sync/common";
 import { logger } from "~utils/logger";
+import { closeSidebarWhenIdle } from "~utils/sidebar";
 
 type PublishType = "DYNAMIC" | "VIDEO" | "ARTICLE";
 
@@ -28,7 +29,7 @@ export default function PublishTypePlatforms() {
 
       // 关于页：关闭侧边栏（浮动侧边栏可关；固定侧边栏关闭失败时隐藏内容）
       if (raw === "about") {
-        window.close();
+        closeSidebarWhenIdle();
         if (alive) setHidden(true);
         return;
       }

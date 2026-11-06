@@ -51,7 +51,7 @@
           </p>
 
           <h2 id="install">安装</h2>
-          <p>pupu 提供已经打包好的扩展压缩包，无需自己编译即可安装使用。</p>
+          <p>pupu 提供分别面向 Chromium 与 Firefox 的扩展压缩包。下面先介绍 Chrome / Edge 的安装方式。</p>
           <ol class="steps">
             <li>
               <h3>下载并解压</h3>
@@ -72,6 +72,18 @@
               <p>点击左上角「加载已解压的扩展程序」，选中第 1 步解压出的目录。</p>
             </li>
           </ol>
+          <h3>Firefox 桌面版 140+ 临时安装</h3>
+          <p>
+            包含 Firefox 产物的新版本会提供 <code>pupu-firefox-v&lt;version&gt;.zip</code>。打开
+            <code>about:debugging#/runtime/this-firefox</code>，点击「临时载入附加组件」并选择此 ZIP，
+            或选择解压后的 <code>manifest.json</code>。不要使用 Chromium 的 ZIP。
+          </p>
+          <div class="note">
+            Firefox ZIP 未经 Mozilla 签名，只能临时安装测试或提交
+            <a href="https://addons.mozilla.org/developers/" target="_blank" rel="noreferrer">Firefox 附加组件</a>审核；
+            重启 Firefox 会移除临时扩展。普通 Firefox 中持久安装需要 Mozilla 签名后的附加组件，Release 不会自动签名。
+            Firefox 使用原生侧边栏，空闲时需手动关闭；发布标签不使用 Chromium 标签分组。网站消息触发账号刷新时会打开扩展标签页。
+          </div>
           <div class="note">
             <strong>为什么不能直接装 <code>.crx</code>？</strong> 自签名 CRX 无法通过拖拽或普通安装流程安装：Chromium 会校验
             CRX 内的 proof 是否由 Chrome 应用商店的私钥签名，否则报 <code>CRX_REQUIRED_PROOF_MISSING</code>（依据见 Chromium
@@ -82,23 +94,27 @@
           </div>
           <div class="note">
             扩展 ID 为 <strong><code>nffpajdealkjpdmjjboneelajanbboig</code></strong
-            >（由签名密钥决定，各版本固定不变）。Edge 与 Chrome 同为 Chromium，共用同一份 <code>.zip</code>。
+            >（由签名密钥决定，各版本固定不变）。Edge 与 Chrome 共用同一份 ZIP；Firefox ID 为 <code>pupu@luskyle.github.io</code>。
           </div>
           <div class="note">
             安装后点击工具栏的 pupu 图标会自动打开扩展主界面（选项页），侧边栏用于平台选择与账号管理。
           </div>
 
-          <h2 id="desktop">Linux 桌面 Agent 实验版</h2>
+          <h2 id="desktop">Linux 桌面工作台实验版</h2>
           <div class="note">
-            <strong>main 开发版新增单窗口多平台工作台，尚未发布安装包：</strong>
-            源码运行 <code>pnpm desktop:dev</code>，可使用插件的动态、视频、Markdown 文章编辑器及图片/PPTX/PDF 导入。
+            <strong>v0.3.1 起默认打开单窗口多平台工作台：</strong>
+            可使用插件的动态、视频、Markdown 文章编辑器及图片/PPTX/PDF 导入。
             平台收纳为窗口内标签，批量执行不弹窗或抢焦点；需要登录时点击「登录 / 查看」或顶部平台标签。
             普通适配器自动模式显示「待确认」，不是发布成功；可能已提交或仍执行的任务禁止重载重发。
-            此路径不需要模型，原 Agent 入口为 <code>pnpm desktop:agent</code>。
-            下列下载和操作步骤针对已发布的 v0.3.0 小红书试点；开发版未逐一验收所有真实平台。
+            此路径不需要模型，且尚未逐一验收所有真实平台。
           </div>
           <ol class="steps">
             <li>从 Releases 下载 <code>pupu-desktop-v{{VERSION}}-linux-x64.tar.gz</code>，解压并保留完整目录，运行 <code>pupu-linux-x64/pupu</code>。不需要 Node.js 或加载扩展。仅提供 Linux x64 归档。</li>
+            <li>编辑动态、视频或文章，选择平台并登录后确认发布；自动模式的「待确认」结果需要在平台页面核对。</li>
+          </ol>
+          <h3>原小红书 Agent 试点（可选）</h3>
+          <ol class="steps">
+            <li>运行 <code>pupu-linux-x64/pupu --agent</code>，或从源码运行 <code>pnpm desktop:agent</code>，进入原小红书 Agent 界面。</li>
             <li>单独安装 <a href="https://ollama.com/download" target="_blank" rel="noreferrer">Ollama</a>。连接本机服务，或在高级设置选择 Ollama 可执行文件，再点击「下载 Qwen3 4B」。模型约 2.5 GB，不包含在应用归档中。</li>
             <li>输入标题、正文并添加图片，打开平台窗口登录并确认当前账号。点击「让 Agent 自动发布」，确认本次任务后自动执行。</li>
           </ol>
@@ -106,6 +122,7 @@
           <div class="note">目前仅试点小红书图文。已实测真实平台上传、填写、回读、图文导航，未实测真实提交及成功回执。登录、验证码或歧义会暂停，提交不确定时不要直接重发，请在内容管理核对。停止不能撤销已提交内容。</div>
           <p>草稿文字和登录状态可保留，图片选择重启后需要重新添加。缺少内容/图片或模型时点击发布按钮会显示原因；不需要自己操作「观察字段」。Windows/macOS 和手机应用尚未发布。</p>
           <pre><code>pnpm desktop:dev
+pnpm desktop:agent     # 原小红书 Agent 试点
 pnpm desktop:smoke     # 不需要模型的 Chromium/IPC 冒烟
 pnpm desktop:verify    # 真实本地 Qwen3 + 模拟发布
 pnpm desktop:package</code></pre>
@@ -180,14 +197,17 @@ pnpm desktop:package</code></pre>
           <pre><code>pnpm install
 pnpm dev        # 启动 Plasmo 开发模式（热更新）</code></pre>
           <p>构建产物的命令：</p>
-          <pre><code>pnpm build      # 本地构建：只产出可「加载已解压」的目录（不出 zip / crx）
-pnpm build:ci   # 构建并打包 zip（CI 使用）
-pnpm package    # 只把已构建的产物打包成 zip
+          <pre><code>pnpm build         # 本地构建 Chromium 目录
+pnpm build:firefox # 本地构建 Firefox 目录
+pnpm build:ci      # 构建两种 ZIP，校验 Firefox ZIP
+pnpm package       # 只打包已构建的 Chromium 产物
+pnpm package:firefox # 只打包已构建的 Firefox 产物
+pnpm lint:firefox  # 用 Mozilla web-ext 校验 Firefox ZIP
 pnpm crx        # 只打包 CRX（自托管/企业策略场景用，需签名密钥；不能拖拽安装）
 pnpm verify:crx # 校验 CRX3 签名与包内内容</code></pre>
           <p>
-            本地构建刻意不产出 zip / crx（那些由 CI 生成并附加到 Release），只输出
-            <code>build/chrome-mv3-prod/</code>，在扩展管理页「加载已解压的扩展程序」中直接导入即可。
+            两个本地构建命令分别输出 <code>build/chrome-mv3-prod/</code> 与 <code>build/firefox-mv3-prod/</code>，
+            需要 ZIP 时运行 <code>pnpm build:ci</code>。
           </p>
           <div class="note">
             <strong>注意：</strong>构建后会自动执行 <code>scripts/copy-pdf-worker.mjs</code>，把 PDF worker、PDF 图像解码器
@@ -223,7 +243,8 @@ pnpm test       # 单元测试（vitest）</code></pre>
                 <td>push 到 main、PR、手动</td>
                 <td>
                   安装依赖 → <code>pnpm lint</code> → <code>pnpm typecheck</code> → <code>pnpm test</code> →
-                  桌面类型检查与无模型 Chromium 冒烟 → <code>pnpm build:ci</code>，校验产物；再用临时密钥打包 CRX 做冒烟测试（仅验证打包路径可用），最后上传 zip 与解压目录为构建产物
+                  桌面类型检查与无模型 Chromium 冒烟 → <code>pnpm build:ci</code>，检查两种 ZIP 的 manifest、资源及 Firefox 的 Mozilla 校验结果；
+                  再用临时密钥打包 CRX 冒烟测试，上传两种浏览器产物
                 </td>
               </tr>
               <tr>
@@ -231,7 +252,7 @@ pnpm test       # 单元测试（vitest）</code></pre>
                 <td>推送 <code>v*</code> 标签、手动</td>
                 <td>
                   校验标签与 <code>package.json</code> 版本一致 → <code>lint</code> + <code>typecheck</code> + <code>test</code>
-                  → 扩展构建 + Linux 桌面打包/冒烟 → 创建 Release，附上扩展 ZIP、桌面 tar.gz 与 SHA256SUMS（不附 CRX）
+                  → 扩展构建 + Linux 桌面打包/冒烟 → 创建 Release，附上 Chromium / Firefox ZIP、桌面 tar.gz 与 SHA256SUMS（不附 CRX）
                 </td>
               </tr>
               <tr>
@@ -243,14 +264,16 @@ pnpm test       # 单元测试（vitest）</code></pre>
           </table>
           <h3>发布一个版本</h3>
           <p>先改版本号并提交，再打标签（顺序不能反，否则发布流程会因一致性校验失败而中止）：</p>
-          <pre><code>pnpm pkg set version=0.3.0
-# 同步更新 docs/releases/v0.3.0.md 并提交相关变更
-git commit -am "chore(release): 0.3.0"
+          <pre><code>VERSION=0.3.2 # 示例，使用尚未发布的版本号
+pnpm pkg set version="$VERSION"
+# 新建并填写 docs/releases/v${VERSION}.md；其他变更也应提前提交或暂存
+git add package.json "docs/releases/v${VERSION}.md"
+git commit -m "chore(release): ${VERSION}"
 git push origin main
-git tag v0.3.0 &amp;&amp; git push origin v0.3.0</code></pre>
+git tag "v${VERSION}" &amp;&amp; git push origin "v${VERSION}"</code></pre>
           <p>
             推送标签后，Release 工作流会校验标签与 <code>package.json</code> 版本一致、跑完 lint / 类型检查 / 单元测试、
-            构建扩展 ZIP 与 Linux 桌面归档（校验 manifest 版本与标签一致），然后发布到 Releases 页面，
+            构建两种扩展 ZIP 与 Linux 桌面归档（校验 manifest 版本与标签一致），然后发布到 Releases 页面，
             并触发一次站点重部署以同步站点上的版本号。也可以在 Actions 页面手动运行 <code>Release</code> 工作流并填写版本号，
             输入必须与源码版本一致，且必须提供对应更新说明；它会自动创建对应标签。
           </p>
@@ -279,6 +302,8 @@ git tag v0.3.0 &amp;&amp; git push origin v0.3.0</code></pre>
             这是不经过应用商店安装的浏览器限制，与扩展本身无关：需保持扩展管理页右上角的「开发者模式」开启，
             否则这类扩展可能被浏览器自动停用。
           </p>
+          <h3>Firefox 重启后扩展消失？</h3>
+          <p>未签名的 ZIP 只能通过 <code>about:debugging</code> 临时安装；持久安装需要 Mozilla 签名后的附加组件。</p>
           <h3>有 Safari 版本吗？</h3>
           <p>
             暂时没有。Safari 扩展不能像 <code>.crx</code> 那样单独分发，必须由 Xcode 打包成宿主 App 并通过 App Store
@@ -322,7 +347,7 @@ git tag v0.3.0 &amp;&amp; git push origin v0.3.0</code></pre>
               </tr>
               <tr>
                 <th><code>tabs</code> / <code>tabGroups</code></th>
-                <td>为每个同步任务打开管理标签页，并在侧边栏中管理这些标签</td>
+                <td>为每个同步任务打开并管理标签页；标签分组仅在 Chromium 中使用</td>
               </tr>
               <tr>
                 <th><code>scripting</code></th>
@@ -334,17 +359,18 @@ git tag v0.3.0 &amp;&amp; git push origin v0.3.0</code></pre>
               </tr>
               <tr>
                 <th><code>sidePanel</code></th>
-                <td>提供平台选择与账号管理的侧边栏界面</td>
+                <td>Chromium 使用 sidePanel；Firefox 使用原生 sidebar_action 提供侧边栏</td>
               </tr>
               <tr>
                 <th><code>background</code></th>
-                <td>在后台协调各平台标签页与同步任务</td>
+                <td>Chromium 使用此权限在后台协调任务；Firefox 使用 MV3 后台脚本，不申请此权限</td>
               </tr>
             </tbody>
           </table>
           <p>
-            扩展会把内容发布到你自己已经登录的平台；除此之外，扩展会请求项目自身的同步服务
-            <code>https://pupu.app</code>（开发模式下为 <code>http://localhost:3000</code>）用于账号数据同步。设置页的「可信域名」
+            扩展会把内容发布到你自己已经登录的平台；如果主动连接同步服务，扩展还会请求
+            <code>https://pupu.app</code>（开发模式下为 <code>http://localhost:3000</code>）用于账号数据同步。
+            Firefox 清单声明了社交内容与网站内容的数据传输。设置页的「可信域名」
             用于授权特定网站调用扩展的发布能力，请只添加你信任的域名。
           </p>
 

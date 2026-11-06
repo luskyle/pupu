@@ -10,6 +10,7 @@
   [![Deploy Pages](https://github.com/luskyle/pupu/actions/workflows/pages.yml/badge.svg)](https://github.com/luskyle/pupu/actions/workflows/pages.yml)
   [![Latest Release](https://img.shields.io/github/v/release/luskyle/pupu?color=7c5cff)](https://github.com/luskyle/pupu/releases/latest)
   [![Chrome](https://img.shields.io/badge/Chrome%20Extension-MV3-brightgreen)](https://github.com/luskyle/pupu/releases/latest)
+  [![Firefox](https://img.shields.io/badge/Firefox%20Extension-MV3-orange)](https://github.com/luskyle/pupu/releases/latest)
   [![License](https://img.shields.io/github/license/luskyle/pupu)](./LICENSE)
 
    **官网 / 文档**：<https://luskyle.github.io/pupu/> · 📦 **下载**：<https://github.com/luskyle/pupu/releases/latest>
@@ -43,11 +44,22 @@
 
 ## 📦 安装使用
 
-**安装方式：下载 `.zip` 并「加载已解压的扩展程序」**
+### Chrome / Edge
 
 1. 到 [Releases](https://github.com/luskyle/pupu/releases/latest) 下载 `pupu-v<version>.zip` 并解压（解压后目录中应能看到 `manifest.json`）
 2. 打开 `chrome://extensions`（Edge 为 `edge://extensions`），开启右上角「开发者模式」
 3. 点击「加载已解压的扩展程序」，选择解压出的目录
+
+### Firefox 桌面版 140+
+
+包含 Firefox 产物的新版本会在 Releases 提供 `pupu-firefox-v<version>.zip`，不要使用 Chrome 的 ZIP。
+
+1. 打开 `about:debugging#/runtime/this-firefox`
+2. 点击「临时载入附加组件」，选择 Firefox ZIP，或解压后选择其中的 `manifest.json`
+
+此 ZIP 未经 Mozilla 签名，仅供临时安装测试或提交 [Firefox 附加组件](https://addons.mozilla.org/developers/)审核；重启 Firefox 后临时扩展会被移除。普通 Firefox 中持久安装需要 Mozilla 签名后的附加组件，Release 不会自动签名。
+
+Firefox 使用浏览器原生侧边栏；由于浏览器的限制，空闲侧边栏需要手动关闭，发布标签不使用 Chromium 的标签分组。经网站消息触发的账号刷新会打开扩展标签页。发布内容会发送到所选平台，Firefox 安装时也会显示相应的数据使用声明。
 
 > **为什么没有 `.crx`？** 自签名 CRX **无法**通过拖拽或普通安装流程安装：Chromium 会校验 CRX 里的
 > proof 是否由 Chrome 应用商店的私钥签名，否则报 `CRX_REQUIRED_PROOF_MISSING`（依据见 Chromium
@@ -56,9 +68,9 @@
 > （`ExtensionInstallAllowlist` + `ExtensionInstallSources`），普通用户请用上面的 zip 方式；
 > 想彻底摆脱「开发者模式」，唯一途径是上架 Chrome Web Store / Edge 加载项商店。
 
-> - 扩展 ID：**`nffpajdealkjpdmjjboneelajanbboig`**（由签名密钥决定，各版本固定不变；将来上架商店需沿用同一密钥）
+> - Chromium 扩展 ID：**`nffpajdealkjpdmjjboneelajanbboig`**（由签名密钥决定；将来上架商店需沿用同一密钥）；Firefox ID：**`pupu@luskyle.github.io`**
 > - Edge 与 Chrome 同为 Chromium，使用同一份 `.zip`，无需分别下载
-> - 安装需要开启「开发者模式」：这是不经过应用商店安装的浏览器限制，与扩展本身无关
+> - Chromium 加载未签名扩展需要开启「开发者模式」
 > - Safari 暂不支持：Safari 扩展必须由 Xcode 打包成 App 分发，且本扩展依赖的 `sidePanel` / `tabGroups` 在 Safari 上并不存在
 
 > 更详细的安装、使用与常见问题见 **在线文档**：<https://luskyle.github.io/pupu/guide.html>
@@ -67,7 +79,7 @@
 
 ### 桌面 Agent 实验版
 
-**main 分支新增多平台桌面工作台，尚未发布新的安装包；下面的 v0.3.0 下载包仍是小红书 Agent 试点。**
+**v0.3.1 起默认打开多平台桌面工作台；原小红书 Agent 试点仍可通过 `--agent` 单独启动。**
 
 源码运行 `pnpm desktop:dev` 默认打开统一工作台，复用插件的动态、视频、Markdown 文章编辑器、
 图片/PPTX/PDF 导入、话题与表情、平台选择、自动/手动模式和任务结果列表。
@@ -83,11 +95,13 @@
 Linux x64 用户可直接从 [Releases](https://github.com/luskyle/pupu/releases/latest) 下载
 `pupu-desktop-v<version>-linux-x64.tar.gz`，解压完整目录后运行 `pupu-linux-x64/pupu`。
 Ollama 和模型需要单独安装，不包含在归档内。Windows/macOS 尚未提供发行包。
-本次版本详情见 [v0.3.0 更新说明](docs/releases/v0.3.0.md)。
+本次版本详情见 [v0.3.1 更新说明](docs/releases/v0.3.1.md)。
 
-除原扩展外，现有独立 Electron 工作台：本地草稿、图片选择、隔离的小红书登录窗口、
+#### 原小红书 Agent 试点（`--agent`）
+
+除多平台工作台外，原独立 Agent 提供本地草稿、图片选择、隔离的小红书登录窗口、
 Ollama 标题候选决策、自动上传、受控填写、回读核验、自动提交与成功回执检查。
-不需要加载浏览器扩展。**仅试点小红书图文，不代表原扩展全部平台已迁移。**
+不需要加载浏览器扩展。**Agent 仅试点小红书图文，不代表其他平台已完成真实发布验收。**
 
 日常使用只需：**写标题和正文 → 添加图片 → 在平台窗口登录并确认账号 →
 点击「让 Agent 自动发布」→ 确认本次任务**。观察字段和本地模型设置已收进内部流程/高级设置。
@@ -98,7 +112,7 @@ Ollama 标题候选决策、自动上传、受控填写、回读核验、自动�
 
 ```bash
 pnpm install
-pnpm desktop:dev       # 默认打开单窗口多平台工作台（main 开发版）
+pnpm desktop:dev       # 默认打开单窗口多平台工作台
 pnpm desktop:agent     # 原小红书 Agent 试点
 pnpm desktop:typecheck
 pnpm desktop:smoke     # 无模型 Chromium / preload / IPC 冒烟，CI 使用
@@ -156,7 +170,7 @@ node scripts/configure-desktop-runtime.mjs /absolute/path/to/ollama /absolute/pa
 宣称真实平台已验收。Windows/macOS 使用相同代码，但尚需对应系统构建、签名与实际验证；
 这不是手机 App，移动端协作仍属于后续方案。
 
-发行流程同时生成扩展 ZIP、Linux 桌面 tar.gz 和 `SHA256SUMS`；
+发行流程同时生成 Chromium / Firefox 扩展 ZIP、Linux 桌面 tar.gz 和 `SHA256SUMS`；
 桌面产物冒烟通过后才创建 Release，发布完成后触发 Pages 部署。
 CI 不下载模型，额外运行单窗口多平台工作台冒烟；真实 Qwen3 验收仍用 `desktop:verify`。
 Pages 的静态版本取自已发布 Release。
@@ -171,16 +185,19 @@ pnpm dev        # 启动 Plasmo 开发模式（热更新）
 ### 构建
 
 ```bash
-pnpm build         # 本地构建：只产出可「加载已解压」的目录（不出 zip / crx）
+pnpm build         # 本地构建 Chromium：只产出可加载的目录
+pnpm build:firefox # 本地构建 Firefox：只产出可临时加载的目录
 pnpm check:version # 检查本地产物/源码是否落后于最新发布（build 结束时也会自动跑）
-pnpm build:ci      # 构建并打包 zip（CI 使用）
-pnpm package       # 只把已构建的产物打包成 zip
+pnpm build:ci      # 构建并打包两种 ZIP，使用 Mozilla 校验器检查 Firefox ZIP
+pnpm package       # 只把已构建的 Chromium 产物打包成 ZIP
+pnpm package:firefox # 只把已构建的 Firefox 产物打包成 ZIP
+pnpm lint:firefox  # 用 Mozilla web-ext 校验已打包的 Firefox ZIP
 pnpm crx           # 只打包 CRX（自托管/企业策略场景用，需签名密钥；不能拖拽安装）
 pnpm verify:crx    # 校验 CRX3 签名与包内内容
 ```
 
-**本地构建刻意不产出 zip / crx**（那些由 CI 生成并附加到 Release），只输出 `build/chrome-mv3-prod/`，
-在扩展管理页「加载已解压的扩展程序」中直接导入即可；需要本地打包时用 `pnpm build:ci`。
+`pnpm build` 和 `pnpm build:firefox` 只分别输出 `build/chrome-mv3-prod/` 和
+`build/firefox-mv3-prod/`；需要本地生成两种 ZIP 时使用 `pnpm build:ci`。
 
 > ⚠️ **本地产物不会自动跟随新发布**：`pnpm build` 用的是 `package.json` 的版本号，所以本地产物会停在
 > 「上次构建时」的版本 —— 如果之后又发了新版本（或你在旧 commit 上构建），浏览器里加载它时「关于」页会
@@ -228,8 +245,8 @@ pnpm test:watch # 单元测试（watch 模式）
 
 | 工作流 | 触发条件 | 作用 |
 | --- | --- | --- |
-| [`CI`](.github/workflows/ci.yml) | push 到 `main`、PR、手动 | `pnpm install` → `pnpm lint` → `pnpm typecheck` → `pnpm test` → `pnpm build:ci`，校验产物（manifest 版本、PDF worker、WASM、平台图标），并用临时密钥打包 CRX 做冒烟测试，最后上传 zip 与解压目录为构建产物 |
-| [`Release`](.github/workflows/release.yml) | 推送 `v*` 标签、手动 | 校验标签与 `package.json` 版本一致 → `lint` + `typecheck` + `test`（发布前自证）→ 构建 → 校验产物 → 创建 GitHub Release（**只附 zip**，不再附 CRX）→ 触发站点重部署以同步站点版本号 |
+| [`CI`](.github/workflows/ci.yml) | push 到 `main`、PR、手动 | 检查、测试并构建两种扩展 ZIP；用 Mozilla 校验器及 manifest / 资源检查验证产物，用临时密钥冒烟测试 CRX，再上传各浏览器产物 |
+| [`Release`](.github/workflows/release.yml) | 推送 `v*` 标签、手动 | 校验版本、检查并测试 → 构建和校验两种扩展 ZIP 与桌面归档 → 创建 GitHub Release（不附 CRX）→ 触发站点重部署 |
 | [`Deploy Pages`](.github/workflows/pages.yml) | push 到 `main` 且改动 `docs/**`、发布后自动触发、手动 | 注入最新版本号到 `docs/` 并部署到 GitHub Pages（官网与文档站） |
 
 ### 发布一个新版本
@@ -237,20 +254,23 @@ pnpm test:watch # 单元测试（watch 模式）
 **先改版本号并提交，再打标签**（顺序不能反 —— 扩展内「关于」页显示的版本取自构建时的 manifest，而 manifest 版本来自 `package.json`；标签与 `package.json` 不一致时发布流程会直接失败）：
 
 ```bash
-pnpm pkg set version=0.2.10        # 改成要发布的版本
-git commit -am "chore(release): 0.2.10"
+VERSION=0.3.2 # 示例，使用尚未发布的版本号
+pnpm pkg set version="$VERSION"
+# 新建并填写 docs/releases/v${VERSION}.md；其他变更也应提前提交或暂存
+git add package.json "docs/releases/v${VERSION}.md"
+git commit -m "chore(release): ${VERSION}"
 git push origin main
-git tag v0.2.10 && git push origin v0.2.10
+git tag "v${VERSION}" && git push origin "v${VERSION}"
 ```
 
-推送标签后会自动构建并发布 Release（附件为 `pupu-v<version>.zip`）；也可以在 Actions 页面手动运行 `Release` 工作流并填写版本号（留空则使用 `package.json` 中的版本号），工作流会自动创建对应标签（手动触发时不做一致性校验，会按填写值同步）。
+推送标签后会自动构建并发布 Release（附件包括 Chromium 的 `pupu-v<version>.zip` 和 Firefox 的 `pupu-firefox-v<version>.zip`）；也可以手动运行 `Release` 工作流。输入版本必须与 `package.json` 一致，并提供对应的发布说明。
 
 **版本号会显示在这几处，均已自动化，无需手工同步**：
 
 | 位置 | 来源 |
 | --- | --- |
 | 扩展内「关于」页 | 构建时 manifest（即 `package.json`） |
-| 官网 / 文档站 | 部署时由 `scripts/inject-site-version.mjs` 从**最新 `v*` 标签**注入静态兜底值，页面再用 GitHub API 覆盖为最新 release |
+| 官网 / 文档站 | 部署时由 `scripts/inject-site-version.mjs` 注入最新 Release 版本，页面再用 GitHub API 更新显示 |
 | README 徽章 | shields 动态读取最新 release |
 
 > 🔐 Release 已不再需要 `CRX_PRIVATE_KEY`（不再产出 CRX）；该 Secret 与 `keys/pupu.pem` 建议保留 ——
@@ -260,7 +280,7 @@ git tag v0.2.10 && git push origin v0.2.10
 
 ## 🧱 技术栈
 
-- [Plasmo](https://www.plasmo.com/) — 浏览器扩展框架（Chrome MV3）
+- [Plasmo](https://www.plasmo.com/) — 浏览器扩展框架（Chrome / Firefox MV3）
 - [React 18](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
 - [Tailwind CSS](https://tailwindcss.com/) + [HeroUI](https://heroui.com/)
 - [marked](https://github.com/markedjs/marked) / [turndown](https://github.com/mixmark-io/turndown) — Markdown 与 HTML 互转

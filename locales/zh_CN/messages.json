@@ -339,6 +339,10 @@
     "message": "同步管理",
     "description": "侧边栏标签管理器的标题"
   },
+  "sidepanelOpenError": {
+    "message": "无法打开侧边栏，请重试。",
+    "description": "浏览器无法打开侧边栏时的错误提示"
+  },
   "sidepanelUntitledGroup": {
     "message": "未命名分组 $1",
     "description": "标签管理器中未命名分组的标题"

@@ -8,6 +8,7 @@ import PublishTypePlatforms from "~components/Sidepanel/PublishTypePlatforms";
 import TabsManager from "~components/Sidepanel/Tabs/TabsManager";
 import type { SyncData } from "~sync/common";
 import RefreshAccounts from "~tabs/refresh-accounts";
+import { closeSidebarWhenIdle } from "~utils/sidebar";
 import { ThemeProvider } from "~utils/theme";
 
 export function getShadowContainer() {
@@ -141,7 +142,7 @@ function SidePanel() {
     if (!pending && !hasTabs) {
       const timer = setTimeout(() => {
         if (!suppressAutoCloseRef.current && !pendingRef.current && !hasTabs) {
-          window.close();
+          closeSidebarWhenIdle();
         }
       }, AUTO_CLOSE_DELAY_MS);
       return () => {

@@ -8,9 +8,11 @@ import {
   getPlatformInfos,
 } from "~sync/common";
 import { logger } from "~utils/logger";
+import { openSidebarFromBackground } from "~utils/sidebar";
 import QuantumEntanglementKeepAlive from "../utils/keep-alive";
 import { agentMessageHandler } from "./services/agent";
 import { linkExtensionMessageHandler, starter } from "./services/api";
+import { firefoxMediaMessageHandler } from "./services/firefox-media";
 import {
   addTabsManagerMessages,
   collectInjectionResults,
@@ -38,17 +40,22 @@ async function initDefaultTrustedDomains() {
 }
 
 chrome.runtime.onInstalled.addListener((object) => {
-  if (object.reason === chrome.runtime.OnInstalledReason.INSTALL) {
+  if (object.reason === "install") {
     chrome.tabs.create({ url: chrome.runtime.getURL("options.html#tab=about") });
   }
   initDefaultTrustedDomains();
-  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
+  if (chrome.sidePanel?.setPanelBehavior) {
+    void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch((error) => {
+      logger.error("配置侧边栏失败:", error);
+    });
+  }
 });
 
 // Listen Message || 监听消息 || START
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   const handled =
     agentMessageHandler(request, sender, sendResponse) ||
+    firefoxMediaMessageHandler(request, sender, sendResponse) ||
     defaultMessageHandler(request, sender, sendResponse) ||
     tabsManagerMessageHandler(request, sender, sendResponse) ||
     trustDomainMessageHandler(request, sender, sendResponse) ||
@@ -95,12 +102,12 @@ const defaultMessageHandler = (request, _sender, sendResponse) => {
     return true;
   }
   if (request.action === "PUPU_EXTENSION_REFRESH_ACCOUNT_INFOS") {
-    // 以侧边栏形式呈现刷新账号（不再弹窗）：写标记 + 打开侧边栏
-    chrome.storage.local.set({ refreshAccountsView: true });
-    chrome.windows.getCurrent({ populate: true }).then((w) => {
-      if (w.id) chrome.sidePanel.open({ windowId: w.id });
-    });
-    sendResponse({ status: "ok" });
+    void openSidebarFromBackground({ refreshAccountsView: true })
+      .then(() => sendResponse({ status: "ok" }))
+      .catch((error) => {
+        logger.error("打开账号视图失败:", error);
+        sendResponse({ status: "error", error: error instanceof Error ? error.message : String(error) });
+      });
     return true;
   }
   if (request.action === "PUPU_EXTENSION_PUBLISH_NOW") {

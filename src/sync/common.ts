@@ -1,10 +1,12 @@
 import { AGENT_SETTINGS_KEY, parseSettings } from "~agent/decision";
+import { isFirefox } from "~utils/browser";
 import type { PublishOutcomeStatus } from "~utils/publish-result";
 import { TimeoutError, withTimeout } from "~utils/timeout";
 import { getAccountInfoFromPlatformInfo, getAccountInfoFromPlatformInfos } from "./account";
 import { ArticleInfoMap } from "./article";
 import { DynamicInfoMap } from "./dynamic";
 import { getExtraConfigFromPlatformInfo, getExtraConfigFromPlatformInfos } from "./extraconfig";
+import { assertInjectionSucceeded, injectFirefoxAdapter } from "./firefox-injection";
 import { PodcastInfoMap } from "./podcast";
 import { VideoInfoMap } from "./video";
 
@@ -263,9 +265,10 @@ const INJECT_TIMEOUT_MS = 60_000;
  * 若照常查询，可能读到的还是旧页面的 complete 状态，于是把内容填进一个即将被丢弃的页面。
  */
 const waitForTabComplete = async (tabId: number, timeoutMs: number, expectReload = false) => {
+  const isReady = (tab: chrome.tabs.Tab) => tab.status === "complete" && Boolean(tab.url) && tab.url !== "about:blank";
   if (!expectReload) {
     const tab = await chrome.tabs.get(tabId).catch(() => null);
-    if (!tab || tab.status === "complete") return;
+    if (!tab || isReady(tab)) return;
   }
 
   await new Promise<void>((resolve) => {
@@ -274,14 +277,14 @@ const waitForTabComplete = async (tabId: number, timeoutMs: number, expectReload
       chrome.tabs.onUpdated.removeListener(listener);
       resolve();
     }
-    const listener = (updatedTabId: number, changeInfo: chrome.tabs.TabChangeInfo) => {
-      if (updatedTabId === tabId && changeInfo.status === "complete") finish();
+    const listener = (updatedTabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => {
+      if (updatedTabId === tabId && changeInfo.status === "complete" && isReady(tab)) finish();
     };
     chrome.tabs.onUpdated.addListener(listener);
     const timer = setTimeout(finish, timeoutMs);
     if (!expectReload) {
       void chrome.tabs.get(tabId).then((tab) => {
-        if (tab.status === "complete") finish();
+        if (isReady(tab)) finish();
       }, finish);
     }
   });
@@ -325,15 +328,12 @@ const injectToTab = async (
       );
       if (!response?.ok) throw new Error(response?.error || "小红书填写没有返回结果");
     } else {
-      await withTimeout(
-        chrome.scripting.executeScript({
-          target: { tabId },
-          func: info.injectFunction,
-          args: [data],
-        }),
-        INJECT_TIMEOUT_MS,
-        `填充超过 ${INJECT_TIMEOUT_MS / 1000} 秒仍未返回`,
-      );
+      const inject = isFirefox()
+        ? injectFirefoxAdapter(tabId, platform.name, data)
+        : chrome.scripting
+            .executeScript({ target: { tabId }, func: info.injectFunction, args: [data] })
+            .then(assertInjectionSucceeded);
+      await withTimeout(inject, INJECT_TIMEOUT_MS, `填充超过 ${INJECT_TIMEOUT_MS / 1000} 秒仍未返回`);
     }
     return { name: platform.name, tabId, status: "filled" };
   } catch (error) {
@@ -367,26 +367,27 @@ export async function createTabsForPlatforms(data: SyncData) {
         const platformInfo = { ...info, injectUrl: url };
         // 等待标签页加载完成
         if (tab) {
+          if (tab.id === undefined) throw new Error("创建的平台标签页缺少 id");
           injections.push(injectScriptsToTabs([{ tab, platformInfo }], data));
-          await chrome.tabs.update(tab.id!, { active: true });
+          await chrome.tabs.update(tab.id, { active: true });
           tabs.push({
             tab,
             platformInfo,
           });
 
-          // 如果是第一个标签页，创建一个新组
-          if (!groupId) {
-            groupId = await chrome.tabs.group({ tabIds: [tab.id!] });
-            await chrome.tabGroups.update(groupId, {
-              color: "blue",
-              title: `pupu-${new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}`,
-            });
-          } else {
-            // 将新标签页添加到现有组中
-            await chrome.tabs.group({ tabIds: [tab.id!], groupId });
+          if (typeof chrome.tabs.group === "function" && typeof chrome.tabGroups?.update === "function") {
+            if (groupId === undefined) {
+              groupId = await chrome.tabs.group({ tabIds: [tab.id] });
+              await chrome.tabGroups.update(groupId, {
+                color: "blue",
+                title: `pupu-${new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}`,
+              });
+            } else {
+              await chrome.tabs.group({ tabIds: [tab.id], groupId });
+            }
           }
           // 等待3秒再继续
-          await waitForTabComplete(tab.id!, TAB_LOAD_TIMEOUT_MS);
+          await waitForTabComplete(tab.id, TAB_LOAD_TIMEOUT_MS);
           if (process.env.PUPU_DESKTOP !== "true") await new Promise((resolve) => setTimeout(resolve, 3000));
         }
       }

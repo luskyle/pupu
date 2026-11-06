@@ -1,7 +1,7 @@
 {
   "name": "pupu",
   "displayName": "__MSG_extensionDisplayName__",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "__MSG_extensionDescription__",
   "author": "pupu",
   "packageManager": "pnpm@11.18.0",
@@ -15,10 +15,15 @@
     "desktop:workspace-smoke": "pnpm desktop:build && electron build/desktop/main.cjs --workspace-smoke",
     "desktop:package": "pnpm desktop:build && node scripts/package-desktop.mjs",
     "dev": "plasmo dev && node scripts/copy-pdf-worker.mjs",
-    "build": "plasmo build && node scripts/copy-pdf-worker.mjs && node scripts/check-local-version.mjs",
-    "build:ci": "plasmo build && node scripts/copy-pdf-worker.mjs && plasmo package && node scripts/rename-package.mjs",
+    "build": "plasmo build && node scripts/copy-pdf-worker.mjs chrome && node scripts/check-local-version.mjs",
+    "build:firefox": "plasmo build --target=firefox-mv3 && node scripts/build-firefox-adapters.mjs && node scripts/prepare-firefox.mjs && node scripts/copy-pdf-worker.mjs firefox",
+    "build:chrome:ci": "plasmo build && node scripts/copy-pdf-worker.mjs chrome && plasmo package && node scripts/rename-package.mjs chrome",
+    "build:firefox:ci": "pnpm build:firefox && plasmo package --target=firefox-mv3 && node scripts/rename-package.mjs firefox && pnpm lint:firefox",
+    "build:ci": "pnpm build:chrome:ci && pnpm build:firefox:ci",
     "check:version": "node scripts/check-local-version.mjs",
-    "package": "plasmo package && node scripts/rename-package.mjs",
+    "package": "plasmo package && node scripts/rename-package.mjs chrome",
+    "package:firefox": "plasmo package --target=firefox-mv3 && node scripts/rename-package.mjs firefox",
+    "lint:firefox": "node scripts/lint-firefox-package.mjs",
     "crx": "node scripts/pack-crx.mjs",
     "verify:crx": "node scripts/verify-crx.mjs",
     "test": "vitest run",
@@ -69,7 +74,8 @@
     "lint-staged": "^15.2.10",
     "postcss": "8.4.31",
     "typescript": "5.2.2",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.0",
+    "web-ext": "^10.8.0"
   },
   "pnpm": {
     "overrides": {

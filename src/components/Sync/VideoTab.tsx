@@ -7,6 +7,7 @@ import { logger } from "~utils/logger";
 import "video-react/dist/video-react.css";
 import InfoModal from "~components/Sync/Modals/InfoModal";
 import type { FileData, SyncData } from "~sync/common";
+import { openSidebarWithState } from "~utils/sidebar";
 
 const VideoTab: React.FC = () => {
   const [title, setTitle] = useState<string>("");
@@ -61,11 +62,10 @@ const VideoTab: React.FC = () => {
     };
 
     try {
-      await chrome.storage.local.set({ pendingPublishData: { type: "VIDEO", data } });
-      const window = await chrome.windows.getCurrent({ populate: true });
-      await chrome.sidePanel.open({ windowId: window.id });
+      await openSidebarWithState({ pendingPublishData: { type: "VIDEO", data } });
     } catch (error) {
       logger.error("打开侧边栏发布时出错:", error);
+      setInfoMsg(chrome.i18n.getMessage("sidepanelOpenError"));
     }
   };
 

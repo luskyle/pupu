@@ -123,20 +123,13 @@ jobs:
       - name: 构建扩展
         run: pnpm build:ci
 
-      - name: 校验产物版本
+      - name: 校验扩展产物
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -eu
-          zip="build/pupu-v${VERSION}.zip"
-          test -f "$zip" || { echo "未找到构建产物 $zip"; ls -l build; exit 1; }
-          manifest_version=$(unzip -p "$zip" manifest.json | node -e "let s='';process.stdin.on('data',(d)=>s+=d).on('end',()=>console.log(JSON.parse(s).version))")
-          echo "tag/输入版本: $VERSION / manifest: $manifest_version"
-          test "$VERSION" = "$manifest_version"
-          for f in pdf.worker.min.mjs wasm assets/platforms/51cto.ico; do
-            unzip -l "$zip" | grep -q "$f" || { echo "缺少 $f"; exit 1; }
-          done
-          echo "SHA256(zip): $(sha256sum "$zip" | cut -d' ' -f1)"
+          node scripts/verify-extension-packages.mjs "$VERSION"
+          sha256sum "build/pupu-v${VERSION}.zip" "build/pupu-firefox-v${VERSION}.zip"
 
       - name: 下载桌面产物
         uses: actions/download-artifact@v8
@@ -152,18 +145,20 @@ jobs:
           set -eu
           TAG="v${VERSION}"
           ZIP="build/pupu-v${VERSION}.zip"
+          FIREFOX_ZIP="build/pupu-firefox-v${VERSION}.zip"
           test -f "$ZIP"
+          test -f "$FIREFOX_ZIP"
           DESKTOP="build/pupu-desktop-v${VERSION}-linux-x64.tar.gz"
           test -f "$DESKTOP"
-          (cd build && sha256sum "pupu-v${VERSION}.zip" "pupu-desktop-v${VERSION}-linux-x64.tar.gz" > SHA256SUMS)
+          (cd build && sha256sum "pupu-v${VERSION}.zip" "pupu-firefox-v${VERSION}.zip" "pupu-desktop-v${VERSION}-linux-x64.tar.gz" > SHA256SUMS)
           NOTES="docs/releases/v${VERSION}.md"
           test -f "$NOTES"
           if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-            gh release create "$TAG" "$ZIP" "$DESKTOP" build/SHA256SUMS \
+            gh release create "$TAG" "$ZIP" "$FIREFOX_ZIP" "$DESKTOP" build/SHA256SUMS \
               --title "pupu $TAG" \
               --notes-file "$NOTES"
           else
-            gh release create "$TAG" "$ZIP" "$DESKTOP" build/SHA256SUMS \
+            gh release create "$TAG" "$ZIP" "$FIREFOX_ZIP" "$DESKTOP" build/SHA256SUMS \
               --title "pupu $TAG" \
               --target "$GITHUB_SHA" \
               --notes-file "$NOTES"

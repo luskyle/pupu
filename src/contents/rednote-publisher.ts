@@ -1,5 +1,7 @@
 import type { PlasmoCSConfig } from "plasmo";
 import { DynamicRednote } from "~sync/dynamic/rednote";
+import { isFirefox } from "~utils/browser";
+import { prepareFirefoxMedia } from "~utils/firefox-media";
 
 export const config: PlasmoCSConfig = {
   matches: ["https://creator.xiaohongshu.com/*"],
@@ -40,9 +42,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   };
   panel.append(message, stop);
   document.body.append(panel);
-  void DynamicRednote(request.data, request.agentEnabled === true, controller.signal, (stage) => {
-    message.textContent = `${stage}${request.agentEnabled ? "；试点不自动发布 " : " "}`;
-  })
+  void (async () => {
+    if (isFirefox()) await prepareFirefoxMedia(request.data);
+    await DynamicRednote(request.data, request.agentEnabled === true, controller.signal, (stage) => {
+      message.textContent = `${stage}${request.agentEnabled ? "；试点不自动发布 " : " "}`;
+    });
+  })()
     .then(() => {
       message.textContent = "已完成填写，请在平台检查内容与账号 ";
       sendResponse({ ok: true });

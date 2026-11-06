@@ -20,6 +20,7 @@ import "video-react/dist/video-react.css";
 import InfoModal from "~components/Sync/Modals/InfoModal";
 import type { FileData, SyncData } from "~sync/common";
 import { escapeHtml } from "~utils/escape-html";
+import { openSidebarWithState } from "~utils/sidebar";
 // 注意：pdfjs / pptx-preview / 截图库体积很大（合计约 1 MB），只在用户真正导入文件时才需要，
 // 因此这里不静态引入 ~utils/pdf 与 ~utils/pptx，而是在处理函数里动态 import（见下方）。
 
@@ -1058,11 +1059,10 @@ const DynamicTab: React.FC = () => {
     };
 
     try {
-      await chrome.storage.local.set({ pendingPublishData: { type: "DYNAMIC", data } });
-      const window = await chrome.windows.getCurrent({ populate: true });
-      await chrome.sidePanel.open({ windowId: window.id });
+      await openSidebarWithState({ pendingPublishData: { type: "DYNAMIC", data } });
     } catch (error) {
       logger.error("打开侧边栏发布时出错:", error);
+      setInfoMsg(chrome.i18n.getMessage("sidepanelOpenError"));
     }
   };
 

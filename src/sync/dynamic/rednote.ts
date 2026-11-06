@@ -1,4 +1,5 @@
 import { fillTitleWithAgent } from "~agent/title";
+import { fetchFirefoxMedia } from "~utils/firefox-media";
 import { logger } from "~utils/logger";
 import { buildXhsContent, pickXhsTitle } from "~utils/rednote-text";
 import type { DynamicData, SyncData } from "../common";
@@ -64,7 +65,7 @@ export async function DynamicRednote(
     for (const fileInfo of images) {
       checkStopped();
       try {
-        const response = await fetch(fileInfo.url, { signal });
+        const response = await fetchFirefoxMedia(fileInfo.url, { signal });
         if (!response.ok) {
           throw new Error(`HTTP 错误! 状态: ${response.status}`);
         }

@@ -332,6 +332,10 @@
     "message": "Tabs Manager",
     "description": "Title for the Tabs Manager in the side panel"
   },
+  "sidepanelOpenError": {
+    "message": "Could not open the sidebar. Please try again.",
+    "description": "Error shown when the browser cannot open the sidebar"
+  },
   "sidepanelUntitledGroup": {
     "message": "Untitled Group $1",
     "description": "Title for an untitled group in the Tabs Manager"

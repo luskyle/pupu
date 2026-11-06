@@ -1,20 +1,25 @@
 import { Button, Image } from "@heroui/react";
 import { Moon, Sun } from "lucide-react";
 import type React from "react";
+import { useState } from "react";
 import AnonAvatar from "~components/AnonAvatar";
+import InfoModal from "~components/Sync/Modals/InfoModal";
+import { logger } from "~utils/logger";
+import { openSidebarWithState } from "~utils/sidebar";
 import { useTheme } from "~utils/theme";
-
-/** 打开侧边栏刷新账号视图：写标记 + 在用户点击手势内打开侧边栏（不弹窗） */
-async function openAccountsRefresh() {
-  await chrome.storage.local.set({ refreshAccountsView: true });
-  const window = await chrome.windows.getCurrent({ populate: true });
-  await chrome.sidePanel.open({ windowId: window.id });
-}
 
 const Header: React.FC = () => {
   const { isDark, toggleTheme } = useTheme();
+  const [sidebarError, setSidebarError] = useState(false);
   // 浏览器无法读取真实主机名/用户名，账户名固定用「本地用户」
   const accountName = chrome.i18n.getMessage("optionsLocalAccount") || "本地用户";
+
+  const openAccountsRefresh = () => {
+    void openSidebarWithState({ refreshAccountsView: true }).catch((error) => {
+      logger.error("打开账号侧边栏失败:", error);
+      setSidebarError(true);
+    });
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/85 backdrop-blur dark:border-slate-800 dark:bg-slate-900/85">
@@ -47,6 +52,11 @@ const Header: React.FC = () => {
           </Button>
         </div>
       </div>
+      <InfoModal
+        isOpen={sidebarError}
+        message={chrome.i18n.getMessage("sidepanelOpenError")}
+        onClose={() => setSidebarError(false)}
+      />
     </header>
   );
 };
